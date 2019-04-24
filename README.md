@@ -25,7 +25,7 @@ object Main extends IOApp {
     _ <- STM.atomically[IO] {
       for {
         balance <- accountForTim.get
-        _       <- STM.check({ println(balance); balance > 100 } )
+        _       <- STM.check(balance > 100)
         _       <- accountForTim.modify(_ - 100)
         _       <- accountForSteve.modify(_ + 100)
       } yield ()
