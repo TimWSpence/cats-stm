@@ -1,10 +1,13 @@
 package org.timwspence.cats.stm
 
-import org.timwspence.cats.stm.STM.internal.{TLog, TLogEntry, TSuccess, TvarIdGen}
+import java.util.concurrent.atomic.AtomicReference
+
+import org.timwspence.cats.stm.STM.internal._
 
 class TVar[A] private[stm] (
   private val id: Long,
-  @volatile private[stm] var value: A
+  @volatile private[stm] var value: A,
+  private[stm] val pending: AtomicReference[Map[Long, Pending]]
 ) {
 
   def get: STM[A] = STM { log =>
@@ -38,8 +41,8 @@ class TVar[A] private[stm] (
 object TVar {
 
   def make[A](value: A): STM[TVar[A]] = STM { _ =>
-    val id = TvarIdGen.incrementAndGet()
-    TSuccess(new TVar(id, value))
+    val id = IdGen.incrementAndGet()
+    TSuccess(new TVar(id, value, new AtomicReference(Map())))
   }
 
 }

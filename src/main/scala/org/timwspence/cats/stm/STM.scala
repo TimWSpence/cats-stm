@@ -3,7 +3,7 @@ package org.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.effect.Sync
+import cats.effect.Async
 import org.timwspence.cats.stm.STM.internal._
 
 import scala.collection.mutable.{Map => MMap}
@@ -14,7 +14,7 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     run(log) match {
       case TSuccess(value) => TSuccess(f(value))
       case TFailure(error) => TFailure(error) //Coercion would be nice here!
-      case TRetry()        => TRetry()        //And here!
+      case TRetry          => TRetry          //And here!
     }
   }
 
@@ -22,9 +22,11 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     run(log) match {
       case TSuccess(value) => f(value).run(log)
       case TFailure(error) => TFailure(error)
-      case TRetry()        => TRetry()
+      case TRetry          => TRetry
     }
   }
+
+  def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
 
 }
 
@@ -32,12 +34,12 @@ object STM {
 
   def atomically[F[_]] = new AtomicallyPartiallyApplied[F]
 
-  def retry: STM[Unit] = STM { _ => TRetry() }
+  val retry: STM[Unit] = STM { _ => TRetry }
 
   def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = STM { log =>
     attempt.run(log) match {
-      case TRetry() => fallback.run(log)
-      case r        => r
+      case TRetry => fallback.run(log)
+      case r      => r
     }
   }
 
@@ -45,26 +47,54 @@ object STM {
 
   def pure[A](a: A): STM[A] = STM { _ => TSuccess(a) }
 
-  def unit: STM[Unit] = pure(())
+  val unit: STM[Unit] = pure(())
 
   class AtomicallyPartiallyApplied[F[_]] {
-    def apply[A](stm: STM[A])(implicit F: Sync[F]): F[A] = F.delay {
-      internal.globalLock.acquire
-      try {
+    def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = F.async { cb =>
+      val txId = IdGen.incrementAndGet
+
+      def attempt: () => Unit = () => {
+        var result: Either[Throwable, A] = null
+        var success = false
         val log = MMap[Long, TLogEntry]()
-        val result = stm.run(log) match {
-          case TSuccess(value) => {
-            for(entry <- log.values) {
-              entry.commit
+        globalLock.acquire
+        try {
+          stm.run(log) match {
+            case TSuccess(value) => {
+              for(entry <- log.values) {
+                entry.commit
+              }
+              result = Right(value)
+              success = true
             }
-            value
+            case TFailure(error) => result = Left(error)
+            case TRetry          => registerPending(txId, attempt, log)
           }
-          case TFailure(error) => throw error
-          case TRetry()        => throw new RuntimeException("Need to handle retry")
         }
-        result
+        finally globalLock.release
+        if (success) rerunPending(txId, log) //should this be before the cb invocation?
+        if (result != null) cb(result)
       }
-      finally internal.globalLock.release
+
+      attempt()
+
+    }
+
+    private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit = {
+      for(entry <- log.values) {
+        entry.tvar.pending.updateAndGet(m => m + (txId -> pending))
+      }
+    }
+
+    private def rerunPending(txId: Long, log: TLog): Unit = {
+      val todo = MMap[Long, Pending]()
+      for(entry <- log.values) {
+        val updated = entry.tvar.pending.updateAndGet(_ - txId)
+        todo ++= updated
+      }
+      for(pending <- todo.values) {
+        pending()
+      }
     }
   }
 
@@ -72,6 +102,7 @@ object STM {
   private[stm] object internal {
 
     type TLog = MMap[Long, TLogEntry]
+    type Pending = () => Unit
 
     abstract class TLogEntry{
       type Repr
@@ -95,12 +126,12 @@ object STM {
 
     }
 
-    sealed trait TResult[A]
+    sealed trait TResult[+A]
     case class TSuccess[A](value: A) extends TResult[A]
     case class TFailure[A](error: Throwable) extends TResult[A]
-    case class TRetry[A]() extends TResult[A]
+    case object TRetry extends TResult[Nothing]
 
-    val TvarIdGen = new AtomicLong()
+    val IdGen = new AtomicLong()
 
     val globalLock = new Semaphore(1, true)
 
