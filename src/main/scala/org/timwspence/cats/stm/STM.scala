@@ -32,6 +32,21 @@ object STM {
 
   def atomically[F[_]] = new AtomicallyPartiallyApplied[F]
 
+  def retry: STM[Unit] = STM { _ => TRetry() }
+
+  def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = STM { log =>
+    attempt.run(log) match {
+      case TRetry() => fallback.run(log)
+      case r        => r
+    }
+  }
+
+  def check(check: => Boolean): STM[Unit] = if (check) unit else retry
+
+  def pure[A](a: A): STM[A] = STM { _ => TSuccess(a) }
+
+  def unit: STM[Unit] = pure(())
+
   class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Sync[F]): F[A] = F.delay {
       internal.globalLock.acquire
@@ -53,18 +68,6 @@ object STM {
     }
   }
 
-  def retry: STM[Unit] = STM { _ => TRetry() }
-
-  def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = STM { log =>
-    attempt.run(log) match {
-      case TRetry() => fallback.run(log)
-      case r        => r
-    }
-  }
-
-  def check(check: => Boolean): STM[Unit] = if (check) unit else retry
-
-  def unit: STM[Unit] = STM { _ => TSuccess(()) }
 
   private[stm] object internal {
 
@@ -102,6 +105,5 @@ object STM {
     val globalLock = new Semaphore(1, true)
 
   }
-
 
 }

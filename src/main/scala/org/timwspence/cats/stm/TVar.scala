@@ -1,7 +1,6 @@
 package org.timwspence.cats.stm
 
-import org.timwspence.cats.stm.STM.internal
-import org.timwspence.cats.stm.STM.internal.{TLog, TLogEntry, TSuccess}
+import org.timwspence.cats.stm.STM.internal.{TLog, TLogEntry, TSuccess, TvarIdGen}
 
 class TVar[A] private[stm] (
   private val id: Long,
@@ -39,7 +38,7 @@ class TVar[A] private[stm] (
 object TVar {
 
   def make[A](value: A): STM[TVar[A]] = STM { _ =>
-    val id = internal.TvarIdGen.incrementAndGet()
+    val id = TvarIdGen.incrementAndGet()
     TSuccess(new TVar(id, value))
   }
 
