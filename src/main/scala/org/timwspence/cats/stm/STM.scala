@@ -3,9 +3,10 @@ package org.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
-import scala.collection.mutable.{Map => MMap}
-import cats.effect.IO
+import cats.effect.Sync
 import org.timwspence.cats.stm.STM.internal._
+
+import scala.collection.mutable.{Map => MMap}
 
 case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 
@@ -29,23 +30,27 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 
 object STM {
 
-  def atomically[A](stm: STM[A]): IO[A] = IO {
-    internal.globalLock.acquire
-    try {
-      val log = MMap[Long, TLogEntry]()
-      val result = stm.run(log) match {
-        case TSuccess(value) => {
-          for(entry <- log.values) {
-            entry.commit
+  def atomically[F[_]] = new AtomicallyPartiallyApplied[F]
+
+  class AtomicallyPartiallyApplied[F[_]] {
+    def apply[A](stm: STM[A])(implicit F: Sync[F]): F[A] = F.delay {
+      internal.globalLock.acquire
+      try {
+        val log = MMap[Long, TLogEntry]()
+        val result = stm.run(log) match {
+          case TSuccess(value) => {
+            for(entry <- log.values) {
+              entry.commit
+            }
+            value
           }
-          value
+          case TFailure(error) => throw error
+          case TRetry()        => throw new RuntimeException("Need to handle retry")
         }
-        case TFailure(error) => throw error
-        case TRetry()        => throw new RuntimeException("Need to handle retry")
+        result
       }
-      result
+      finally internal.globalLock.release
     }
-    finally internal.globalLock.release
   }
 
   def retry: STM[Unit] = STM { _ => TRetry() }
