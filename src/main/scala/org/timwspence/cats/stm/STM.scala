@@ -34,7 +34,12 @@ object STM {
     try {
       val log = MMap[Long, TLogEntry]()
       val result = stm.run(log) match {
-        case TSuccess(value) => value
+        case TSuccess(value) => {
+          for(entry <- log.values) {
+            entry.commit
+          }
+          value
+        }
         case TFailure(error) => throw error
         case TRetry()        => throw new RuntimeException("Need to handle retry")
       }
@@ -68,6 +73,8 @@ object STM {
       def unsafeGet[A]: A = current.asInstanceOf[A]
 
       def unsafeSet[A](a: A): Unit = current = a.asInstanceOf[Repr]
+
+      def commit: Unit = tvar.value = current
     }
 
     object TLogEntry {
