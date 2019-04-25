@@ -1,4 +1,4 @@
-Cats STM
+Cats STM [![CircleCI](https://circleci.com/gh/TimWSpence/cats-stm/tree/master.svg?style=svg)](https://circleci.com/gh/TimWSpence/cats-stm/tree/master)
 ========
 
 An implementation of STM for [Cats Effect](https://typelevel.org/cats-effect/), inspired by
