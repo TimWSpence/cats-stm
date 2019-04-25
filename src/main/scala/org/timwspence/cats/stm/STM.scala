@@ -12,7 +12,7 @@ import scala.collection.mutable.{Map => MMap}
 
 case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 
-  def map[B](f: A => B): STM[B] = STM { log =>
+  final def map[B](f: A => B): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => TSuccess(f(value))
       case TFailure(error) => TFailure(error) //Coercion would be nice here!
@@ -20,7 +20,7 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
-  def flatMap[B](f: A => STM[B]): STM[B] = STM { log =>
+  final def flatMap[B](f: A => STM[B]): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => f(value).run(log)
       case TFailure(error) => TFailure(error)
@@ -28,7 +28,7 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
-  def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
+  final def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
 
 }
 
