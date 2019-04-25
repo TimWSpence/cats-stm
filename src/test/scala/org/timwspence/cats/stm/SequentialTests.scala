@@ -80,6 +80,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   test("Check retries until transaction succeeds") {
     val from = TVar.make(100).commit[IO].unsafeRunSync
     val to = TVar.make(0).commit[IO].unsafeRunSync
+    var checkCounter = 0
 
     val prog = for {
       _    <- (for {
@@ -89,7 +90,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _    <- STM.atomically[IO] {
         for {
           balance <- from.get
-          _       <- STM.check(balance > 100)
+          _       <- {checkCounter += 1; STM.check(balance > 100) }
           _       <- from.modify(_ - 100)
           _       <- to.modify(_ + 100)
         } yield ()
@@ -99,6 +100,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     for(_ <- prog.attempt.unsafeToFuture) yield {
       from.value shouldBe 1
       to.value shouldBe 100
+      checkCounter should be > 1
     }
   }
 
