@@ -28,6 +28,13 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
+  final def orElse(fallback: STM[A]): STM[A] = STM { log =>
+    run(log) match {
+      case TRetry => fallback.run(log)
+      case r      => r
+    }
+  }
+
   final def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
 
 }
@@ -38,14 +45,11 @@ object STM {
 
   val retry: STM[Unit] = STM { _ => TRetry }
 
-  def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = STM { log =>
-    attempt.run(log) match {
-      case TRetry => fallback.run(log)
-      case r      => r
-    }
-  }
+  def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = attempt.orElse(fallback)
 
   def check(check: => Boolean): STM[Unit] = if (check) unit else retry
+
+  def abort(error: Throwable): STM[Unit] = STM { _ => TFailure(error) }
 
   def pure[A](a: A): STM[A] = STM { _ => TSuccess(a) }
 
@@ -72,6 +76,9 @@ object STM {
             case TFailure(error) => result = Left(error)
             case TRetry          => registerPending(txId, attempt, log)
           }
+        }
+        catch {
+          case e: Throwable => result = Left(e)
         }
         finally globalLock.release
         if (success) rerunPending(txId, log)
