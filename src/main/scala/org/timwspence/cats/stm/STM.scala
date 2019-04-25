@@ -3,9 +3,11 @@ package org.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
+import cats.Monad
 import cats.effect.Async
 import org.timwspence.cats.stm.STM.internal._
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}
 
 case class STM[A](run: TLog => TResult[A]) extends AnyVal {
@@ -72,7 +74,7 @@ object STM {
           }
         }
         finally globalLock.release
-        if (success) rerunPending(txId, log) //should this be before the cb invocation?
+        if (success) rerunPending(txId, log)
         if (result != null) cb(result)
       }
 
@@ -98,6 +100,24 @@ object STM {
     }
   }
 
+  implicit val stmMonad: Monad[STM] = new Monad[STM] {
+    override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] =fa.flatMap(f)
+
+    override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
+
+      @tailrec
+      def step(a: A): TResult[B] = f(a).run(log) match {
+        case TSuccess(Left(a1)) => step(a1)
+        case TSuccess(Right(b)) => TSuccess(b)
+        case TFailure(e)        => TFailure(e)
+        case TRetry             => TRetry
+      }
+
+      step(a)
+    }
+
+    override def pure[A](x: A): STM[A] = STM.pure(x)
+  }
 
   private[stm] object internal {
 

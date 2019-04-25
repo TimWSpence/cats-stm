@@ -1,3 +1,4 @@
+val CatsVersion = "1.6.0"
 val CatsEffectVersion = "1.2.0"
 
 lazy val root = (project in file("."))
@@ -8,7 +9,8 @@ lazy val root = (project in file("."))
     scalaVersion := "2.12.8",
     scalacOptions ++= Seq("-Ypartial-unification"),
     libraryDependencies ++= Seq(
-      "org.typelevel"  %%  "cats-effect"     % CatsEffectVersion
+      "org.typelevel" %%  "cats-effect" % CatsEffectVersion,
+      "org.typelevel" %% "cats-core"    % CatsVersion
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
     addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.3.0")
