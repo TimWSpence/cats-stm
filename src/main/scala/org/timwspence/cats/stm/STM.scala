@@ -93,11 +93,10 @@ object STM {
 
     }
 
-    private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit = {
+    private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit =
       for (entry <- log.values) {
         entry.tvar.pending.updateAndGet(m => m + (txId -> pending))
       }
-    }
 
     private def rerunPending(txId: Long, log: TLog): Unit = {
       val todo = MMap[Long, Pending]()

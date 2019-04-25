@@ -26,7 +26,7 @@ class TVar[A] private[stm] (
     TSuccess(entry.unsafeSet(updated))
   }
 
-  private def getOrInsert(log: TLog): TLogEntry = {
+  private def getOrInsert(log: TLog): TLogEntry =
     if (log.contains(id))
       log(id)
     else {
@@ -34,7 +34,6 @@ class TVar[A] private[stm] (
       log += id -> entry
       entry
     }
-  }
 
 }
 
