@@ -21,7 +21,7 @@ class TVar[A] private[stm] (
   }
 
   def modify(f: A => A): STM[Unit] = STM { log =>
-    val entry = getOrInsert(log)
+    val entry   = getOrInsert(log)
     val updated = f(entry.unsafeGet[A])
     TSuccess(entry.unsafeSet(updated))
   }
