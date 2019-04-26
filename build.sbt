@@ -5,7 +5,7 @@ val ScalaCheckVersion = "1.14.0"
 
 lazy val root = (project in file("."))
   .settings(
-    organization := "org.timwspence",
+    organization := "com.github.timwspence",
     name := "cats-stm",
     version := "0.0.1-SNAPSHOT",
     scalaVersion := "2.12.8",

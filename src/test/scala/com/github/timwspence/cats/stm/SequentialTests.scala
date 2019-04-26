@@ -1,4 +1,4 @@
-package org.timwspence.cats.stm
+package com.github.timwspence.cats.stm
 
 import cats.effect.{ContextShift, IO, Timer}
 import org.scalatest.{AsyncFunSuite, Matchers}

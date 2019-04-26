@@ -1,11 +1,11 @@
-package org.timwspence.cats.stm
+package com.github.timwspence.cats.stm
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
 import cats.Monad
 import cats.effect.Async
-import org.timwspence.cats.stm.STM.internal._
+import STM.internal._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}

@@ -1,8 +1,8 @@
-package org.timwspence.cats.stm
+package com.github.timwspence.cats.stm
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.timwspence.cats.stm.STM.internal._
+import STM.internal._
 
 class TVar[A] private[stm] (
   private val id: Long,

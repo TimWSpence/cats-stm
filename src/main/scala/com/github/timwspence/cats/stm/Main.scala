@@ -1,4 +1,4 @@
-package org.timwspence.cats.stm
+package com.github.timwspence.cats.stm
 
 import cats.effect.{ExitCode, IO, IOApp}
 

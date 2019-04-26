@@ -1,4 +1,4 @@
-package org.timwspence.cats.stm
+package com.github.timwspence.cats.stm
 
 import java.util.concurrent.atomic.AtomicReference
 
