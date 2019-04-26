@@ -8,6 +8,20 @@ lazy val root = (project in file("."))
     organization := "com.github.timwspence",
     name := "cats-stm",
     version := "0.0.1-SNAPSHOT",
+    homepage := Some(url("https://github.com/TimWSpence/cats-stm")),
+    developers := List(Developer(
+      "TimWSpence",
+      "Tim Spence",
+      "timothywspence@gmail.com",
+      url("https://github.com/TimWSpence"))),
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
+    publishMavenStyle := true,
+    publishTo := Some(
+      if (isSnapshot.value)
+        Opts.resolver.sonatypeSnapshots
+      else
+        Opts.resolver.sonatypeStaging
+    ),
     scalaVersion := "2.12.8",
     scalacOptions ++= Seq("-Ypartial-unification"),
     libraryDependencies ++= Seq(
@@ -17,8 +31,8 @@ lazy val root = (project in file("."))
       "org.scalacheck" %% "scalacheck"   % ScalaCheckVersion % "test",
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
-    addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.3.0")
-  )
+    addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.3.0"),
+)
 
 scalacOptions ++= Seq(
   "-deprecation",
