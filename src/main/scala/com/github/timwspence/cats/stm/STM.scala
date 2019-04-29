@@ -3,7 +3,7 @@ package com.github.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.Monad
+import cats.{Monad, Monoid}
 import cats.effect.Async
 import STM.internal._
 
@@ -15,15 +15,15 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
   final def map[B](f: A => B): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => TSuccess(f(value))
-      case TFailure(error) => TFailure(error) //Coercion would be nice here!
-      case TRetry          => TRetry //And here!
+      case e @ TFailure(_) => e
+      case TRetry          => TRetry
     }
   }
 
   final def flatMap[B](f: A => STM[B]): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => f(value).run(log)
-      case TFailure(error) => TFailure(error)
+      case e @ TFailure(_) => e
       case TRetry          => TRetry
     }
   }
@@ -60,6 +60,41 @@ object STM {
   }
 
   val unit: STM[Unit] = pure(())
+
+  implicit val stmMonad: Monad[STM] = new Monad[STM] {
+    override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] = fa.flatMap(f)
+
+    override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
+      @tailrec
+      def step(a: A): TResult[B] = f(a).run(log) match {
+        case TSuccess(Left(a1)) => step(a1)
+        case TSuccess(Right(b)) => TSuccess(b)
+        case e @ TFailure(_)    => e
+        case TRetry             => TRetry
+      }
+
+      step(a)
+    }
+
+    override def pure[A](x: A): STM[A] = STM.pure(x)
+  }
+
+  implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[STM[A]] = new Monoid[STM[A]] {
+    override def empty: STM[A] = STM.pure(M.empty)
+
+    override def combine(x: STM[A], y: STM[A]): STM[A] = STM { log =>
+      x.run(log) match {
+        case TSuccess(value1) =>
+          y.run(log) match {
+            case TSuccess(value2) => TSuccess(M.combine(value1, value2))
+            case e @ TFailure(_)  => e
+            case TRetry           => TRetry
+          }
+        case e @ TFailure(_) => e
+        case TRetry          => TRetry
+      }
+    }
+  }
 
   class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = F.async { cb =>
@@ -110,24 +145,6 @@ object STM {
     }
   }
 
-  implicit val stmMonad: Monad[STM] = new Monad[STM] {
-    override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] = fa.flatMap(f)
-
-    override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
-      @tailrec
-      def step(a: A): TResult[B] = f(a).run(log) match {
-        case TSuccess(Left(a1)) => step(a1)
-        case TSuccess(Right(b)) => TSuccess(b)
-        case TFailure(e)        => TFailure(e)
-        case TRetry             => TRetry
-      }
-
-      step(a)
-    }
-
-    override def pure[A](x: A): STM[A] = STM.pure(x)
-  }
-
   private[stm] object internal {
 
     type TLog    = MMap[Long, TLogEntry]
@@ -156,9 +173,9 @@ object STM {
     }
 
     sealed trait TResult[+A]
-    case class TSuccess[A](value: A)         extends TResult[A]
-    case class TFailure[A](error: Throwable) extends TResult[A]
-    case object TRetry                       extends TResult[Nothing]
+    case class TSuccess[A](value: A)      extends TResult[A]
+    case class TFailure(error: Throwable) extends TResult[Nothing]
+    case object TRetry                    extends TResult[Nothing]
 
     val IdGen = new AtomicLong()
 
