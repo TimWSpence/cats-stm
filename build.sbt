@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
   .settings(
     organization := "com.github.timwspence",
     name := "cats-stm",
-    version := "0.0.1",
+    version := "0.0.2-SNAPSHOT",
 
     organizationName := "timwspence",
     organizationHomepage := Some(url("https://github.com/TimWSpence")),
