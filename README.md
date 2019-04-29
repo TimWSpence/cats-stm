@@ -8,7 +8,7 @@ An implementation of Software Transactional Memory for [Cats Effect](https://typ
 Usage
 -----
 
-`libraryDependencies += "com.github.timwspence" %% "cats-stm" % "0.0.1"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.0.1"`
 
 I haven't setup cross-building yet so I'm afraid this is only available on
 2.12 for the moment.
