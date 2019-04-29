@@ -66,7 +66,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
-          _       <- STM.abort(new RuntimeException("Boom"))
+          _       <- STM.abort[Unit](new RuntimeException("Boom"))
         } yield ()
       }
     } yield ()

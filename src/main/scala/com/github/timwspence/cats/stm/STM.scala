@@ -3,9 +3,9 @@ package com.github.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.{Monad, Monoid}
 import cats.effect.Async
-import STM.internal._
+import cats.{Monad, Monoid}
+import com.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}
@@ -51,7 +51,7 @@ object STM {
 
   def check(check: => Boolean): STM[Unit] = if (check) unit else retry
 
-  def abort(error: Throwable): STM[Unit] = STM { _ =>
+  def abort[A](error: Throwable): STM[A] = STM { _ =>
     TFailure(error)
   }
 
