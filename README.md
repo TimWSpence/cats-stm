@@ -4,6 +4,8 @@ Cats STM [![CircleCI](https://circleci.com/gh/TimWSpence/cats-stm/tree/master.sv
 An implementation of Software Transactional Memory for [Cats Effect](https://typelevel.org/cats-effect/), inspired by
 [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf).
 
+For more information, see the [documentation](https://timwspence.github.io/cats-stm/).
+
 
 Usage
 -----
