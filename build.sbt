@@ -1,5 +1,7 @@
 import ReleaseTransformations._
 
+enablePlugins(MicrositesPlugin)
+
 val CatsVersion = "1.6.0"
 val CatsEffectVersion = "1.2.0"
 val ScalaTestVersion = "3.0.5"
@@ -13,7 +15,7 @@ lazy val root = (project in file("."))
     organizationName := "timwspence",
     organizationHomepage := Some(url("https://github.com/TimWSpence")),
 
-    homepage := Some(url("https://github.com/TimWSpence/cats-stm")),
+    homepage := Some(url("https://timwspence.github.io/cats-stm")),
     description := "An STM implementation for Cats Effect",
     scmInfo := Some(
       ScmInfo(
@@ -56,6 +58,15 @@ lazy val root = (project in file("."))
       pushChanges
     ),
     crossScalaVersions := Seq("2.12.8"),
+
+    micrositeName := "Cats STM",
+    micrositeDescription := "Software Transactional Memory for Cats Effect",
+    micrositeAuthor := "Tim Spence",
+    micrositeGithubOwner := "TimWSpence",
+    micrositeGithubRepo := "cats-stm",
+    micrositeBaseUrl := "/cats-stm",
+    micrositeFooterText := None,
+    micrositeHighlightTheme := "zenburn",
 
     scalaVersion := "2.12.8",
     scalacOptions ++= Seq(
