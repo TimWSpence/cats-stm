@@ -66,7 +66,7 @@ lazy val root = (project in file("."))
     micrositeGithubRepo := "cats-stm",
     micrositeBaseUrl := "/cats-stm",
     micrositeFooterText := None,
-    micrositeHighlightTheme := "zenburn",
+    micrositeHighlightTheme := "atom-one-light",
 
     scalaVersion := "2.12.8",
     scalacOptions ++= Seq(

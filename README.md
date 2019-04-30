@@ -1,5 +1,4 @@
-Cats STM [![CircleCI](https://circleci.com/gh/TimWSpence/cats-stm/tree/master.svg?style=svg)](https://circleci.com/gh/TimWSpence/cats-stm/tree/master)
-========
+# Cats STM [![CircleCI](https://circleci.com/gh/TimWSpence/cats-stm/tree/master.svg?style=svg)](https://circleci.com/gh/TimWSpence/cats-stm/tree/master)
 
 An implementation of Software Transactional Memory for [Cats Effect](https://typelevel.org/cats-effect/), inspired by
 [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf).
@@ -7,10 +6,9 @@ An implementation of Software Transactional Memory for [Cats Effect](https://typ
 For more information, see the [documentation](https://timwspence.github.io/cats-stm/).
 
 
-Usage
------
+### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.0.1"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.0.2"`
 
 I haven't setup cross-building yet so I'm afraid this is only available on
 2.12 for the moment.
@@ -21,6 +19,7 @@ monad.
 
 ```scala
 import cats.effect.{ExitCode, IO, IOApp}
+import io.github.timwspence.cats.stm.{TVar, STM}
 
 object Main extends IOApp {
 
@@ -50,9 +49,16 @@ object Main extends IOApp {
   } yield ()
 
   private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
-    _ <- IO(println(s"Tim: ${accountForTim.value}"))
-    _ <- IO(println(s"Steve: ${accountForSteve.value}"))
+    _ <- accountForTim.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
+    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
   } yield ()
 
 }
 ```
+
+### Documentation
+
+The documentation is built using [sbt microsites](https://47deg.github.io/sbt-microsites/). You
+can generate it via `sbt makeMicrosite`. You can view it locally via `cd target/site && jekyll serve`.
+
+You can also publish to Github pages via `sbt publishMicrosite`.

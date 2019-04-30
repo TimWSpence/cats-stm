@@ -1,6 +1,9 @@
 options:
-  - title: Getting Started
+  - title: Theory
     url: docs/index.html
 
   - title: TVar
     url: docs/tvar.html
+
+  - title: STM
+    url: docs/stm.html
