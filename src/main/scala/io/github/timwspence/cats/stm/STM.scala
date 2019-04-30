@@ -12,6 +12,9 @@ import scala.collection.mutable.{Map => MMap}
 
 case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 
+  /**
+    * Functor map on `STM`.
+    */
   final def map[B](f: A => B): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => TSuccess(f(value))
@@ -20,6 +23,9 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
+  /**
+    * Monadic bind on `STM`.
+    */
   final def flatMap[B](f: A => STM[B]): STM[B] = STM { log =>
     run(log) match {
       case TSuccess(value) => f(value).run(log)
@@ -28,6 +34,9 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
+  /**
+    * Try an alternative `STM` action if this one retries.
+    */
   final def orElse(fallback: STM[A]): STM[A] = STM { log =>
     run(log) match {
       case TRetry => fallback.run(log)
@@ -35,30 +44,63 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
     }
   }
 
+  /**
+    * Commit this `STM` action as an `IO` action. The mutable
+    * state of `TVar`s is only modified when this is invoked
+    * (hence the `IO` context - modifying mutable state
+    * is a side effect).
+    */
   final def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
 
 }
 
 object STM {
 
+  /**
+    * Commit the `STM` action as an `IO` action. The mutable
+    * state of `TVar`s is only modified when this is invoked
+    * (hence the `IO` context - modifying mutable state
+    * is a side effect).
+    */
   def atomically[F[_]] = new AtomicallyPartiallyApplied[F]
 
+  /**
+    * Convenience definition.
+    */
   val retry: STM[Unit] = STM { _ =>
     TRetry
   }
 
+  /**
+    * Fallback to an alternative `STM` action if the first one
+    * retries. The whole `orElse` action is retried if both
+    * {@code attempt} and {@code fallback} retry.
+    */
   def orElse[A](attempt: STM[A], fallback: STM[A]): STM[A] = attempt.orElse(fallback)
 
+  /**
+    * Retry transaction until {@code check} succeeds.
+    */
   def check(check: => Boolean): STM[Unit] = if (check) unit else retry
 
+  /**
+    * Abort a transaction. Will raise {@code error} whenever
+    * evaluated with [[atomically]].
+    */
   def abort[A](error: Throwable): STM[A] = STM { _ =>
     TFailure(error)
   }
 
+  /**
+    * Monadic return.
+    */
   def pure[A](a: A): STM[A] = STM { _ =>
     TSuccess(a)
   }
 
+  /**
+    * Alias for `pure(())`.
+    */
   val unit: STM[Unit] = pure(())
 
   implicit val stmMonad: Monad[STM] = new Monad[STM] {

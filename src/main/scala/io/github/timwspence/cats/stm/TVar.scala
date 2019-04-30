@@ -10,16 +10,28 @@ class TVar[A] private[stm] (
   private[stm] val pending: AtomicReference[Map[Long, Pending]]
 ) {
 
+  /**
+    * Get the current value as an
+    * `STM` action.
+    */
   def get: STM[A] = STM { log =>
     val entry = getOrInsert(log)
     TSuccess(entry.unsafeGet[A])
   }
 
+  /**
+    * Set the current value as an
+    * `STM` action.
+    */
   def set(a: A): STM[Unit] = STM { log =>
     val entry = getOrInsert(log)
     TSuccess(entry.unsafeSet(a))
   }
 
+  /**
+    * Modify the current value as an
+    * `STM` action.
+    */
   def modify(f: A => A): STM[Unit] = STM { log =>
     val entry   = getOrInsert(log)
     val updated = f(entry.unsafeGet[A])
