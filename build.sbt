@@ -1,3 +1,5 @@
+import ReleaseTransformations._
+
 val CatsVersion = "1.6.0"
 val CatsEffectVersion = "1.2.0"
 val ScalaTestVersion = "3.0.5"
@@ -38,24 +40,41 @@ lazy val root = (project in file("."))
     pomIncludeRepository := { _ => false },
     sonatypeProfileName := organization.value,
 
+    releaseCrossBuild := true,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      // For non cross-build projects, use releaseStepCommand("publishSigned")
+      releaseStepCommandAndRemaining("+publishSigned"),
+      setNextVersion,
+      commitNextVersion,
+      releaseStepCommand("sonatypeReleaseAll"),
+      pushChanges
+    ),
+    crossScalaVersions := Seq("2.12.8"),
+
     scalaVersion := "2.12.8",
-    scalacOptions ++= Seq("-Ypartial-unification"),
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-language:higherKinds",
+      "-language:postfixOps",
+      "-feature",
+      "-Ypartial-unification",
+      "-Xfatal-warnings",
+    ),
     libraryDependencies ++= Seq(
       "org.typelevel"  %% "cats-effect" % CatsEffectVersion,
       "org.typelevel"  %% "cats-core"   % CatsVersion,
       "org.scalatest"  %% "scalatest"   % ScalaTestVersion  % "test",
       "org.scalacheck" %% "scalacheck"  % ScalaCheckVersion % "test",
     ),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.0" cross CrossVersion.binary),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
   )
 
-scalacOptions ++= Seq(
-  "-deprecation",
-  "-encoding", "UTF-8",
-  "-language:higherKinds",
-  "-language:postfixOps",
-  "-feature",
-  "-Ypartial-unification",
-  "-Xfatal-warnings",
-)
