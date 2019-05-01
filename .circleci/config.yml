@@ -23,4 +23,6 @@ jobs:
         paths: ["~/.m2", "~/.ivy2/cache", "~/.coursier/cache", "~/.sbt/launchers", "~/.cache/coursier"]
         key: sbt-scala-cache-{{ checksum "build.sbt" }}
 
-    - run: sbt test
+    - run: sbt +test
+    - run: sbt +mimaReportBinaryIssues
+    - run: sbt +docs/makeMicrosite
