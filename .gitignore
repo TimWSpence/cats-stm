@@ -183,3 +183,7 @@ tags
 [._]*.un~
 
 # End of https://www.gitignore.io/api/vim,sbt,emacs,scala,ensime,intellij+all
+
+# Metals
+.bloop
+.metals
