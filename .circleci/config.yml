@@ -13,7 +13,12 @@ jobs:
     steps:
     - checkout
     # Site Setup
-    - run: rvm use 2.6.0 --install --fuzzy
+    - run:
+      name: Set ruby version to 2.6.0
+      command: |
+                rvm install 2.6.0
+                echo . $(rvm 2.6.0 do rvm env --path) >> $BASH_ENV
+    # - run: rvm use 2.6.0 --install --fuzzy
     - run: gem update --system
     - run: gem install sass
     - run: gem install jekyll -v 3.2.1
