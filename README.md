@@ -24,8 +24,8 @@ import io.github.timwspence.cats.stm.{TVar, STM}
 object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] = for {
-    accountForTim   <- TVar.make[Long](100).commit[IO]
-    accountForSteve <- TVar.make[Long](0).commit[IO]
+    accountForTim   <- TVar.of[Long](100).commit[IO]
+    accountForSteve <- TVar.of[Long](0).commit[IO]
     _               <- printBalances(accountForTim, accountForSteve)
     _               <- giveTimMoreMoney(accountForTim).start
     _               <- transfer(accountForTim, accountForSteve)

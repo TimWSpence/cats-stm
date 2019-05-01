@@ -14,8 +14,8 @@ import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
 val prog: IO[Unit] = for {
-  to   <- TVar.make(0).commit[IO]
-  from <- TVar.make(100).commit[IO]
+  to   <- TVar.of(0).commit[IO]
+  from <- TVar.of(100).commit[IO]
   txn  <- STM.atomically[IO] {
     for {
       balance <- from.get
@@ -35,8 +35,8 @@ val prog: IO[Unit] = for {
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.make(1).commit[IO].unsafeRunSync
-val from = TVar.make(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).commit[IO].unsafeRunSync
+val from = TVar.of(0).commit[IO].unsafeRunSync
 
 val txn  = STM.atomically[IO] {
   for {
@@ -62,8 +62,8 @@ alternative action if the first retries:
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.make(1).commit[IO].unsafeRunSync
-val from = TVar.make(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).commit[IO].unsafeRunSync
+val from = TVar.of(0).commit[IO].unsafeRunSync
 
 val transferHundred: STM[Unit] = for {
   _ <- from.modify(_ - 100)
@@ -90,8 +90,8 @@ import cats.effect.IO
 import cats.syntax.flatMap._
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.make(1).commit[IO].unsafeRunSync
-val from = TVar.make(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).commit[IO].unsafeRunSync
+val from = TVar.of(0).commit[IO].unsafeRunSync
 
 val txn  = for {
   balance <- from.get

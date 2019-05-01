@@ -10,6 +10,10 @@ import STM.internal._
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}
 
+/**
+  * Monad representing transactions involving one or more
+  * `TVar`s.
+  */
 case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 
   /**
@@ -67,7 +71,7 @@ object STM {
   /**
     * Convenience definition.
     */
-  val retry: STM[Unit] = STM { _ =>
+  def retry[A]: STM[A] = STM { _ =>
     TRetry
   }
 

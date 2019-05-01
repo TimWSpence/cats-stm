@@ -18,8 +18,8 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
 
   test("Basic transaction is executed") {
-    val from = TVar.make(100).commit[IO].unsafeRunSync
-    val to = TVar.make(0).commit[IO].unsafeRunSync
+    val from = TVar.of(100).commit[IO].unsafeRunSync
+    val to = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
       _    <- STM.atomically[IO] {
@@ -38,8 +38,8 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   }
 
   test("Whole transaction is aborted if exception is thrown") {
-    val from = TVar.make(100).commit[IO].unsafeRunSync
-    val to = TVar.make(0).commit[IO].unsafeRunSync
+    val from = TVar.of(100).commit[IO].unsafeRunSync
+    val to = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
       _    <- STM.atomically[IO] {
@@ -58,8 +58,8 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   }
 
   test("Abort primitive aborts whole transaction") {
-    val from = TVar.make(100).commit[IO].unsafeRunSync
-    val to = TVar.make(0).commit[IO].unsafeRunSync
+    val from = TVar.of(100).commit[IO].unsafeRunSync
+    val to = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
       _    <- STM.atomically[IO] {
@@ -78,8 +78,8 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   }
 
   test("Check retries until transaction succeeds") {
-    val from = TVar.make(100).commit[IO].unsafeRunSync
-    val to = TVar.make(0).commit[IO].unsafeRunSync
+    val from = TVar.of(100).commit[IO].unsafeRunSync
+    val to = TVar.of(0).commit[IO].unsafeRunSync
     var checkCounter = 0
 
     val prog = for {
@@ -105,7 +105,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
   }
 
   test("OrElse runs second transaction if first retries") {
-    val account = TVar.make(100).commit[IO].unsafeRunSync
+    val account = TVar.of(100).commit[IO].unsafeRunSync
 
     val first = for {
       balance <- account.get

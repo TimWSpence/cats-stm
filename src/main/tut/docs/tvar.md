@@ -11,8 +11,8 @@ read and modified via `STM` actions.
 import cats.effect.IO
 import io.github.timwspence.cats.stm._
 
-val to   = TVar.make(0).commit[IO].unsafeRunSync
-val from = TVar.make(100).commit[IO].unsafeRunSync
+val to   = TVar.of(0).commit[IO].unsafeRunSync
+val from = TVar.of(100).commit[IO].unsafeRunSync
 val txn: STM[Unit] = for {
   balance <- from.get
   _       <- from.modify(_ - balance)

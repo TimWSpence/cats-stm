@@ -2,8 +2,14 @@ package io.github.timwspence.cats.stm
 
 import java.util.concurrent.atomic.AtomicReference
 
-import STM.internal._
+import io.github.timwspence.cats.stm.STM.internal._
 
+/**
+  * Transactional variable - a mutable memory location
+  * that can be read or written to via `STM` actions.
+  *
+  * Analagous to `cats.effect.concurrent.Ref`.
+  */
 class TVar[A] private[stm] (
   private val id: Long,
   @volatile private[stm] var value: A,
@@ -51,7 +57,7 @@ class TVar[A] private[stm] (
 
 object TVar {
 
-  def make[A](value: A): STM[TVar[A]] = STM { _ =>
+  def of[A](value: A): STM[TVar[A]] = STM { _ =>
     val id = IdGen.incrementAndGet()
     TSuccess(new TVar(id, value, new AtomicReference(Map())))
   }
