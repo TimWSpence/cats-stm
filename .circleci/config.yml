@@ -12,6 +12,11 @@ jobs:
 
     steps:
     - checkout
+    # Site Setup
+    - run: rvm use 2.6.0 --install --fuzzy
+    - run: gem update --system
+    - run: gem install sass
+    - run: gem install jekyll -v 3.2.1
 
     - restore_cache:
         keys:
