@@ -7,3 +7,9 @@ options:
 
   - title: STM
     url: docs/stm.html
+
+  - title: TMVar
+    url: docs/tmvar.html
+
+  - title: TQueue
+    url: docs/tqueue.html
