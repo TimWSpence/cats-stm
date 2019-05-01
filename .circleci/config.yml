@@ -12,9 +12,6 @@ jobs:
 
     steps:
     - checkout
-    - run: gem update --system
-    - run: gem install sass
-    - run: gem install jekyll -v 3.2.1
 
     - restore_cache:
         keys:
@@ -28,4 +25,5 @@ jobs:
 
     - run: sbt +test
     - run: sbt +mimaReportBinaryIssues
-    - run: sbt +docs/makeMicrosite
+    # Need to find a way to get Ruby In CircleCI
+    # - run: sbt +docs/makeMicrosite
