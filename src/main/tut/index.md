@@ -13,7 +13,7 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.1.1"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.2.0"`
 
 You can find more details in the [docs](docs/) but usage looks something like the following:
 
