@@ -36,7 +36,7 @@ lazy val commonSettings = Seq(
   organization := "io.github.timwspence",
   organizationName := "timwspence",
   scalaVersion := "2.12.8",
-  crossScalaVersions := Seq("2.12.8"),
+  crossScalaVersions := Seq("2.11.12", scalaVersion.value),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
