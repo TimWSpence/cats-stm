@@ -17,7 +17,7 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 You can find more details in the [docs](docs/) but usage looks something like the following:
 
-```tut:silent
+```tut
 import cats.effect.{ExitCode, IO, IOApp}
 import io.github.timwspence.cats.stm.{TVar, STM}
 
@@ -54,4 +54,7 @@ object Main extends IOApp {
   } yield ()
 
 }
+
+// Run The Application
+Main.run(List())
 ```
