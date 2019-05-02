@@ -146,7 +146,7 @@ object STM {
     }
   }
 
-  class AtomicallyPartiallyApplied[F[_]] {
+  final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = F.async { cb =>
       val txId = IdGen.incrementAndGet
 
