@@ -1,0 +1,11 @@
+name: Cats STM
+baseurl: /cats-stm
+description: Software Transactional Memory for Cats Effect
+highlighter: rouge
+docs: true
+collections:
+  tut:
+    output: true
+version: 0.3.0-SNAPSHOT
+org: timwspence
+markdown: kramdown
