@@ -104,16 +104,37 @@ lazy val releaseSettings = Seq(
   )
 )
 
-lazy val micrositeSettings = Seq(
-  micrositeName := "Cats STM",
-  micrositeDescription := "Software Transactional Memory for Cats Effect",
-  micrositeAuthor := "Tim Spence",
-  micrositeGithubOwner := "TimWSpence",
-  micrositeGithubRepo := "cats-stm",
-  micrositeBaseUrl := "/cats-stm",
-  micrositeFooterText := None,
-  micrositeHighlightTheme := "atom-one-light"
-)
+lazy val micrositeSettings = {
+  import microsites._
+  Seq(
+    micrositeName := "Cats STM",
+    micrositeDescription := "Software Transactional Memory for Cats Effect",
+    micrositeAuthor := "Tim Spence",
+    micrositeGithubOwner := "TimWSpence",
+    micrositeGithubRepo := "cats-stm",
+    micrositeBaseUrl := "/cats-stm",
+    micrositeFooterText := None,
+    micrositeDocumentationUrl := "https://www.javadoc.io/doc/io.github.timwspence/cats-stm_2.12",
+    micrositeHighlightTheme := "atom-one-light",
+    fork in tut := true,
+    scalacOptions in Tut --= Seq(
+      "-Xfatal-warnings",
+      "-Ywarn-unused-import",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-dead-code",
+      "-Ywarn-unused:imports",
+      "-Xlint:-missing-interpolator,_"
+    ),
+    libraryDependencies += "com.47deg" %% "github4s" % "0.20.1",
+    micrositePushSiteWith := GitHub4s,
+    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
+    micrositeExtraMdFiles := Map(
+      file("CHANGELOG.md")        -> ExtraMdFileConfig("changelog.md", "page", Map("title" -> "changelog", "section" -> "changelog", "position" -> "100")),
+      file("CODE_OF_CONDUCT.md")  -> ExtraMdFileConfig("code-of-conduct.md",   "page", Map("title" -> "code of conduct",   "section" -> "code of conduct",   "position" -> "101")),
+      file("LICENSE")             -> ExtraMdFileConfig("license.md",   "page", Map("title" -> "license",   "section" -> "license",   "position" -> "102"))
+    )
+  )
+}
 
 lazy val mimaSettings = {
   import sbtrelease.Version
