@@ -25,4 +25,5 @@ jobs:
 
     - run: sbt +test
     - run: sbt +mimaReportBinaryIssues
-    - run: sbt +docs/makeMicrosite
+    # Need to find a way to get Ruby In CircleCI
+    # - run: sbt +docs/makeMicrosite
