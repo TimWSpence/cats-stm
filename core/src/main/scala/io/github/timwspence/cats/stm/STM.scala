@@ -9,6 +9,7 @@ import STM.internal._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}
+import scala.compat.java8.FunctionConverters._
 
 /**
   * Monad representing transactions involving one or more
@@ -176,13 +177,13 @@ object STM {
 
     private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit =
       for (entry <- log.values) {
-        entry.tvar.pending.updateAndGet(m => m + (txId -> pending))
+        entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> pending)))
       }
 
     private def rerunPending(txId: Long, log: TLog): Unit = {
       val todo = MMap[Long, Pending]()
       for (entry <- log.values) {
-        val updated = entry.tvar.pending.updateAndGet(_ - txId)
+        val updated = entry.tvar.pending.updateAndGet(asJavaUnaryOperator(_ - txId))
         todo ++= updated
       }
       for (pending <- todo.values) {

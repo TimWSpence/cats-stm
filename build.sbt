@@ -6,6 +6,7 @@ val CatsVersion = "1.6.0"
 val CatsEffectVersion = "1.2.0"
 val ScalaTestVersion = "3.0.5"
 val ScalaCheckVersion = "1.14.0"
+val ScalaJava8CompatVersion = "0.9.0"
 
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
@@ -46,10 +47,11 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings",
   ),
   libraryDependencies ++= Seq(
-    "org.typelevel"  %% "cats-effect" % CatsEffectVersion,
-    "org.typelevel"  %% "cats-core"   % CatsVersion,
-    "org.scalatest"  %% "scalatest"   % ScalaTestVersion  % "test",
-    "org.scalacheck" %% "scalacheck"  % ScalaCheckVersion % "test",
+    "org.typelevel"          %% "cats-effect"        % CatsEffectVersion,
+    "org.typelevel"          %% "cats-core"          % CatsVersion,
+    "org.scalatest"          %% "scalatest"          % ScalaTestVersion  % "test",
+    "org.scalacheck"         %% "scalacheck"         % ScalaCheckVersion % "test",
+    "org.scala-lang.modules" %% "scala-java8-compat" % ScalaJava8CompatVersion,
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.0" cross CrossVersion.binary),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
