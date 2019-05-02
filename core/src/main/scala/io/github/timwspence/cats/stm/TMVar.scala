@@ -1,9 +1,6 @@
 package io.github.timwspence.cats.stm
 
-import java.util.concurrent.atomic.AtomicReference
-
 import cats.syntax.flatMap._
-import io.github.timwspence.cats.stm.STM.internal._
 
 /**
   * Convenience definition providing `MVar`-like behaviour
@@ -83,9 +80,6 @@ object TMVar {
     */
   def empty[A]: STM[TMVar[A]] = make(None)
 
-  private def make[A](value: Option[A]): STM[TMVar[A]] = STM { _ =>
-    val id = IdGen.incrementAndGet()
-    TSuccess(new TMVar(new TVar(id, value, new AtomicReference(Map()))))
-  }
+  private def make[A](value: Option[A]): STM[TMVar[A]] = TVar.of(value).map(tvar => new TMVar[A](tvar))
 
 }

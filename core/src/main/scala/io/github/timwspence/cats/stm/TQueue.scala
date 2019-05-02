@@ -1,10 +1,8 @@
 package io.github.timwspence.cats.stm
 
-import java.util.concurrent.atomic.AtomicReference
+import cats.syntax.flatMap._
 
 import scala.collection.immutable.Queue
-import cats.syntax.flatMap._
-import STM.internal._
 
 /**
   * Convenience definition of a queue in the `STM` monad.
@@ -65,9 +63,6 @@ object TQueue {
   /**
     * Create a new empty `TQueue`.
     */
-  def empty[A]: STM[TQueue[A]] = STM { _ =>
-    val id = IdGen.incrementAndGet()
-    TSuccess(new TQueue(new TVar(id, Queue.empty, new AtomicReference(Map()))))
-  }
+  def empty[A]: STM[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
 
 }

@@ -13,3 +13,6 @@ options:
 
   - title: TQueue
     url: docs/tqueue.html
+
+  - title: TSemaphore
+    url: docs/tsemaphore.html
