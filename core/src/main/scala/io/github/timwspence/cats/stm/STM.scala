@@ -15,7 +15,7 @@ import scala.compat.java8.FunctionConverters._
   * Monad representing transactions involving one or more
   * `TVar`s.
   */
-final class STM[A](private[stm] val run: TLog => TResult[A]) extends AnyVal {
+final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends AnyVal {
 
   /**
     * Functor map on `STM`.
