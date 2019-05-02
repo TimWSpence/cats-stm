@@ -10,7 +10,7 @@ import io.github.timwspence.cats.stm.STM.internal._
   *
   * Analagous to `cats.effect.concurrent.Ref`.
   */
-class TVar[A] private[stm] (
+final class TVar[A] private[stm] (
   private val id: Long,
   @volatile private[stm] var value: A,
   private[stm] val pending: AtomicReference[Map[Long, Pending]]

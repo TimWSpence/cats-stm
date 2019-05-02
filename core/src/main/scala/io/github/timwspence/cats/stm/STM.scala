@@ -15,7 +15,7 @@ import scala.compat.java8.FunctionConverters._
   * Monad representing transactions involving one or more
   * `TVar`s.
   */
-case class STM[A](run: TLog => TResult[A]) extends AnyVal {
+final class STM[A](private[stm] val run: TLog => TResult[A]) extends AnyVal {
 
   /**
     * Functor map on `STM`.
@@ -60,6 +60,9 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 }
 
 object STM {
+
+  private[stm] def apply[A](run: TLog => TResult[A]): STM[A] =
+    new STM[A](run)
 
   /**
     * Commit the `STM` action as an `IO` action. The mutable
@@ -194,10 +197,10 @@ object STM {
 
   private[stm] object internal {
 
-    type TLog    = MMap[Long, TLogEntry]
-    type Pending = () => Unit
+    private[stm] type TLog    = MMap[Long, TLogEntry]
+    private[stm] type Pending = () => Unit
 
-    abstract class TLogEntry {
+    private[stm] abstract class TLogEntry {
       type Repr
       var current: Repr
       val tvar: TVar[Repr]
@@ -209,7 +212,7 @@ object STM {
       def commit: Unit = tvar.value = current
     }
 
-    object TLogEntry {
+    private[stm] object TLogEntry {
 
       def apply[A](tvar0: TVar[A], current0: A): TLogEntry = new TLogEntry {
         override type Repr = A
@@ -219,14 +222,14 @@ object STM {
 
     }
 
-    sealed trait TResult[+A]
-    case class TSuccess[A](value: A)      extends TResult[A]
-    case class TFailure(error: Throwable) extends TResult[Nothing]
-    case object TRetry                    extends TResult[Nothing]
+    private[stm] sealed trait TResult[+A]
+    private[stm] final case class TSuccess[A](value: A)      extends TResult[A]
+    private[stm] final case class TFailure(error: Throwable) extends TResult[Nothing]
+    private[stm] case object TRetry                    extends TResult[Nothing]
 
-    val IdGen = new AtomicLong()
+    private[stm] val IdGen = new AtomicLong()
 
-    val globalLock = new Semaphore(1, true)
+    private[stm] val globalLock = new Semaphore(1, true)
 
   }
 
