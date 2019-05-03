@@ -10,7 +10,8 @@ similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/conc
 You can think of this as a mutable memory location that may contain a value.
 Writes will block if full and reads will block if empty.
 
-```tut
+```tut:book
+import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._
 
@@ -23,4 +24,6 @@ val txn: STM[String] = for {
   _         <- tmvar.put("world")   //Would block if full
   world     <- tmvar.read           //Would block if empty.
 } yield hello |+| world
+
+val result = txn.commit[IO].unsafeRunSync
 ```

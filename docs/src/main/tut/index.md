@@ -50,11 +50,11 @@ object Main extends IOApp {
 
   private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
     _ <- accountForTim.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
-    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
+    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Steve: $b")))
   } yield ()
 
 }
 
 // Run The Application
-Main.run(List())
+Main.run(List()).unsafeRunSync
 ```

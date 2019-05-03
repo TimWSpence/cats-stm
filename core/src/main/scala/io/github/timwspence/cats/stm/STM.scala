@@ -42,11 +42,13 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
   /**
     * Try an alternative `STM` action if this one retries.
     */
-  final def orElse(fallback: STM[A]): STM[A] = STM { log =>
+  final def orElse(fallback: STM[A]): STM[A] = STM { log => {
+    val revert = log.snapshot
     run(log) match {
-      case TRetry => fallback.run(log)
-      case r      => r
+      case TRetry => {revert(); fallback.run(log)}
+      case r => r
     }
+  }
   }
 
   /**
@@ -134,11 +136,9 @@ object STM {
         case TSuccess(value1) =>
           y.run(log) match {
             case TSuccess(value2) => TSuccess(M.combine(value1, value2))
-            case e @ TFailure(_)  => e
-            case TRetry           => TRetry
+            case r                => r
           }
-        case e @ TFailure(_) => e
-        case TRetry          => TRetry
+        case r                => r
       }
     }
   }
@@ -150,7 +150,7 @@ object STM {
       def attempt: () => Unit = () => {
         var result: Either[Throwable, A] = null
         var success                      = false
-        val log                          = MMap[Long, TLogEntry]()
+        val log                          = TLog(MMap[Long, TLogEntry]())
         globalLock.acquire
         try {
           stm.run(log) match {
@@ -194,12 +194,31 @@ object STM {
 
   private[stm] object internal {
 
-    type TLog    = MMap[Long, TLogEntry]
+    case class TLog(val map: MMap[Long, TLogEntry]) {
+      def apply(id: Long): TLogEntry = map(id)
+
+      def values: Iterable[TLogEntry] = map.values
+
+      def contains(id: Long): Boolean = map.contains(id)
+
+      def +=(pair: (Long, TLogEntry)) = map += pair
+
+      //Returns a callback to revert the entries
+      //currently contained in the map
+      def snapshot: () => Unit = {
+        val currentEntries = map.values
+        currentEntries.map(_.snapshot)
+        () => currentEntries.map(_.revert)
+      }
+
+    }
+
     type Pending = () => Unit
 
     abstract class TLogEntry {
       type Repr
       var current: Repr
+      var versions: List[Repr]
       val tvar: TVar[Repr]
 
       def unsafeGet[A]: A = current.asInstanceOf[A]
@@ -207,6 +226,13 @@ object STM {
       def unsafeSet[A](a: A): Unit = current = a.asInstanceOf[Repr]
 
       def commit: Unit = tvar.value = current
+
+      def snapshot: Unit = versions = current :: versions
+
+      def revert: Unit = {
+        current = versions.head
+        versions = versions.tail
+      }
     }
 
     object TLogEntry {
@@ -214,6 +240,7 @@ object STM {
       def apply[A](tvar0: TVar[A], current0: A): TLogEntry = new TLogEntry {
         override type Repr = A
         override var current: A    = current0
+        override var versions: List[A] = List(current0)
         override val tvar: TVar[A] = tvar0
       }
 
