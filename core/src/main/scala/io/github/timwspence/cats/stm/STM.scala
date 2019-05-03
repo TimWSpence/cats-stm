@@ -206,7 +206,7 @@ object STM {
       //Returns a callback to revert the entries
       //currently contained in the map
       def snapshot: () => Unit = {
-        val currentEntries = map.values
+        val currentEntries = map.values.toList
         currentEntries.map(_.snapshot)
         () => currentEntries.map(_.revert)
       }
