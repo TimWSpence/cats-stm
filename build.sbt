@@ -3,7 +3,7 @@ import ReleaseTransformations._
 enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "1.6.0"
-val CatsEffectVersion = "1.2.0"
+val CatsEffectVersion = "1.3.0"
 val ScalaTestVersion = "3.0.5"
 val ScalaCheckVersion = "1.14.0"
 val ScalaJava8CompatVersion = "0.9.0"
