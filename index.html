@@ -46,15 +46,19 @@ and now implemented in <a href="http://hackage.haskell.org/package/stm">this pac
 
   <span class="k">private</span> <span class="k">def</span> <span class="n">printBalances</span><span class="o">(</span><span class="n">accountForTim</span><span class="k">:</span> <span class="kt">TVar</span><span class="o">[</span><span class="kt">Long</span><span class="o">],</span> <span class="n">accountForSteve</span><span class="k">:</span> <span class="kt">TVar</span><span class="o">[</span><span class="kt">Long</span><span class="o">])</span><span class="k">:</span> <span class="kt">IO</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="k">for</span> <span class="o">{</span>
     <span class="k">_</span> <span class="k">&lt;-</span> <span class="n">accountForTim</span><span class="o">.</span><span class="n">get</span><span class="o">.</span><span class="n">commit</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="n">flatMap</span><span class="o">(</span><span class="n">b</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Tim: $b"</span><span class="o">)))</span>
-    <span class="k">_</span> <span class="k">&lt;-</span> <span class="n">accountForSteve</span><span class="o">.</span><span class="n">get</span><span class="o">.</span><span class="n">commit</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="n">flatMap</span><span class="o">(</span><span class="n">b</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Tim: $b"</span><span class="o">)))</span>
+    <span class="k">_</span> <span class="k">&lt;-</span> <span class="n">accountForSteve</span><span class="o">.</span><span class="n">get</span><span class="o">.</span><span class="n">commit</span><span class="o">[</span><span class="kt">IO</span><span class="o">].</span><span class="n">flatMap</span><span class="o">(</span><span class="n">b</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">(</span><span class="n">println</span><span class="o">(</span><span class="n">s</span><span class="s">"Steve: $b"</span><span class="o">)))</span>
   <span class="o">}</span> <span class="k">yield</span> <span class="o">()</span>
 
 <span class="o">}</span>
 <span class="c1">// defined object Main
 </span>
 <span class="c1">// Run The Application
-</span><span class="nc">Main</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="nc">List</span><span class="o">())</span>
-<span class="c1">// res1: cats.effect.IO[cats.effect.ExitCode] = IO$1099943188
+</span><span class="nc">Main</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="nc">List</span><span class="o">()).</span><span class="n">unsafeRunSync</span>
+<span class="c1">// Tim: 100
+// Steve: 0
+// Tim: 1
+// Steve: 100
+// res1: cats.effect.ExitCode = ExitCode(0)
 </span></code></pre>
 </div>
 </div></div></section><section class="technologies"><div class="container"><div class="row"></div></div></section></main><footer id="site-footer"><div class="container"><div class="row"><div class="col-xs-6"><p>Cats STM is designed and developed by <a href="" target="_blank">Tim Spence</a></p></div><div class="col-xs-6"><p class="text-right"><a href="https://github.com/TimWSpence/cats-stm"><span class="fa fa-github"></span>View on GitHub</a></p></div></div></div></footer></body></html>
