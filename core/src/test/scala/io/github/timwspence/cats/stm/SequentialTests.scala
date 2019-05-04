@@ -151,4 +151,33 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     }
   }
 
+  test("OrElse reverts changes to tvars not previously modified if retrying") {
+    val account = TVar.of(100).commit[IO].unsafeRunSync
+    val other  = TVar.of(100).commit[IO].unsafeRunSync
+
+    val first = for {
+      _       <- other.modify(_ - 100)
+      _       <- STM.retry[Unit]
+    } yield ()
+
+    val second = for {
+      balance <- account.get
+      _       <- STM.check(balance > 50)
+      _       <- account.modify(_ - 50)
+    } yield ()
+
+    val prog = for {
+      _    <- STM.atomically[IO] {
+        for {
+          _ <- first.orElse(second)
+        } yield ()
+      }
+    } yield ()
+
+    for(_ <- prog.unsafeToFuture) yield {
+      account.value shouldBe 50
+      other.value shouldBe 100
+    }
+  }
+
 }
