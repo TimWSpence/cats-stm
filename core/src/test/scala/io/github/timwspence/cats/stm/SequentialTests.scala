@@ -1,6 +1,6 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.{ContextShift, Fiber, IO, Timer}
 import org.scalatest.{AsyncFunSuite, Matchers}
 
 import scala.concurrent.ExecutionContext
@@ -138,7 +138,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
 
     val second = for {
       balance <- account.get
-      _       <- {println(balance); STM.check(balance > 50)}
+      _       <- STM.check(balance > 50)
       _       <- account.modify(_ - 50)
     } yield ()
 
@@ -177,6 +177,35 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     for(_ <- prog.unsafeToFuture) yield {
       account.value shouldBe 50
       other.value shouldBe 100
+    }
+  }
+
+  test("Transaction is retried if TVar in if branch is subsequently modified") {
+    val tvar = TVar.of(0L).commit[IO].unsafeRunSync
+
+    val retry: STM[Unit] = for {
+      current <- tvar.get
+      _       <- STM.check(current > 0)
+      _       <- tvar.modify(_ + 1)
+    } yield ()
+
+    val background: IO[Fiber[IO, Unit]] = (
+      for {
+        _ <- Timer[IO].sleep(2 seconds)
+        _ <- tvar.modify(_ + 1).commit[IO]
+      } yield ()
+    ).start
+
+    val prog = for {
+      fiber <- background.start
+      _     <- retry.orElse(STM.retry).commit[IO]
+      _     <- fiber.join
+    } yield ()
+
+    for (_ <- prog.unsafeToFuture) yield {
+      tvar.value shouldBe 2
+
+      tvar.pending.get.isEmpty shouldBe true
     }
   }
 

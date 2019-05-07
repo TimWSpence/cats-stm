@@ -68,7 +68,6 @@ class TVarTest extends AsyncFunSuite with Matchers {
     val tvar = TVar.of("foo").commit[IO].unsafeRunSync
 
     val prog: STM[String] = for {
-      tvar  <- TVar.of("hello")
       _     <- tvar.modify(_.toUpperCase)
       _     <- STM.abort[String](new RuntimeException("boom"))
       value <- tvar.get

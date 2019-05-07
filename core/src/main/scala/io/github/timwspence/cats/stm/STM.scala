@@ -216,9 +216,20 @@ object STM {
         () => {
           for (pair <- map) {
             if (snapshot contains (pair._1)) {
+              //The entry was already modified at
+              //some point in the transaction
               pair._2.unsafeSet(snapshot(pair._1))
             } else {
-              map -= pair._1
+              //The entry was introduced in the attempted
+              //part of the transaction that we are now
+              //reverting so we reset to the initial
+              //value.
+              //We don't want to remove it from the map
+              //as we still want to add the currently
+              //executing transaction to the set of
+              //pending transactions for this tvar if
+              //the whole transaction fails.
+              pair._2.reset
             }
           }
         }
@@ -231,6 +242,7 @@ object STM {
     abstract class TLogEntry {
       type Repr
       var current: Repr
+      val initial: Repr
       val tvar: TVar[Repr]
 
       def unsafeGet[A]: A = current.asInstanceOf[A]
@@ -238,6 +250,9 @@ object STM {
       def unsafeSet[A](a: A): Unit = current = a.asInstanceOf[Repr]
 
       def commit: Unit = tvar.value = current
+
+      def reset: Unit = current = initial
+
     }
 
     object TLogEntry {
@@ -245,6 +260,7 @@ object STM {
       def apply[A](tvar0: TVar[A], current0: A): TLogEntry = new TLogEntry {
         override type Repr = A
         override var current: A    = current0
+        override val initial: A    = tvar0.value
         override val tvar: TVar[A] = tvar0
       }
 
