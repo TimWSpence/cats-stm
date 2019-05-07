@@ -27,9 +27,8 @@ object MaintainsInvariants extends Properties("STM") {
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
 
   val tvarGen: Gen[TVar[Long]] = for {
-    id    <- Gen.posNum[Long]
     value <- Gen.posNum[Long]
-  } yield new TVar(id, value, new AtomicReference(Map()))
+  } yield TVar.of(value).commit[IO].unsafeRunSync
 
   val txnGen: List[TVar[Long]] => Gen[STM[Unit]] = tvars => for {
     fromIdx <- Gen.choose(0, tvars.length - 1)
