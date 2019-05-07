@@ -1,7 +1,9 @@
 ---
 layout: docs
-title: TVar
+title:  "TVar"
+number: 4
 ---
+
 # TVar
 
 A `TVar` (transactional variable) is a mutable memory location that can be be
