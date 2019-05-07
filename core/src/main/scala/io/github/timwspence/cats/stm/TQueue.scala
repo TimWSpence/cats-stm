@@ -7,7 +7,7 @@ import scala.collection.immutable.Queue
 /**
   * Convenience definition of a queue in the `STM` monad.
   */
-class TQueue[A] private[stm] (private val tvar: TVar[Queue[A]]) {
+final class TQueue[A] private[stm] (private val tvar: TVar[Queue[A]]) {
 
   /**
     * Enqueue a value.

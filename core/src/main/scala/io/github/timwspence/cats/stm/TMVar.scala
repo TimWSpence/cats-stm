@@ -9,7 +9,7 @@ import cats.syntax.flatMap._
   *
   * Analogous to `cats.effect.concurrent.MVar`.
   */
-class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends AnyVal {
+final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends AnyVal {
 
   /**
     * Store a value. Retries if the `TMVar` already

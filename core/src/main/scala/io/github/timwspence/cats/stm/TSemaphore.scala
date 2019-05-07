@@ -5,7 +5,7 @@ package io.github.timwspence.cats.stm
   *
   * Analogous to `cats.effect.concurrent.Semaphore`.
   */
-class TSemaphore private[stm] (private val tvar: TVar[Long]) {
+final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
 
   /**
     * Get the number of permits currently available.

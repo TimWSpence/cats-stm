@@ -15,7 +15,7 @@ import scala.compat.java8.FunctionConverters._
   * Monad representing transactions involving one or more
   * `TVar`s.
   */
-case class STM[A](run: TLog => TResult[A]) extends AnyVal {
+final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends AnyVal {
 
   /**
     * Functor map on `STM`.
@@ -63,6 +63,9 @@ case class STM[A](run: TLog => TResult[A]) extends AnyVal {
 }
 
 object STM {
+
+  private[stm] def apply[A](run: TLog => TResult[A]): STM[A] =
+    new STM[A](run)
 
   /**
     * Commit the `STM` action as an `IO` action. The mutable
@@ -144,7 +147,7 @@ object STM {
     }
   }
 
-  class AtomicallyPartiallyApplied[F[_]] {
+  final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = F.async { cb =>
       val txId = IdGen.incrementAndGet
 
@@ -247,15 +250,14 @@ object STM {
 
     }
 
-    sealed trait TResult[+A]
-    case class TSuccess[A](value: A)      extends TResult[A]
-    case class TFailure(error: Throwable) extends TResult[Nothing]
+    sealed trait TResult[+A] extends Product with Serializable
+    final case class TSuccess[A](value: A)      extends TResult[A]
+    final case class TFailure(error: Throwable) extends TResult[Nothing]
     case object TRetry                    extends TResult[Nothing]
 
     val IdGen = new AtomicLong()
 
     val globalLock = new Semaphore(1, true)
-
   }
 
 }
