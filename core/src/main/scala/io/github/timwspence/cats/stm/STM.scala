@@ -43,9 +43,12 @@ final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends An
     * Try an alternative `STM` action if this one retries.
     */
   final def orElse(fallback: STM[A]): STM[A] = STM { log =>
-    run(log) match {
-      case TRetry => fallback.run(log)
-      case r      => r
+    {
+      val revert = log.snapshot
+      run(log) match {
+        case TRetry => { revert(); fallback.run(log) }
+        case r      => r
+      }
     }
   }
 
@@ -137,11 +140,9 @@ object STM {
         case TSuccess(value1) =>
           y.run(log) match {
             case TSuccess(value2) => TSuccess(M.combine(value1, value2))
-            case e @ TFailure(_)  => e
-            case TRetry           => TRetry
+            case r                => r
           }
-        case e @ TFailure(_) => e
-        case TRetry          => TRetry
+        case r => r
       }
     }
   }
@@ -153,7 +154,7 @@ object STM {
       def attempt: () => Unit = () => {
         var result: Either[Throwable, A] = null
         var success                      = false
-        val log                          = MMap[Long, TLogEntry]()
+        val log                          = TLog(MMap[Long, TLogEntry]())
         globalLock.acquire
         try {
           stm.run(log) match {
@@ -197,10 +198,37 @@ object STM {
 
   private[stm] object internal {
 
-    private[stm] type TLog    = MMap[Long, TLogEntry]
-    private[stm] type Pending = () => Unit
+    case class TLog(val map: MMap[Long, TLogEntry]) {
+      def apply(id: Long): TLogEntry = map(id)
 
-    private[stm] abstract class TLogEntry {
+      def values: Iterable[TLogEntry] = map.values
+
+      def contains(id: Long): Boolean = map.contains(id)
+
+      def +=(pair: (Long, TLogEntry)) = map += pair
+
+      //Returns a callback to revert the log to the state at the
+      //point when snapshot was invoked
+      def snapshot: () => Unit = {
+        val snapshot: Map[Long, Any] = map.toMap.map {
+          case (id, e) => id -> e.current
+        }
+        () => {
+          for (pair <- map) {
+            if (snapshot contains (pair._1)) {
+              pair._2.unsafeSet(snapshot(pair._1))
+            } else {
+              map -= pair._1
+            }
+          }
+        }
+      }
+
+    }
+
+    type Pending = () => Unit
+
+    abstract class TLogEntry {
       type Repr
       var current: Repr
       val tvar: TVar[Repr]
@@ -212,7 +240,7 @@ object STM {
       def commit: Unit = tvar.value = current
     }
 
-    private[stm] object TLogEntry {
+    object TLogEntry {
 
       def apply[A](tvar0: TVar[A], current0: A): TLogEntry = new TLogEntry {
         override type Repr = A
@@ -222,15 +250,14 @@ object STM {
 
     }
 
-    private[stm] sealed trait TResult[+A]
-    private[stm] final case class TSuccess[A](value: A)      extends TResult[A]
-    private[stm] final case class TFailure(error: Throwable) extends TResult[Nothing]
-    private[stm] case object TRetry                    extends TResult[Nothing]
+    sealed trait TResult[+A]
+    final case class TSuccess[A](value: A)      extends TResult[A]
+    final case class TFailure(error: Throwable) extends TResult[Nothing]
+    case object TRetry                    extends TResult[Nothing]
 
-    private[stm] val IdGen = new AtomicLong()
+    val IdGen = new AtomicLong()
 
-    private[stm] val globalLock = new Semaphore(1, true)
-
+    val globalLock = new Semaphore(1, true)
   }
 
 }

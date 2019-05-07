@@ -13,11 +13,11 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.2.0"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.3.0"`
 
 You can find more details in the [docs](docs/) but usage looks something like the following:
 
-```tut:silent
+```tut:book
 import cats.effect.{ExitCode, IO, IOApp}
 import io.github.timwspence.cats.stm.{TVar, STM}
 
@@ -50,8 +50,11 @@ object Main extends IOApp {
 
   private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
     _ <- accountForTim.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
-    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
+    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Steve: $b")))
   } yield ()
 
 }
+
+// Run The Application
+Main.run(List()).unsafeRunSync
 ```

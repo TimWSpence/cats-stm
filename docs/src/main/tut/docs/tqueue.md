@@ -7,7 +7,8 @@ title: TQueue
 A convenience implementation of a queue in the `STM` monad, built on top of
 [`TVar`](tmar.html).
 
-```tut
+```tut:book
+import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._
 
@@ -20,4 +21,6 @@ val txn: STM[String] = for {
   hello  <- tqueue.read
   world  <- tqueue.peek
 } yield hello |+| world
+
+val result = txn.commit[IO].unsafeRunSync
 ```

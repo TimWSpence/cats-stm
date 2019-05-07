@@ -7,7 +7,8 @@ title: TSem
 A convenience implementation of a semaphore in the `STM` monad, built on top of
 [`TVar`](tmar.html).
 
-```tut
+```tut:book
+import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._
 
@@ -19,4 +20,6 @@ val txn: STM[Long] = for {
   zero  <- tsem.available
   _     <- tsem.release
 } yield zero
+
+val result = txn.commit[IO].unsafeRunSync
 ```

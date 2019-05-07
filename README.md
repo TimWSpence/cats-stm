@@ -9,10 +9,7 @@ For more information, see the [documentation](https://timwspence.github.io/cats-
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.2.0"`
-
-I haven't setup cross-building yet so I'm afraid this is only available on
-2.12 for the moment.
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.3.0"`
 
 The core abstraction is the `TVar` (transactional var), which exposes operations in the
 `STM` monad. Once constructed, `STM` actions can be atomically evaluated in the `IO`
@@ -61,5 +58,3 @@ object Main extends IOApp {
 
 The documentation is built using [sbt microsites](https://47deg.github.io/sbt-microsites/). You
 can generate it via `sbt makeMicrosite`. You can view it locally via `cd docs/target/site && jekyll serve`.
-
-You can also publish to Github pages via `sbt publishMicrosite`.

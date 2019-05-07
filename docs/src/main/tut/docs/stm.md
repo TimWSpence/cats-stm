@@ -9,11 +9,11 @@ title: STM
 `STM` is a monad which describes transactions involving `TVar`s. It is executed via
 `STM.atomically`:
 
-```tut
+```tut:book
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val prog: IO[Unit] = for {
+val prog: IO[(Int, Int)] = for {
   to   <- TVar.of(0).commit[IO]
   from <- TVar.of(100).commit[IO]
   txn  <- STM.atomically[IO] {
@@ -23,7 +23,11 @@ val prog: IO[Unit] = for {
       _       <- to.modify(_ + balance)
     } yield ()
   }
-} yield ()
+  t   <- to.get.commit[IO]
+  f   <- from.get.commit[IO]
+} yield f -> t
+
+val result = prog.unsafeRunSync
 ```
 
 ### Retries
@@ -31,14 +35,14 @@ val prog: IO[Unit] = for {
 `STM.atomically` supports the concept of retries, which can be introduced via
 `STM.check`:
 
-```tut
+```tut:book
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
 val to   = TVar.of(1).commit[IO].unsafeRunSync
 val from = TVar.of(0).commit[IO].unsafeRunSync
 
-val txn  = STM.atomically[IO] {
+val txn: IO[Unit]  = STM.atomically[IO] {
   for {
     balance <- from.get
     _       <- STM.check(balance > 100)
@@ -58,7 +62,7 @@ is committed.
 `STM.orElse` is built on top of the retry logic and allows you to attempt an
 alternative action if the first retries:
 
-```tut
+```tut:book
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
@@ -66,6 +70,8 @@ val to   = TVar.of(1).commit[IO].unsafeRunSync
 val from = TVar.of(0).commit[IO].unsafeRunSync
 
 val transferHundred: STM[Unit] = for {
+  b <- from.get
+  _ <- STM.check(b > 100)
   _ <- from.modify(_ - 100)
   _ <- to.modify(_ + 100)
 } yield ()
@@ -77,15 +83,19 @@ val transferRemaining: STM[Unit] = for {
 } yield ()
 
 val txn  = for {
-  _ <- transferHundred.orElse(transferRemaining)
-} yield ()
+  _    <- transferHundred.orElse(transferRemaining)
+  f    <- from.get
+  t    <- to.get
+} yield f -> t
+
+val result = txn.commit[IO].unsafeRunSync
 ```
 
 ### Aborting
 
 Transactions can be aborted via `STM.abort`:
 
-```tut
+```tut:book
 import cats.effect.IO
 import cats.syntax.flatMap._
 import io.github.timwspence.cats.stm.{STM, TVar}
@@ -102,6 +112,8 @@ val txn  = for {
   _ <- from.modify(_ - 100)
   _ <- to.modify(_ + 100)
 } yield ()
+
+val result = txn.commit[IO].attempt.unsafeRunSync
 ```
 
 Note that aborting a transaction will not modify any of the `TVar`s involved.
