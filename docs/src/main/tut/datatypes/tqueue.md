@@ -1,11 +1,13 @@
 ---
 layout: docs
-title: TQueue
+title:  "TQueue"
+number: 5
 ---
+
 # TQueue
 
 A convenience implementation of a queue in the `STM` monad, built on top of
-[`TVar`](tmar.html).
+[`TVar`](tvar.html).
 
 ```tut:book
 import cats.effect.IO

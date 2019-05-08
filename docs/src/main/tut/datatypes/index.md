@@ -1,9 +1,9 @@
 ---
 layout: docs
-title: Concepts
+title:  "Data Types"
+position: 2
 ---
-
-# Theory
+## Introduction
 
 ### The problem
 
@@ -15,7 +15,6 @@ case class Account(private var balance: Long) {
   def get = this.synchronized {
     balance
   }
-  
   def modify(f: Long => Long) = this.synchronized {
     balance = f(balance)
   }

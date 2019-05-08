@@ -1,11 +1,13 @@
 ---
 layout: docs
-title: TSem
+title:  "TSemaphore"
+number: 6
 ---
+
 # TSemaphore
 
 A convenience implementation of a semaphore in the `STM` monad, built on top of
-[`TVar`](tmar.html).
+[`TVar`](tvar.html).
 
 ```tut:book
 import cats.effect.IO

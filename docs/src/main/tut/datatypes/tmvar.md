@@ -1,7 +1,9 @@
 ---
 layout: docs
-title: TMVar
+title:  "TMVar"
+number: 6
 ---
+
 # TMVar
 
 A convenience implementation built on top of [`TVar`](tmvar.html), which provides

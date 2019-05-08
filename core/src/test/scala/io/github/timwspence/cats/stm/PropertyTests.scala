@@ -30,21 +30,22 @@ object MaintainsInvariants extends Properties("STM") {
     value <- Gen.posNum[Long]
   } yield TVar.of(value).commit[IO].unsafeRunSync
 
-  val txnGen: List[TVar[Long]] => Gen[STM[Unit]] = tvars => for {
-    fromIdx <- Gen.choose(0, tvars.length - 1)
-    toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
-    txn     <- for {
-      balance <- tvars(fromIdx).get
-      transfer = Math.abs(Random.nextLong()) % balance
-      _       <- tvars(fromIdx).modify(_ - transfer)
-      _       <- tvars(toIdx).modify(_ + transfer)
-    } yield ()
-  } yield txn
+  val txnGen: List[TVar[Long]] => Gen[STM[Unit]] = tvars =>
+    for {
+      fromIdx <- Gen.choose(0, tvars.length - 1)
+      toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
+      txn <- for {
+        balance <- tvars(fromIdx).get
+        transfer = Math.abs(Random.nextLong()) % balance
+        _ <- tvars(fromIdx).modify(_ - transfer)
+        _ <- tvars(toIdx).modify(_ + transfer)
+      } yield ()
+    } yield txn
 
   val gen: Gen[(Long, List[TVar[Long]], IO[Unit])] = for {
     tvars <- Gen.listOfN(50, tvarGen)
-    total  = tvars.foldLeft(0L)((acc, tvar) => acc + tvar.value)
-    txns  <- Gen.listOf(txnGen(tvars))
+    total = tvars.foldLeft(0L)((acc, tvar) => acc + tvar.value)
+    txns <- Gen.listOf(txnGen(tvars))
     commit = txns.traverse(_.commit[IO].start)
     run    = commit.flatMap(l => l.traverse(_.join)).void
   } yield (total, tvars, run)

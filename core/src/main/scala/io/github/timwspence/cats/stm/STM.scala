@@ -266,10 +266,10 @@ object STM {
 
     }
 
-    sealed trait TResult[+A] extends Product with Serializable
+    sealed trait TResult[+A]                    extends Product with Serializable
     final case class TSuccess[A](value: A)      extends TResult[A]
     final case class TFailure(error: Throwable) extends TResult[Nothing]
-    case object TRetry                    extends TResult[Nothing]
+    case object TRetry                          extends TResult[Nothing]
 
     val IdGen = new AtomicLong()
 

@@ -1,7 +1,9 @@
 ---
 layout: docs
-title: STM
+title:  "STM"
+number: 3
 ---
+
 # STM
 
 ### Overview
