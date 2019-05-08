@@ -14,7 +14,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("Read returns current value when not empty") {
     val prog: STM[String] = for {
-      tmvar  <- TMVar.of("hello")
+      tmvar <- TMVar.of("hello")
       value <- tmvar.read
     } yield value
 
@@ -25,7 +25,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("Read does not modify value when not empty") {
     val prog: STM[String] = for {
-      tmvar  <- TMVar.of("hello")
+      tmvar <- TMVar.of("hello")
       _     <- tmvar.read
       value <- tmvar.read
     } yield value
@@ -37,7 +37,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("Take returns current value when not empty") {
     val prog: STM[String] = for {
-      tmvar  <- TMVar.of("hello")
+      tmvar <- TMVar.of("hello")
       value <- tmvar.take
     } yield value
 
@@ -48,7 +48,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("Take empties tmvar when not empty") {
     val prog: STM[Boolean] = for {
-      tmvar  <- TMVar.of("hello")
+      tmvar <- TMVar.of("hello")
       _     <- tmvar.take
       empty <- tmvar.isEmpty
     } yield empty
@@ -60,7 +60,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("Put stores a value when empty") {
     val prog: STM[String] = for {
-      tmvar  <- TMVar.empty[String]
+      tmvar <- TMVar.empty[String]
       _     <- tmvar.put("hello")
       value <- tmvar.take
     } yield value
@@ -72,7 +72,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("TryPut returns true when empty") {
     val prog: STM[Boolean] = for {
-      tmvar   <- TMVar.empty[String]
+      tmvar  <- TMVar.empty[String]
       result <- tmvar.tryPut("hello")
     } yield result
 
@@ -83,7 +83,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("TryPut returns false when not empty") {
     val prog: STM[Boolean] = for {
-      tmvar   <- TMVar.of("world")
+      tmvar  <- TMVar.of("world")
       result <- tmvar.tryPut("hello")
     } yield result
 
@@ -94,8 +94,8 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("IsEmpty is false when not empty") {
     val prog: STM[Boolean] = for {
-      tmvar   <- TMVar.of("world")
-      empty  <- tmvar.isEmpty
+      tmvar <- TMVar.of("world")
+      empty <- tmvar.isEmpty
     } yield empty
 
     for (value <- prog.commit[IO].unsafeToFuture) yield {
@@ -105,8 +105,8 @@ class TMVarTest extends AsyncFunSuite with Matchers {
 
   test("IsEmpty is true when empty") {
     val prog: STM[Boolean] = for {
-      tmvar   <- TMVar.empty[String]
-      empty  <- tmvar.isEmpty
+      tmvar <- TMVar.empty[String]
+      empty <- tmvar.isEmpty
     } yield empty
 
     for (value <- prog.commit[IO].unsafeToFuture) yield {

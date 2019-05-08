@@ -213,26 +213,27 @@ object STM {
         val snapshot: Map[Long, Any] = map.toMap.map {
           case (id, e) => id -> e.current
         }
-        () => {
-          for (pair <- map) {
-            if (snapshot contains (pair._1)) {
-              //The entry was already modified at
-              //some point in the transaction
-              pair._2.unsafeSet(snapshot(pair._1))
-            } else {
-              //The entry was introduced in the attempted
-              //part of the transaction that we are now
-              //reverting so we reset to the initial
-              //value.
-              //We don't want to remove it from the map
-              //as we still want to add the currently
-              //executing transaction to the set of
-              //pending transactions for this tvar if
-              //the whole transaction fails.
-              pair._2.reset
+        () =>
+          {
+            for (pair <- map) {
+              if (snapshot contains (pair._1)) {
+                //The entry was already modified at
+                //some point in the transaction
+                pair._2.unsafeSet(snapshot(pair._1))
+              } else {
+                //The entry was introduced in the attempted
+                //part of the transaction that we are now
+                //reverting so we reset to the initial
+                //value.
+                //We don't want to remove it from the map
+                //as we still want to add the currently
+                //executing transaction to the set of
+                //pending transactions for this tvar if
+                //the whole transaction fails.
+                pair._2.reset
+              }
             }
           }
-        }
       }
 
     }
@@ -266,10 +267,10 @@ object STM {
 
     }
 
-    sealed trait TResult[+A] extends Product with Serializable
+    sealed trait TResult[+A]                    extends Product with Serializable
     final case class TSuccess[A](value: A)      extends TResult[A]
     final case class TFailure(error: Throwable) extends TResult[Nothing]
-    case object TRetry                    extends TResult[Nothing]
+    case object TRetry                          extends TResult[Nothing]
 
     val IdGen = new AtomicLong()
 

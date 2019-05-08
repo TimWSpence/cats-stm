@@ -19,10 +19,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
 
   test("Basic transaction is executed") {
     val from = TVar.of(100).commit[IO].unsafeRunSync
-    val to = TVar.of(0).commit[IO].unsafeRunSync
+    val to   = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
-      _    <- STM.atomically[IO] {
+      _ <- STM.atomically[IO] {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
@@ -31,7 +31,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for(_ <- prog.unsafeToFuture) yield {
+    for (_ <- prog.unsafeToFuture) yield {
       from.value shouldBe 0
       to.value shouldBe 100
     }
@@ -39,10 +39,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
 
   test("Whole transaction is aborted if exception is thrown") {
     val from = TVar.of(100).commit[IO].unsafeRunSync
-    val to = TVar.of(0).commit[IO].unsafeRunSync
+    val to   = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
-      _    <- STM.atomically[IO] {
+      _ <- STM.atomically[IO] {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
@@ -51,7 +51,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for(_ <- prog.attempt.unsafeToFuture) yield {
+    for (_ <- prog.attempt.unsafeToFuture) yield {
       from.value shouldBe 100
       to.value shouldBe 0
     }
@@ -59,10 +59,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
 
   test("Abort primitive aborts whole transaction") {
     val from = TVar.of(100).commit[IO].unsafeRunSync
-    val to = TVar.of(0).commit[IO].unsafeRunSync
+    val to   = TVar.of(0).commit[IO].unsafeRunSync
 
     val prog = for {
-      _    <- STM.atomically[IO] {
+      _ <- STM.atomically[IO] {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
@@ -71,33 +71,33 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for(_ <- prog.attempt.unsafeToFuture) yield {
+    for (_ <- prog.attempt.unsafeToFuture) yield {
       from.value shouldBe 100
       to.value shouldBe 0
     }
   }
 
   test("Check retries until transaction succeeds") {
-    val from = TVar.of(100).commit[IO].unsafeRunSync
-    val to = TVar.of(0).commit[IO].unsafeRunSync
+    val from         = TVar.of(100).commit[IO].unsafeRunSync
+    val to           = TVar.of(0).commit[IO].unsafeRunSync
     var checkCounter = 0
 
     val prog = for {
-      _    <- (for {
+      _ <- (for {
         _ <- Timer[IO].sleep(2 seconds)
         _ <- from.modify(_ + 1).commit[IO]
       } yield ()).start
-      _    <- STM.atomically[IO] {
+      _ <- STM.atomically[IO] {
         for {
           balance <- from.get
-          _       <- {checkCounter += 1; STM.check(balance > 100) }
+          _       <- { checkCounter += 1; STM.check(balance > 100) }
           _       <- from.modify(_ - 100)
           _       <- to.modify(_ + 100)
         } yield ()
       }
     } yield ()
 
-    for(_ <- prog.attempt.unsafeToFuture) yield {
+    for (_ <- prog.attempt.unsafeToFuture) yield {
       from.value shouldBe 1
       to.value shouldBe 100
       checkCounter should be > 1
@@ -120,10 +120,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     } yield ()
 
     val prog = for {
-      _    <- first.orElse(second).commit[IO]
+      _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for(_ <- prog.unsafeToFuture) yield {
+    for (_ <- prog.unsafeToFuture) yield {
       account.value shouldBe 50
     }
   }
@@ -132,8 +132,8 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     val account = TVar.of(100).commit[IO].unsafeRunSync
 
     val first = for {
-      _       <- account.modify(_ - 100)
-      _       <- STM.retry[Unit]
+      _ <- account.modify(_ - 100)
+      _ <- STM.retry[Unit]
     } yield ()
 
     val second = for {
@@ -143,21 +143,21 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     } yield ()
 
     val prog = for {
-      _    <- first.orElse(second).commit[IO]
+      _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for(_ <- prog.unsafeToFuture) yield {
+    for (_ <- prog.unsafeToFuture) yield {
       account.value shouldBe 50
     }
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
     val account = TVar.of(100).commit[IO].unsafeRunSync
-    val other  = TVar.of(100).commit[IO].unsafeRunSync
+    val other   = TVar.of(100).commit[IO].unsafeRunSync
 
     val first = for {
-      _       <- other.modify(_ - 100)
-      _       <- STM.retry[Unit]
+      _ <- other.modify(_ - 100)
+      _ <- STM.retry[Unit]
     } yield ()
 
     val second = for {
@@ -167,14 +167,14 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     } yield ()
 
     val prog = for {
-      _    <- STM.atomically[IO] {
+      _ <- STM.atomically[IO] {
         for {
           _ <- first.orElse(second)
         } yield ()
       }
     } yield ()
 
-    for(_ <- prog.unsafeToFuture) yield {
+    for (_ <- prog.unsafeToFuture) yield {
       account.value shouldBe 50
       other.value shouldBe 100
     }
