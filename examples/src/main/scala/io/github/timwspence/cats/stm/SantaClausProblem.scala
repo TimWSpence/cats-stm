@@ -132,7 +132,8 @@ object SantaClausProblem extends IOApp {
           (elfGroup.await, { g: (Gate, Gate) =>
             run("meet in study", g)
           })
-        ))
+        )
+      )
     } yield ()
   }
 
