@@ -58,3 +58,7 @@ object Main extends IOApp {
 
 The documentation is built using [sbt microsites](https://47deg.github.io/sbt-microsites/). You
 can generate it via `sbt makeMicrosite`. You can view it locally via `cd docs/target/site && jekyll serve`.
+
+### Credits
+
+This software was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and informed by ZIO which has a common origin in that paper via the [stm package](http://hackage.haskell.org/package/stm).

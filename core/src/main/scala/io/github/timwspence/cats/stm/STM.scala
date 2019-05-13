@@ -14,6 +14,9 @@ import scala.compat.java8.FunctionConverters._
 /**
   * Monad representing transactions involving one or more
   * `TVar`s.
+  *
+  * This design was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and informed by ZIO
+  * which has a common origin in that paper via the [stm package](http://hackage.haskell.org/package/stm).
   */
 final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends AnyVal {
 
