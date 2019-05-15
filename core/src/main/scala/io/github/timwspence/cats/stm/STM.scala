@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import cats.effect.Concurrent
 import cats.effect.syntax.all._
+import cats.instances.list._
 import cats.syntax.all._
 import cats.{Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
@@ -152,7 +153,7 @@ object STM {
   final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Concurrent[F]): F[A] = {
       val txId                  = IdGen.incrementAndGet
-      var pending: Set[Pending] = null
+      var pending: List[Pending] = null
 
       F.async { (cb: (Either[Throwable, A] => Unit))  =>
 
@@ -182,7 +183,7 @@ object STM {
 
         attempt()
       } flatTap { _ =>
-        if (pending != null && !pending.isEmpty) F.delay(rerunPending(pending)).start.void else F.unit
+        if (pending != null && !pending.isEmpty) rerunPending(pending).start.void else F.unit
       }
     }
 
@@ -191,20 +192,17 @@ object STM {
         entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> pending)))
       }
 
-    private def collectPending(txId: Long, log: TLog): Set[Pending] = {
-      var pending: Set[Pending] = Set.empty
+    private def collectPending(txId: Long, log: TLog): List[Pending] = {
+      var pending: Map[Long, Pending] = Map.empty
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
-        pending = pending ++ updated.filter{ case (k,v) => k != txId }.values
+        pending = pending ++ updated
       }
-      pending
+      pending.values.toList
     }
 
-    private def rerunPending(pending: Set[Pending]): Unit = {
-      for (p <- pending) {
-        p()
-      }
-    }
+    private def rerunPending[F[_]](pending: List[Pending])(implicit F: Concurrent[F]): F[Unit] =
+      pending.traverse(p => F.delay(p())).void
   }
 
   private[stm] object internal {
