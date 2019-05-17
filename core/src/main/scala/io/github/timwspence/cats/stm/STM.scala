@@ -3,9 +3,12 @@ package io.github.timwspence.cats.stm
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.effect.Async
+import cats.effect.Effect
+import cats.effect.syntax.all._
+import cats.instances.list._
+import cats.syntax.all._
 import cats.{Monad, Monoid}
-import STM.internal._
+import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap}
@@ -61,7 +64,7 @@ final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends An
     * (hence the `IO` context - modifying mutable state
     * is a side effect).
     */
-  final def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
+  final def commit[F[_] : Effect]: F[A] = STM.atomically[F](this)
 
 }
 
@@ -151,35 +154,40 @@ object STM {
   }
 
   final class AtomicallyPartiallyApplied[F[_]] {
-    def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = F.async { cb =>
-      val txId = IdGen.incrementAndGet
+    def apply[A](stm: STM[A])(implicit F: Effect[F]): F[A] = {
+      val txId                  = IdGen.incrementAndGet
+      var pending: List[Pending] = null
 
-      def attempt: () => Unit = () => {
-        var result: Either[Throwable, A] = null
-        var success                      = false
-        val log                          = TLog(MMap[Long, TLogEntry]())
-        globalLock.acquire
-        try {
-          stm.run(log) match {
-            case TSuccess(value) => {
-              for (entry <- log.values) {
-                entry.commit
+      F.async { (cb: (Either[Throwable, A] => Unit))  =>
+
+        def attempt: () => Unit = () => {
+          var result: Either[Throwable, A] = null
+          val log                          = TLog(MMap[Long, TLogEntry]())
+          globalLock.acquire
+          try {
+            stm.run(log) match {
+              case TSuccess(value) => {
+                for (entry <- log.values) {
+                  entry.commit
+                }
+                result = Right(value)
+                pending = collectPending(txId, log)
               }
-              result = Right(value)
-              success = true
+              case TFailure(error) => result = Left(error)
+              case TRetry          => registerPending(txId, attempt, log)
             }
-            case TFailure(error) => result = Left(error)
-            case TRetry          => registerPending(txId, attempt, log)
+          } catch {
+            case e: Throwable => result = Left(e)
+          } finally {
+            globalLock.release
           }
-        } catch {
-          case e: Throwable => result = Left(e)
-        } finally globalLock.release
-        if (success) rerunPending(txId, log)
-        if (result != null) cb(result)
+          if (result != null) cb(result)
+        }
+
+        attempt()
+      } flatTap { _ =>
+        if (pending != null && !pending.isEmpty) rerunPending(pending).void else F.unit
       }
-
-      attempt()
-
     }
 
     private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit =
@@ -187,16 +195,17 @@ object STM {
         entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> pending)))
       }
 
-    private def rerunPending(txId: Long, log: TLog): Unit = {
-      val todo = MMap[Long, Pending]()
+    private def collectPending(txId: Long, log: TLog): List[Pending] = {
+      var pending: Map[Long, Pending] = Map.empty
       for (entry <- log.values) {
-        val updated = entry.tvar.pending.updateAndGet(asJavaUnaryOperator(_ - txId))
-        todo ++= updated
+        val updated = entry.tvar.pending.getAndSet(Map())
+        pending = pending ++ updated
       }
-      for (pending <- todo.values) {
-        pending()
-      }
+      pending.values.toList
     }
+
+    private def rerunPending[F[_]](pending: List[Pending])(implicit F: Effect[F]): F[Unit] =
+      pending.traverse(p => F.delay(p())).void
   }
 
   private[stm] object internal {
