@@ -155,38 +155,35 @@ object STM {
 
   final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Effect[F]): F[A] = {
-      val txId                  = IdGen.incrementAndGet
-      var pending: List[Pending] = null
+      val txId = IdGen.incrementAndGet
 
       F.async { (cb: (Either[Throwable, A] => Unit))  =>
 
         def attempt: () => Unit = () => {
           var result: Either[Throwable, A] = null
           val log                          = TLog(MMap[Long, TLogEntry]())
-          globalLock.acquire
-          try {
-            stm.run(log) match {
-              case TSuccess(value) => {
-                for (entry <- log.values) {
-                  entry.commit
+          STM.synchronized {
+            try {
+              stm.run(log) match {
+                case TSuccess(value) => {
+                  for (entry <- log.values) {
+                    entry.commit
+                  }
+                  result = Right(value)
+                  val pending = collectPending(txId, log)
+                  if (pending != null && !pending.isEmpty) rerunPending(pending)
                 }
-                result = Right(value)
-                pending = collectPending(txId, log)
+                case TFailure(error) => result = Left(error)
+                case TRetry          => registerPending(txId, attempt, log)
               }
-              case TFailure(error) => result = Left(error)
-              case TRetry          => registerPending(txId, attempt, log)
+            } catch {
+              case e: Throwable => result = Left(e)
             }
-          } catch {
-            case e: Throwable => result = Left(e)
-          } finally {
-            globalLock.release
           }
           if (result != null) cb(result)
         }
 
         attempt()
-      } flatTap { _ =>
-        if (pending != null && !pending.isEmpty) rerunPending(pending).void else F.unit
       }
     }
 
@@ -204,8 +201,10 @@ object STM {
       pending.values.toList
     }
 
-    private def rerunPending[F[_]](pending: List[Pending])(implicit F: Effect[F]): F[Unit] =
-      pending.traverse(p => F.delay(p())).void
+    private def rerunPending(pending: List[Pending])(implicit F: Effect[F]): Unit =
+      for(p <- pending) {
+        p()
+      }
   }
 
   private[stm] object internal {
@@ -284,8 +283,6 @@ object STM {
     case object TRetry                          extends TResult[Nothing]
 
     val IdGen = new AtomicLong()
-
-    val globalLock = new Semaphore(1, true)
   }
 
 }
