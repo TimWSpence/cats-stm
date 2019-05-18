@@ -171,7 +171,7 @@ object STM {
                   }
                   result = Right(value)
                   val pending = collectPending(txId, log)
-                  if (pending != null && !pending.isEmpty) rerunPending(pending)
+                  if (pending.nonEmpty) rerunPending(pending)
                 }
                 case TFailure(error) => result = Left(error)
                 case TRetry          => registerPending(txId, attempt, log)
