@@ -198,6 +198,7 @@ object STM {
         val updated = entry.tvar.pending.getAndSet(Map())
         pending = pending ++ updated
       }
+      pending = pending - txId
       pending.values.toList
     }
 
