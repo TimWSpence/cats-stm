@@ -1,13 +1,9 @@
 package io.github.timwspence.cats.stm
 
-import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicLong
 
 import cats.effect.Effect
-import cats.effect.syntax.all._
-import cats.instances.list._
-import cats.syntax.all._
-import cats.{Alternative, Applicative, Monad, Monoid}
+import cats.{Alternative, Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
