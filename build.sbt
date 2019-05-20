@@ -35,6 +35,7 @@ lazy val examples = project.in(file("examples"))
 lazy val commonSettings = Seq(
   organization := "io.github.timwspence",
   organizationName := "timwspence",
+  organizationHomepage := Some(url("https://github.com/TimWSpence")),
   scalaVersion := "2.12.8",
   crossScalaVersions := Seq("2.11.12", scalaVersion.value),
   scalacOptions ++= Seq(
@@ -58,8 +59,6 @@ lazy val commonSettings = Seq(
 )
 
 lazy val releaseSettings = Seq(
-  organizationHomepage := Some(url("https://github.com/TimWSpence")),
-
   homepage := Some(url("https://timwspence.github.io/cats-stm")),
   description := "An STM implementation for Cats Effect",
   scmInfo := Some(
