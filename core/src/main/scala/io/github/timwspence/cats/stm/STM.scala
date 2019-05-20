@@ -7,7 +7,7 @@ import cats.effect.Effect
 import cats.effect.syntax.all._
 import cats.instances.list._
 import cats.syntax.all._
-import cats.{Monad, Monoid}
+import cats.{Alternative, Applicative, Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
@@ -120,7 +120,7 @@ object STM {
     */
   val unit: STM[Unit] = pure(())
 
-  implicit val stmMonad: Monad[STM] = new Monad[STM] {
+  implicit val stmMonad: Monad[STM] with Alternative[STM] = new Monad[STM] with Alternative[STM] {
     override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] = fa.flatMap(f)
 
     override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
@@ -136,6 +136,10 @@ object STM {
     }
 
     override def pure[A](x: A): STM[A] = STM.pure(x)
+
+    override def empty[A]: STM[A] = STM.retry
+
+    override def combineK[A](x: STM[A], y: STM[A]): STM[A] = x.orElse(y)
   }
 
   implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[STM[A]] = new Monoid[STM[A]] {
