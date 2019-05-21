@@ -11,7 +11,7 @@ import scala.concurrent.duration._
   * (most) concurrency
   */
 class SequentialTests extends AsyncFunSuite with Matchers {
-  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  implicit override val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val timer: Timer[IO] = IO.timer(executionContext)
 
