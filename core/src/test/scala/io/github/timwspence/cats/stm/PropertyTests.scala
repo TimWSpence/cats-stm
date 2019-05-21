@@ -1,15 +1,14 @@
 package io.github.timwspence.cats.stm
 
-import java.util.concurrent.atomic.AtomicReference
-
 import cats.effect.{ContextShift, IO, Timer}
 import cats.instances.list._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import org.scalacheck.Prop.forAll
 import org.scalacheck._
+import org.scalatest.{FunSuite, Matchers}
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext.Implicits
+import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 /**
@@ -19,8 +18,8 @@ import scala.util.Random
   * adds the same amount to another tvar. The sum of the tvar values
   * should be invariant under the execution of all these transactions.
   */
-object MaintainsInvariants extends Properties("STM") {
-  val executionContext = Implicits.global
+class MaintainsInvariants extends FunSuite with ScalaCheckDrivenPropertyChecks with Matchers {
+  implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val timer: Timer[IO] = IO.timer(executionContext)
 
@@ -50,14 +49,16 @@ object MaintainsInvariants extends Properties("STM") {
     run    = commit.flatMap(l => l.traverse(_.join)).void
   } yield (total, tvars, run)
 
-  property("Transactions maintain total") = forAll(gen) { g =>
-    val total = g._1
-    val tvars = g._2
-    val txn   = g._3
+  test("Transactions maintain invariants") {
+    forAll(gen) { g =>
+      val total = g._1
+      val tvars = g._2
+      val txn   = g._3
 
-    txn.unsafeRunSync
+      txn.unsafeRunSync()
 
-    tvars.map(_.value).sum == total
+      tvars.map(_.value).sum shouldBe total
+    }
   }
 
 }
