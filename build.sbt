@@ -54,7 +54,7 @@ lazy val commonSettings = Seq(
     "org.scalacheck"         %% "scalacheck"         % ScalaCheckVersion % "test",
     "org.scala-lang.modules" %% "scala-java8-compat" % ScalaJava8CompatVersion,
   ),
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.2" cross CrossVersion.binary),
+  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0"),
 )
 
