@@ -7,7 +7,7 @@ import cats.{Alternative, Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Map => MMap, Queue => MQueue}
 import scala.compat.java8.FunctionConverters._
 
 /**
@@ -169,8 +169,8 @@ object STM {
                     entry.commit
                   }
                   result = Right(value)
-                  val pending = collectPending(txId, log)
-                  if (pending.nonEmpty) rerunPending(pending)
+                  collectPending(txId, log)
+                  rerunPending
                 }
                 case TFailure(error) => result = Left(error)
                 case TRetry          => registerPending(txId, attempt, log)
@@ -191,23 +191,27 @@ object STM {
         entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> pending)))
       }
 
-    private def collectPending(txId: Long, log: TLog): List[Pending] = {
-      var pending: Map[Long, Pending] = Map.empty
+    private def collectPending(txId: Long, log: TLog): Unit = {
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
-        pending = pending ++ updated
+        for ((k,v) <- updated.toList) {
+          if (k != txId) {
+            pendingQueue.enqueue(v)
+          }
+        }
       }
-      pending = pending - txId
-      pending.values.toList
     }
 
-    private def rerunPending(pending: List[Pending]): Unit =
-      for (p <- pending) {
+    private def rerunPending(): Unit =
+      while (!pendingQueue.isEmpty) {
+        val p = pendingQueue.dequeue()
         p()
       }
   }
 
   private[stm] object internal {
+
+    val pendingQueue: MQueue[Pending] = MQueue.empty
 
     case class TLog(val map: MMap[Long, TLogEntry]) {
       def apply(id: Long): TLogEntry = map(id)
