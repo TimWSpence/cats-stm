@@ -2,7 +2,7 @@ package io.github.timwspence.cats.stm
 
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.effect.Effect
+import cats.effect.Async
 import cats.{Alternative, Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
 
@@ -60,7 +60,7 @@ final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends An
     * (hence the `IO` context - modifying mutable state
     * is a side effect).
     */
-  final def commit[F[_] : Effect]: F[A] = STM.atomically[F](this)
+  final def commit[F[_] : Async]: F[A] = STM.atomically[F](this)
 
 }
 
@@ -154,7 +154,7 @@ object STM {
   }
 
   final class AtomicallyPartiallyApplied[F[_]] {
-    def apply[A](stm: STM[A])(implicit F: Effect[F]): F[A] = {
+    def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = {
       val txId = IdGen.incrementAndGet
 
       F.async { (cb: (Either[Throwable, A] => Unit))  =>
@@ -202,7 +202,7 @@ object STM {
       pending.values.toList
     }
 
-    private def rerunPending(pending: List[Pending])(implicit F: Effect[F]): Unit =
+    private def rerunPending(pending: List[Pending]): Unit =
       for(p <- pending) {
         p()
       }
