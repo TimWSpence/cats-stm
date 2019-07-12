@@ -7,7 +7,8 @@ import cats.{Alternative, Monad, Monoid}
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
-import scala.collection.mutable.{Map => MMap, Queue => MQueue}
+import scala.collection.immutable.Queue
+import scala.collection.mutable.{Map => MMap}
 import scala.compat.java8.FunctionConverters._
 
 /**
@@ -196,7 +197,7 @@ object STM {
         val updated = entry.tvar.pending.getAndSet(Map())
         for ((k,v) <- updated.toList) {
           if (k != txId) {
-            pendingQueue.enqueue(v)
+            pendingQueue = pendingQueue.enqueue(v)
           }
         }
       }
@@ -204,14 +205,15 @@ object STM {
 
     private def rerunPending(): Unit =
       while (!pendingQueue.isEmpty) {
-        val p = pendingQueue.dequeue()
+        val (p, remaining) = pendingQueue.dequeue
+        pendingQueue = remaining
         p()
       }
   }
 
   private[stm] object internal {
 
-    val pendingQueue: MQueue[Pending] = MQueue.empty
+    @volatile var pendingQueue: Queue[Pending] = Queue.empty
 
     case class TLog(val map: MMap[Long, TLogEntry]) {
       def apply(id: Long): TLogEntry = map(id)
