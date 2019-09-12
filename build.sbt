@@ -4,8 +4,9 @@ enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
-val ScalaTestVersion = "3.0.8"
+val ScalaTestVersion = "3.1.0-RC2"
 val ScalaCheckVersion = "1.14.0"
+val ScalaTestPlusScalaCheck = "3.1.0.0-RC2"
 val ScalaJava8CompatVersion = "0.9.0"
 
 lazy val `cats-stm` = project.in(file("."))
@@ -36,23 +37,23 @@ lazy val commonSettings = Seq(
   organization := "io.github.timwspence",
   organizationName := "timwspence",
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq("2.11.12", scalaVersion.value),
+  scalaVersion := "2.13.0",
+  crossScalaVersions := Seq("2.11.12", "2.12.10", scalaVersion.value),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
     "-language:higherKinds",
     "-language:postfixOps",
     "-feature",
-    "-Ypartial-unification",
     "-Xfatal-warnings",
   ),
   libraryDependencies ++= Seq(
-    "org.typelevel"          %% "cats-effect"        % CatsEffectVersion,
-    "org.typelevel"          %% "cats-core"          % CatsVersion,
-    "org.scalatest"          %% "scalatest"          % ScalaTestVersion  % "test",
-    "org.scalacheck"         %% "scalacheck"         % ScalaCheckVersion % "test",
-    "org.scala-lang.modules" %% "scala-java8-compat" % ScalaJava8CompatVersion,
+    "org.typelevel"          %% "cats-effect"              % CatsEffectVersion,
+    "org.typelevel"          %% "cats-core"                % CatsVersion,
+    "org.scalatest"          %% "scalatest"                % ScalaTestVersion % Test,
+    "org.scalacheck"         %% "scalacheck"               % ScalaCheckVersion % Test,
+    "org.scalatestplus"      %% "scalatestplus-scalacheck" % ScalaTestPlusScalaCheck % Test,
+    "org.scala-lang.modules" %% "scala-java8-compat"       % ScalaJava8CompatVersion,
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),

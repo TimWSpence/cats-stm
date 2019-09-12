@@ -5,7 +5,8 @@ import cats.instances.list._
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import org.scalacheck._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.ExecutionContext
@@ -18,7 +19,7 @@ import scala.util.Random
   * adds the same amount to another tvar. The sum of the tvar values
   * should be invariant under the execution of all these transactions.
   */
-class MaintainsInvariants extends FunSuite with ScalaCheckDrivenPropertyChecks with Matchers {
+class MaintainsInvariants extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with Matchers {
   implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val timer: Timer[IO] = IO.timer(executionContext)
