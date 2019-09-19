@@ -56,7 +56,6 @@ object Main extends IOApp {
 
 }
 
-// Run The Application
 Main.run(List()).unsafeRunSync
 ```
 
