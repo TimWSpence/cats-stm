@@ -60,7 +60,7 @@ final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends An
     * (hence the `IO` context - modifying mutable state
     * is a side effect).
     */
-  final def commit[F[_] : Async]: F[A] = STM.atomically[F](this)
+  final def commit[F[_]: Async]: F[A] = STM.atomically[F](this)
 
 }
 
@@ -157,8 +157,7 @@ object STM {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = {
       val txId = IdGen.incrementAndGet
 
-      F.async { (cb: (Either[Throwable, A] => Unit))  =>
-
+      F.async { (cb: (Either[Throwable, A] => Unit)) =>
         def attempt: () => Unit = () => {
           var result: Either[Throwable, A] = null
           val log                          = TLog(MMap[Long, TLogEntry]())
@@ -203,7 +202,7 @@ object STM {
     }
 
     private def rerunPending(pending: List[Pending]): Unit =
-      for(p <- pending) {
+      for (p <- pending) {
         p()
       }
   }
