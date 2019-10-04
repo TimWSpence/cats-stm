@@ -1,7 +1,8 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.{ContextShift, IO, Timer}
-import org.scalatest.{AsyncFunSuite, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.funsuite.AsyncFunSuite 
 
 import scala.concurrent.ExecutionContext
 

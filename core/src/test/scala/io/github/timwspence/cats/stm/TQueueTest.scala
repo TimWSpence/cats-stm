@@ -3,7 +3,8 @@ package io.github.timwspence.cats.stm
 import cats.effect.{ContextShift, IO, Timer}
 import cats.instances.string._
 import cats.syntax.semigroup._
-import org.scalatest.{AsyncFunSuite, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.funsuite.AsyncFunSuite 
 
 import scala.concurrent.ExecutionContext
 
