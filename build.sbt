@@ -5,7 +5,7 @@ enablePlugins(MicrositesPlugin)
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
 val ScalaTestVersion = "3.0.8"
-val ScalaCheckVersion = "1.14.1"
+val ScalaCheckVersion = "1.14.0"
 val ScalaJava8CompatVersion = "0.9.0"
 
 lazy val `cats-stm` = project.in(file("."))
