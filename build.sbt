@@ -175,6 +175,7 @@ lazy val mimaSettings = {
 
   Seq(
     mimaFailOnProblem := mimaVersions(version.value).toList.headOption.isDefined,
+    mimaFailOnNoPrevious in ThisBuild := false,
     mimaPreviousArtifacts := (mimaVersions(version.value) ++ extraVersions)
       .filterNot(excludedVersions.contains(_))
       .map{v => 
