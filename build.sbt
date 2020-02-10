@@ -5,8 +5,8 @@ enablePlugins(MicrositesPlugin)
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
 val ScalaTestVersion = "3.1.0"
-val ScalaCheckVersion = "1.14.0"
-val ScalaTestPlusScalaCheck = "3.1.0.0-RC2"
+val ScalaCheckVersion = "1.14.3"
+val ScalaTestPlusScalaCheck = "3.1.0.0"
 val ScalaJava8CompatVersion = "0.9.0"
 
 lazy val `cats-stm` = project.in(file("."))
@@ -175,6 +175,7 @@ lazy val mimaSettings = {
 
   Seq(
     mimaFailOnProblem := mimaVersions(version.value).toList.headOption.isDefined,
+    mimaFailOnNoPrevious in ThisBuild := false,
     mimaPreviousArtifacts := (mimaVersions(version.value) ++ extraVersions)
       .filterNot(excludedVersions.contains(_))
       .map{v => 
