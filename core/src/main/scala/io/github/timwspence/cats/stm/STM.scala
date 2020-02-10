@@ -159,17 +159,25 @@ object STM {
       val txId = IdGen.incrementAndGet
 
       F.async { (cb: (Either[Throwable, A] => Unit)) =>
-        def attempt: () => Unit = () => {
+        def attempt: Pending = tvs => {
           var result: Either[Throwable, A] = null
           val log                          = TLog(MMap[Long, TLogEntry]())
           STM.synchronized {
+            if(completed.contains(txId)) {
+              println(s"Retrying completed txn $txId")
+              throw new RuntimeException(s"Retrying completed txn $txId")
+            }
             try {
               stm.run(log) match {
                 case TSuccess(value) => {
                   for (entry <- log.values) {
                     entry.commit
                   }
+                  completed = completed + txId
                   result = Right(value)
+                  for(e <- tvs) {
+                    e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - txId))
+                  }
                   collectPending(txId, log)
                   rerunPending
                 }
@@ -183,23 +191,31 @@ object STM {
           if (result != null) cb(result)
         }
 
-        attempt()
+        attempt(Set.empty)
       }
     }
 
-    private def registerPending(txId: Long, pending: () => Unit, log: TLog): Unit =
+    private def registerPending(txId: Long, pending: Pending, log: TLog): Unit = {
+      //TODO could replace this with an onComplete callback instead of passing etvars everywhere
+      val txn = Txn(pending, log.map.values.map(entry => ETVar(entry.tvar)).toSet)
       for (entry <- log.values) {
-        entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> pending)))
+        entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> txn)))
       }
+    }
 
     private def collectPending(txId: Long, log: TLog): Unit = {
+      var pending = Map.empty[Long, Txn]
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
         for ((k,v) <- updated.toList) {
-          if (k != txId) {
-            pendingQueue = pendingQueue.enqueue(v)
+          for(e <- v.tvs) {
+            e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - txId))
           }
+          pending = pending + (k -> v)
         }
+      }
+      for(p <- pending.values) {
+        pendingQueue = pendingQueue.enqueue(p)
       }
     }
 
@@ -207,13 +223,16 @@ object STM {
       while (!pendingQueue.isEmpty) {
         val (p, remaining) = pendingQueue.dequeue
         pendingQueue = remaining
-        p()
+        p.pending(p.tvs)
       }
   }
 
   private[stm] object internal {
 
-    @volatile var pendingQueue: Queue[Pending] = Queue.empty
+    @volatile var pendingQueue: Queue[Txn] = Queue.empty
+
+    // For debugging
+    @volatile var completed: Set[Long] = Set.empty
 
     case class TLog(val map: MMap[Long, TLogEntry]) {
       def apply(id: Long): TLogEntry = map(id)
@@ -254,7 +273,22 @@ object STM {
 
     }
 
-    type Pending = () => Unit
+    type Pending = Set[ETVar] => Unit
+
+    case class Txn(pending: Pending, tvs: Set[ETVar])
+
+    // Existential TVar
+    abstract class ETVar {
+      type Repr
+      val tv: TVar[Repr]
+    }
+
+    object ETVar {
+      def apply[A](t: TVar[A]): ETVar = new ETVar {
+        override type Repr = A
+        override val tv = t
+      }
+    }
 
     abstract class TLogEntry {
       type Repr
