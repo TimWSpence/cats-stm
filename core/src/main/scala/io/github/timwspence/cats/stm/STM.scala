@@ -156,11 +156,10 @@ object STM {
   }
 
   final class AtomicallyPartiallyApplied[F[_]] {
-    def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = {
-
+    def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] =
       F.async { (cb: (Either[Throwable, A] => Unit)) =>
         def attempt: Pending = () => {
-          val txId = IdGen.incrementAndGet
+          val txId                         = IdGen.incrementAndGet
           var result: Either[Throwable, A] = null
           val log                          = TLog(MMap[TxId, TLogEntry]())
           lock.synchronized {
@@ -181,13 +180,11 @@ object STM {
               case e: Throwable => result = Left(e)
             }
           }
-//          println("")
           if (result != null) cb(result)
         }
 
         attempt()
       }
-    }
 
     private def registerPending(txId: TxId, pending: Pending, log: TLog): Unit = {
       //TODO could replace this with an onComplete callback instead of passing etvars everywhere
@@ -201,34 +198,30 @@ object STM {
       var pending = Map.empty[TxId, Txn]
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
-        for ((k,v) <- updated) {
-          for(e <- v.tvs) {
+        for ((k, v) <- updated) {
+          for (e <- v.tvs) {
             e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - k))
-          }
-          if(v.id != k) {
-            throw new RuntimeException(s"ARGH")
           }
           pending = pending + (k -> v)
         }
       }
-      for(p <- pending.values) {
-        pendingQueue.updateAndGet(q => q.enqueue(p))
+      for (p <- pending.values) {
+        pendingQueue = pendingQueue.enqueue(p)
       }
 
     }
 
     private def rerunPending(): Unit =
-      while (!pendingQueue.get.isEmpty) {
-        val q = pendingQueue.getAndUpdate(q => q.dequeue._2)
-        val (p, _) = q.dequeue
+      while (!pendingQueue.isEmpty) {
+        val (p, remaining) = pendingQueue.dequeue
+        pendingQueue = remaining
         p.pending()
       }
   }
 
   private[stm] object internal {
 
-    // @volatile var pendingQueue: Queue[Txn] = Queue.empty
-    val pendingQueue: AtomicReference[Queue[Txn]] = new AtomicReference(Queue.empty)
+    @volatile var pendingQueue: Queue[Txn] = Queue.empty
 
     case class TLog(val map: MMap[TxId, TLogEntry]) {
       def apply(id: TxId): TLogEntry = map(id)
