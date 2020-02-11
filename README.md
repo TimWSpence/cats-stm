@@ -9,7 +9,7 @@ For more information, see the [documentation](https://timwspence.github.io/cats-
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.5.0"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.6.0"`
 
 The core abstraction is the `TVar` (transactional var), which exposes operations in the
 `STM` monad. Once constructed, `STM` actions can be atomically evaluated in the `IO`

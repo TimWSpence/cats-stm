@@ -14,7 +14,7 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.5.0"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.6.0"`
 
 You can find more details in the [docs](docs/) but usage looks something like the following:
 
