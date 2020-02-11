@@ -13,7 +13,7 @@ import io.github.timwspence.cats.stm.STM.internal._
 final class TVar[A] private[stm] (
   private[stm] val id: Long,
   @volatile private[stm] var value: A,
-  private[stm] val pending: AtomicReference[Map[Long, Txn]]
+  private[stm] val pending: AtomicReference[Map[TxId, Txn]]
 ) {
 
   /**
@@ -58,7 +58,7 @@ final class TVar[A] private[stm] (
 object TVar {
 
   def of[A](value: A): STM[TVar[A]] = STM { _ =>
-    val id = IdGen.incrementAndGet()
+    val id = IdGen.incrementAndGet
     TSuccess(new TVar(id, value, new AtomicReference(Map())))
   }
 

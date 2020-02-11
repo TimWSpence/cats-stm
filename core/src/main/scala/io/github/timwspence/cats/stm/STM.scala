@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.collection.mutable.{Map => MMap}
 import scala.compat.java8.FunctionConverters._
+import java.util.concurrent.atomic.AtomicReference
 
 /**
   * Monad representing transactions involving one or more
@@ -156,29 +157,21 @@ object STM {
 
   final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] = {
-      val txId = IdGen.incrementAndGet
 
       F.async { (cb: (Either[Throwable, A] => Unit)) =>
-        def attempt: Pending = tvs => {
+        def attempt: Pending = () => {
+          val txId = IdGen.incrementAndGet
           var result: Either[Throwable, A] = null
-          val log                          = TLog(MMap[Long, TLogEntry]())
-          STM.synchronized {
-            if(completed.contains(txId)) {
-              println(s"Retrying completed txn $txId")
-              throw new RuntimeException(s"Retrying completed txn $txId")
-            }
+          val log                          = TLog(MMap[TxId, TLogEntry]())
+          lock.synchronized {
             try {
               stm.run(log) match {
                 case TSuccess(value) => {
                   for (entry <- log.values) {
                     entry.commit
                   }
-                  completed = completed + txId
                   result = Right(value)
-                  for(e <- tvs) {
-                    e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - txId))
-                  }
-                  collectPending(txId, log)
+                  collectPending(log)
                   rerunPending
                 }
                 case TFailure(error) => result = Left(error)
@@ -188,65 +181,68 @@ object STM {
               case e: Throwable => result = Left(e)
             }
           }
+//          println("")
           if (result != null) cb(result)
         }
 
-        attempt(Set.empty)
+        attempt()
       }
     }
 
-    private def registerPending(txId: Long, pending: Pending, log: TLog): Unit = {
+    private def registerPending(txId: TxId, pending: Pending, log: TLog): Unit = {
       //TODO could replace this with an onComplete callback instead of passing etvars everywhere
-      val txn = Txn(pending, log.map.values.map(entry => ETVar(entry.tvar)).toSet)
+      val txn = Txn(txId, pending, log.values.map(entry => ETVar(entry.tvar)).toSet)
       for (entry <- log.values) {
         entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> txn)))
       }
     }
 
-    private def collectPending(txId: Long, log: TLog): Unit = {
-      var pending = Map.empty[Long, Txn]
+    private def collectPending(log: TLog): Unit = {
+      var pending = Map.empty[TxId, Txn]
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
-        for ((k,v) <- updated.toList) {
+        for ((k,v) <- updated) {
           for(e <- v.tvs) {
-            e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - txId))
+            e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - k))
+          }
+          if(v.id != k) {
+            throw new RuntimeException(s"ARGH")
           }
           pending = pending + (k -> v)
         }
       }
       for(p <- pending.values) {
-        pendingQueue = pendingQueue.enqueue(p)
+        pendingQueue.updateAndGet(q => q.enqueue(p))
       }
+
     }
 
     private def rerunPending(): Unit =
-      while (!pendingQueue.isEmpty) {
-        val (p, remaining) = pendingQueue.dequeue
-        pendingQueue = remaining
-        p.pending(p.tvs)
+      while (!pendingQueue.get.isEmpty) {
+        val q = pendingQueue.getAndUpdate(q => q.dequeue._2)
+        val (p, _) = q.dequeue
+        p.pending()
       }
   }
 
   private[stm] object internal {
 
-    @volatile var pendingQueue: Queue[Txn] = Queue.empty
+    // @volatile var pendingQueue: Queue[Txn] = Queue.empty
+    val pendingQueue: AtomicReference[Queue[Txn]] = new AtomicReference(Queue.empty)
 
-    // For debugging
-    @volatile var completed: Set[Long] = Set.empty
-
-    case class TLog(val map: MMap[Long, TLogEntry]) {
-      def apply(id: Long): TLogEntry = map(id)
+    case class TLog(val map: MMap[TxId, TLogEntry]) {
+      def apply(id: TxId): TLogEntry = map(id)
 
       def values: Iterable[TLogEntry] = map.values
 
-      def contains(id: Long): Boolean = map.contains(id)
+      def contains(id: TxId): Boolean = map.contains(id)
 
-      def +=(pair: (Long, TLogEntry)) = map += pair
+      def +=(pair: (TxId, TLogEntry)) = map += pair
 
       //Returns a callback to revert the log to the state at the
       //point when snapshot was invoked
       def snapshot: () => Unit = {
-        val snapshot: Map[Long, Any] = map.toMap.map {
+        val snapshot: Map[TxId, Any] = map.toMap.map {
           case (id, e) => id -> e.current
         }
         () => {
@@ -273,9 +269,13 @@ object STM {
 
     }
 
-    type Pending = Set[ETVar] => Unit
+    val lock = new Object()
 
-    case class Txn(pending: Pending, tvs: Set[ETVar])
+    type Pending = () => Unit
+
+    type TxId = Long
+
+    case class Txn(id: TxId, pending: Pending, tvs: Set[ETVar])
 
     // Existential TVar
     abstract class ETVar {
