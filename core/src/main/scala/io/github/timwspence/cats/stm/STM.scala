@@ -47,12 +47,10 @@ final class STM[A] private[stm] (private val run: TLog => TResult[A]) extends An
     * Try an alternative `STM` action if this one retries.
     */
   final def orElse(fallback: STM[A]): STM[A] = STM { log =>
-    {
-      val revert = log.snapshot
-      run(log) match {
-        case TRetry => { revert(); fallback.run(log) }
-        case r      => r
-      }
+    val revert = log.snapshot
+    run(log) match {
+      case TRetry => { revert(); fallback.run(log) }
+      case r      => r
     }
   }
 
@@ -162,7 +160,7 @@ object STM {
           val txId                         = IdGen.incrementAndGet
           var result: Either[Throwable, A] = null
           val log                          = TLog(MMap[TxId, TLogEntry]())
-          lock.synchronized {
+          STM.synchronized {
             try {
               stm.run(log) match {
                 case TSuccess(value) => {
@@ -261,8 +259,6 @@ object STM {
       }
 
     }
-
-    val lock = new Object()
 
     type Pending = () => Unit
 

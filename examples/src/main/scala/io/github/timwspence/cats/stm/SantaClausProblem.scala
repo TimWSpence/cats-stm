@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.global
 object SantaClausProblem extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
-    mainProblem.timeout(50.seconds).as(ExitCode.Success)
+    mainProblem.timeout(5.seconds).as(ExitCode.Success)
 
   def meetInStudy(id: Int): IO[Unit] = IO(println(show"Elf $id meeting in the study"))
 
