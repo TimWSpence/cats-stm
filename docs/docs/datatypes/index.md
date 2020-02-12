@@ -10,7 +10,7 @@ position: 2
 Concurrency is *hard* and so are locks. Consider modelling the transfer of
 balances between bank accounts. You might end up with something like this:
 
-```tut:silent
+```scala mdoc:silent
 case class Account(private var balance: Long) {
   def get = this.synchronized {
     balance

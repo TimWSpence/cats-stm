@@ -9,7 +9,7 @@ number: 5
 A convenience implementation of a queue in the `STM` monad, built on top of
 [`TVar`](tvar.html).
 
-```tut:book
+```scala mdoc
 import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._

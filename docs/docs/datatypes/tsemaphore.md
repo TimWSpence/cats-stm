@@ -9,7 +9,7 @@ number: 6
 A convenience implementation of a semaphore in the `STM` monad, built on top of
 [`TVar`](tvar.html).
 
-```tut:book
+```scala mdoc
 import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._

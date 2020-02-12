@@ -37,7 +37,7 @@ lazy val commonSettings = Seq(
   organization := "io.github.timwspence",
   organizationName := "timwspence",
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
-  scalaVersion := "2.13.0",
+  scalaVersion := "2.13.1",
   crossScalaVersions := Seq("2.11.12", "2.12.10", scalaVersion.value),
   scalacOptions ++= Seq(
     "-deprecation",
@@ -118,15 +118,7 @@ lazy val micrositeSettings = {
     micrositeFooterText := None,
     micrositeDocumentationUrl := "https://www.javadoc.io/doc/io.github.timwspence/cats-stm_2.12",
     micrositeHighlightTheme := "atom-one-light",
-    fork in tut := true,
-    scalacOptions in Tut --= Seq(
-      "-Xfatal-warnings",
-      "-Ywarn-unused-import",
-      "-Ywarn-numeric-widen",
-      "-Ywarn-dead-code",
-      "-Ywarn-unused:imports",
-      "-Xlint:-missing-interpolator,_"
-    ),
+    micrositeCompilingDocsTool := WithMdoc,
     micrositePushSiteWith := GitHub4s,
     micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
     micrositeExtraMdFiles := Map(
@@ -188,8 +180,6 @@ lazy val mimaSettings = {
       import com.typesafe.tools.mima.core._
       import com.typesafe.tools.mima.core.ProblemFilters._
       Seq(
-	//https://github.com/lightbend/mima/issues/423
-	ProblemFilters.exclude[IncompatibleSignatureProblem]("io.github.timwspence.cats.stm.STM.stmMonoid")
       )
     }
   )

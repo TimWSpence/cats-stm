@@ -3,7 +3,7 @@ language: scala
 dist: xenial
 
 scala:
-  - 2.13.0
+  - 2.13.1
   - 2.12.10
   - 2.11.12
 
@@ -26,7 +26,7 @@ script:
 
 after_success:
   - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "TimWSpence/cats-stm" && sbt ++$TRAVIS_SCALA_VERSION publish
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "TimWSpence/cats-stm" && test $TRAVIS_SCALA_VERSION == "2.12.8" && sbt docs/publishMicrosite
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "TimWSpence/cats-stm" && test $TRAVIS_SCALA_VERSION == "2.13.1" && sbt docs/publishMicrosite
 
 cache:
   directories:

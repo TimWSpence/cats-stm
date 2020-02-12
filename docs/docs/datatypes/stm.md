@@ -11,7 +11,7 @@ number: 3
 `STM` is a monad which describes transactions involving `TVar`s. It is executed via
 `STM.atomically`:
 
-```tut:book
+```scala mdoc:reset
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
@@ -37,7 +37,7 @@ val result = prog.unsafeRunSync
 `STM.atomically` supports the concept of retries, which can be introduced via
 `STM.check`:
 
-```tut:book
+```scala mdoc:reset
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
@@ -64,7 +64,7 @@ is committed.
 `STM.orElse` is built on top of the retry logic and allows you to attempt an
 alternative action if the first retries:
 
-```tut:book
+```scala mdoc:reset
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
@@ -97,7 +97,7 @@ val result = txn.commit[IO].unsafeRunSync
 
 Transactions can be aborted via `STM.abort`:
 
-```tut:book
+```scala mdoc:reset
 import cats.effect.IO
 import cats.syntax.flatMap._
 import io.github.timwspence.cats.stm.{STM, TVar}
