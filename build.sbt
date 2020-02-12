@@ -185,7 +185,10 @@ lazy val mimaSettings = {
     mimaBinaryIssueFilters ++= {
       import com.typesafe.tools.mima.core._
       import com.typesafe.tools.mima.core.ProblemFilters._
-      Seq()
+      Seq(
+	//https://github.com/lightbend/mima/issues/423
+	ProblemFilters.exclude[IncompatibleSignatureProblem]("io.github.timwspence.cats.stm.STM.stmMonoid")
+      )
     }
   )
 }
