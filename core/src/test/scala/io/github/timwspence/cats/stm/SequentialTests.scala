@@ -190,12 +190,12 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _       <- tvar.modify(_ + 1)
     } yield ()
 
-    val background: IO[Fiber[IO, Unit]] = (
+    val background: IO[Unit] = (
       for {
         _ <- Timer[IO].sleep(2 seconds)
         _ <- tvar.modify(_ + 1).commit[IO]
       } yield ()
-    ).start
+    )
 
     val prog = for {
       fiber <- background.start
@@ -207,6 +207,46 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       tvar.value shouldBe 2
 
       tvar.pending.get.isEmpty shouldBe true
+    }
+  }
+
+  /**
+    *  This seemingly strange test guards against reintroducing the issue
+    *  fixed in ad10e29ae38aa8b9507833fe84a68cf7961aac57
+    *  (https://github.com/TimWSpence/cats-stm/pull/96) whereby
+    *  atomically was not referentially transparent and would re-use tx ids
+    *  which caused problems if two transactions produced by the same
+    *  atomically invocation both needed to retry - they would have the same
+    *  id and hence we would only register one to retry
+   */
+  test("Atomically is referentially transparent") {
+    val flag = TVar.of(false).commit[IO].unsafeRunSync
+    val tvar = TVar.of(0L).commit[IO].unsafeRunSync
+
+    val retry: IO[Unit] = STM.atomically[IO] {
+      for {
+        current <- flag.get
+        _       <- STM.check(current)
+        _       <- tvar.modify(_ + 1)
+      } yield ()
+    }
+
+    val background: IO[Unit] = (
+      for {
+        _ <- Timer[IO].sleep(2 seconds)
+        _ <- flag.set(true).commit[IO]
+      } yield ()
+    )
+
+    val prog = for {
+      fiber <- background.start
+      _     <- retry.start
+      _     <- retry.start
+      _     <- fiber.join
+    } yield ()
+
+    for (_ <- prog.unsafeToFuture) yield {
+      tvar.value shouldBe 2
     }
   }
 
