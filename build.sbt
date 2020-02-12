@@ -121,6 +121,7 @@ lazy val micrositeSettings = {
     micrositeCompilingDocsTool := WithMdoc,
     micrositePushSiteWith := GitHub4s,
     micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
+    micrositeGitterChannelUrl := "cats-stm/community",
     micrositeExtraMdFiles := Map(
       file("CHANGELOG.md")        -> ExtraMdFileConfig("changelog.md", "page", Map("title" -> "changelog", "section" -> "changelog", "position" -> "100")),
       file("CODE_OF_CONDUCT.md")  -> ExtraMdFileConfig("code-of-conduct.md",   "page", Map("title" -> "code of conduct",   "section" -> "code of conduct",   "position" -> "101")),
