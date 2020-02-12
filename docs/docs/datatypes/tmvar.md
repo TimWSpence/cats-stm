@@ -12,7 +12,7 @@ similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/conc
 You can think of this as a mutable memory location that may contain a value.
 Writes will block if full and reads will block if empty.
 
-```tut:book
+```scala mdoc
 import cats.effect.IO
 import cats.syntax.semigroup._
 import cats.instances.string._
