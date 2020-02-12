@@ -51,7 +51,7 @@ lazy val commonSettings = Seq(
     "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
     "org.typelevel"              %% "cats-core"                 % CatsVersion,
     "org.scala-lang.modules"     %% "scala-java8-compat"        % ScalaJava8CompatVersion,
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.4" % Test,
     "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
     "org.scalatest"              %% "scalatest"                 % ScalaTestVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
