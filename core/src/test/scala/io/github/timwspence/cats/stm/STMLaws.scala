@@ -12,6 +12,7 @@ import org.typelevel.discipline.scalatest.Discipline
 import org.scalatest.prop.Configuration
 import cats.laws.discipline._
 import cats.kernel.laws.discipline._
+import cats.kernel.laws.discipline._
 import cats.laws.discipline.eq._
 import cats.laws.discipline.arbitrary._
 
@@ -39,12 +40,16 @@ object Helpers {
 
   }
 
-  implicit  def eqSTM[A: Eq](implicit Log: ExhaustiveCheck[TLog]): Eq[STM[A]] = Eq.instance((stm1, stm2) => Log.allValues.forall(a => Eq[TResult[A]].eqv(stm1.run(a), stm1.run(a))))
-
   implicit def genTVar[A](implicit A: Gen[A]): Gen[TVar[A]] = A.map(a => TVar.of(a).commit[IO].unsafeRunSync)
 
+  // Why doesn't this work?
+  // implicit  def eqSTM[A: Eq](implicit Log: ExhaustiveCheck[TLog]): Eq[STM[A]] = Eq.instance((stm1, stm2) => Log.allValues.forall(a => Eq[TResult[A]].eqv(stm1.run(a), stm1.run(a))))
+
   //This looks a bit weird but STM.run is always invoked with an empty TLog so it's ok
-  implicit val exhaustiveCheckTlog: ExhaustiveCheck[TLog] = ExhaustiveCheck.instance(List(TLog.empty))
+  // implicit val exhaustiveCheckTlog: ExhaustiveCheck[TLog] = ExhaustiveCheck.instance(List(TLog.empty))
+
+  implicit def eqSTM[A](implicit A: Eq[A]): Eq[STM[A]] = Eq.instance((stm1, stm2) => stm1.run(TLog.empty) === stm2.run(TLog.empty))
+
 
   implicit def genSTM[A: Gen : Order](implicit TVar: Gen[TVar[A]], M: Monoid[A]): Gen[STM[A]] = {
     def genGetSTM[A](tv: TVar[A]): Gen[STM[Unit]] = Gen.const(tv.get.void)
@@ -56,7 +61,7 @@ object Helpers {
 
     for {
       tvars <- Gen.listOfN(5, TVar)
-      stms  <- Gen.listOf(for  {
+      stms  <- Gen.nonEmptyListOf(for  {
         idx <- Gen.choose(0, tvars.length - 1)
         tv = tvars(idx)
         stm <- genSingleSTM(tv)
@@ -72,5 +77,11 @@ object Helpers {
 }
 
 class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
+  checkAll("STM[Int]", SemigroupTests[STM[Int]].semigroup)
+
   checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)
+
+  checkAll("STM[Int]", FunctorTests[STM].functor[Int, Int, Int])
+
+  // checkAll("STM[Int]", MonadTests[STM].monad[Int, Int, Int])
 }
