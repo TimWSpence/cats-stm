@@ -2,31 +2,22 @@ package io.github.timwspence.cats.stm
 
 import cats._
 import cats.implicits._
-import cats.derived._
 import cats.effect._
-
-import org.scalatest.funsuite.AnyFunSuite
-import scala.collection.mutable.{Map => MMap}
-
-import org.typelevel.discipline.scalatest.Discipline
-import org.scalatest.prop.Configuration
+import cats.kernel.laws.discipline._
+import cats.laws.AlternativeLaws
 import cats.laws.discipline._
-import cats.kernel.laws.discipline._
-import cats.kernel.laws.discipline._
 import cats.laws.discipline.eq._
 import cats.laws.discipline.arbitrary._
 
-import shapeless._
+import io.github.timwspence.cats.stm.STM.internal.{TLog, TFailure, TResult, TRetry, TSuccess}
+
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.prop.Configuration
+
+import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 import Implicits._
-import org.scalacheck.{Arbitrary, Gen}
-import io.github.timwspence.cats.stm.STM.internal.TLog
-import io.github.timwspence.cats.stm.STM.internal.TResult
-import io.github.timwspence.cats.stm.STM.internal.TSuccess
-import io.github.timwspence.cats.stm.STM.internal.TRetry
-import io.github.timwspence.cats.stm.STM.internal.TFailure
-import org.typelevel.discipline.scalatest.FunSuiteDiscipline
-import cats.laws.AlternativeLaws
 
 object Implicits extends LowPriorityImplicits {
   implicit def eqTResult[A](implicit A: Eq[A]): Eq[TResult[A]] = new Eq[TResult[A]] {
