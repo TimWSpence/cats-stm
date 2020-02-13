@@ -26,6 +26,7 @@ import io.github.timwspence.cats.stm.STM.internal.TSuccess
 import io.github.timwspence.cats.stm.STM.internal.TRetry
 import io.github.timwspence.cats.stm.STM.internal.TFailure
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
+import cats.laws.AlternativeLaws
 
 object Implicits extends LowPriorityImplicits {
   implicit def eqTResult[A](implicit A: Eq[A]): Eq[TResult[A]] = new Eq[TResult[A]] {
@@ -83,6 +84,8 @@ object Implicits extends LowPriorityImplicits {
 trait LowPriorityImplicits {
   // Generates non-interesting arbitrary STMs using pure
   // Necessary as the Monad laws require Arbitrary[A => B]
+  // And Function does not satisfy the (Monoid, Ord) constraints
+  // we used above to generate more complex STM  values
   implicit def arbSTMNoConstraints[A](implicit A: Arbitrary[A]): Arbitrary[STM[A]] = Arbitrary(A.arbitrary.map(STM.pure))
 }
 
@@ -94,4 +97,6 @@ class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
   checkAll("STM[Int]", FunctorTests[STM].functor[Int, Int, Int])
 
   checkAll("STM[Int]", MonadTests[STM].monad[Int, Int, Int])
+
+  checkAll("STM[Int]", AlternativeTests[STM].alternative[Int, Int, Int])
 }
