@@ -49,7 +49,23 @@ object Helpers {
   //This looks a bit weird but STM.run is always invoked with an empty TLog so it's ok
   implicit val exhaustiveCheckTlog: ExhaustiveCheck[TLog] = ExhaustiveCheck.instance(List(TLog.empty))
 
-  implicit def genSTM[A: Gen]: Gen[STM[A]] = ???
+  implicit def genSTM[A: Gen : Order](implicit TVar: Gen[TVar[A]], M: Monoid[A]): Gen[STM[A]] = {
+    def genGetSTM[A](tv: TVar[A]): Gen[STM[Unit]] = Gen.const(tv.get.void)
+    def genSetSTM[A](tv: TVar[A])(implicit A: Gen[A]): Gen[STM[Unit]] = A.map(tv.set)
+    def genModifySTM[A](tv: TVar[A])(implicit A: Gen[A], M: Monoid[A]): Gen[STM[Unit]] = A.map(a1 => tv.modify(a2 => M.combine(a1, a2)))
+    def genCheckSTM[A](tv: TVar[A])(implicit A: Gen[A], Ord: Order[A]): Gen[STM[Unit]] = A.map(a1 => tv.get >>= (a2 => STM.check(Ord.compare(a1, a2) > 0)))
+    def genSingleSTM[A: Gen : Monoid : Order](tv: TVar[A]): Gen[STM[Unit]] = Gen.oneOf(genGetSTM(tv), genSetSTM(tv), genModifySTM(tv), genCheckSTM(tv))
+    def sumAll[A](tvs: List[TVar[A]])(implicit M: Monoid[A]): STM[A] = tvs.traverse(_.get).map(M.combineAll)
+
+    for {
+      tvars <- Gen.listOfN(5, TVar)
+      stms  <- Gen.listOf(for  {
+        idx <- Gen.choose(0, tvars.length - 1)
+        tv = tvars(idx)
+        stm <- genSingleSTM(tv)
+      } yield stm)
+    } yield stms.reduce(_ >> _) >> sumAll(tvars)
+  }
 }
 
 class STMLaws extends AnyFunSuite with Discipline with Configuration {
