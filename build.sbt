@@ -4,6 +4,8 @@ enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
+val DisciplineVersion = "1.0.0"
+val KittensVersion = "2.0.0"
 val ScalaTestVersion = "3.1.0-RC2"
 val ScalaCheckVersion = "1.14.3"
 val ScalaTestPlusScalaCheck = "3.1.0.0-RC2"
@@ -53,6 +55,8 @@ lazy val commonSettings = Seq(
     "org.scala-lang.modules"     %% "scala-java8-compat"        % ScalaJava8CompatVersion,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.4" % Test,
     "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
+    "org.typelevel"              %% "discipline-scalatest"      % DisciplineVersion % Test,
+    "org.typelevel"              %% "kittens"                   % KittensVersion % Test,
     "org.scalatest"              %% "scalatest"                 % ScalaTestVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalatestplus"          %% "scalatestplus-scalacheck"  % ScalaTestPlusScalaCheck % Test,
