@@ -3,8 +3,10 @@ package io.github.timwspence.cats.stm
 import cats._
 import cats.implicits._
 import cats.derived._
+import cats.effect._
 
 import org.scalatest.funsuite.AnyFunSuite
+import scala.collection.mutable.{Map => MMap}
 
 import org.typelevel.discipline.scalatest.Discipline
 import org.scalatest.prop.Configuration
@@ -16,7 +18,7 @@ import cats.laws.discipline.arbitrary._
 import shapeless._
 
 import Helpers._
-import org.scalacheck.Arbitrary
+import org.scalacheck.{Arbitrary, Gen}
 import io.github.timwspence.cats.stm.STM.internal.TLog
 import io.github.timwspence.cats.stm.STM.internal.TResult
 import io.github.timwspence.cats.stm.STM.internal.TSuccess
@@ -42,11 +44,14 @@ object Helpers {
   //Possibly the best way to build a stm is to generate list of tvars and then from that generate list of stm actions from that
   //and fold with bind
 
-  implicit val arbitraryTLog: Arbitrary[TLog] = ???
+  implicit def genTVar[A](implicit A: Gen[A]): Gen[TVar[A]] = A.map(a => TVar.of(a).commit[IO].unsafeRunSync)
 
-  implicit def arbitrarySTM[A: Arbitrary]: Arbitrary[STM[A]] = Arbitrary.arbitrary[Function1[TLog, A]].map(r => STM(r))
+  //This looks a bit weird but STM.run is always invoked with an empty TLog so it's ok
+  implicit val exhaustiveCheckTlog: ExhaustiveCheck[TLog] = ExhaustiveCheck.instance(List(TLog.empty))
+
+  implicit def genSTM[A: Gen]: Gen[STM[A]] = ???
 }
 
 class STMLaws extends AnyFunSuite with Discipline with Configuration {
-  checkAll("STM[String]", MonoidTests[STM[String]].monoid)
+  // checkAll("STM[String]", MonoidTests[STM[String]].monoid)
 }

@@ -159,7 +159,7 @@ object STM {
         def attempt: Pending = () => {
           val txId                         = IdGen.incrementAndGet
           var result: Either[Throwable, A] = null
-          val log                          = TLog(MMap[TxId, TLogEntry]())
+          val log                          = TLog.empty
           STM.synchronized {
             try {
               stm.run(log) match {
@@ -258,6 +258,10 @@ object STM {
         }
       }
 
+    }
+
+    object TLog {
+      def empty: TLog = TLog(MMap[TxId, TLogEntry]())
     }
 
     type Pending = () => Unit
