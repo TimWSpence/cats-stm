@@ -24,6 +24,7 @@ import io.github.timwspence.cats.stm.STM.internal.TResult
 import io.github.timwspence.cats.stm.STM.internal.TSuccess
 import io.github.timwspence.cats.stm.STM.internal.TRetry
 import io.github.timwspence.cats.stm.STM.internal.TFailure
+import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 object Helpers {
   implicit def eqTResult[A](implicit A: Eq[A]): Eq[TResult[A]] = new Eq[TResult[A]] {
@@ -39,10 +40,6 @@ object Helpers {
   }
 
   implicit  def eqSTM[A: Eq](implicit Log: ExhaustiveCheck[TLog]): Eq[STM[A]] = Eq.instance((stm1, stm2) => Log.allValues.forall(a => Eq[TResult[A]].eqv(stm1.run(a), stm1.run(a))))
-
-
-  //Possibly the best way to build a stm is to generate list of tvars and then from that generate list of stm actions from that
-  //and fold with bind
 
   implicit def genTVar[A](implicit A: Gen[A]): Gen[TVar[A]] = A.map(a => TVar.of(a).commit[IO].unsafeRunSync)
 
@@ -66,8 +63,14 @@ object Helpers {
       } yield stm)
     } yield stms.reduce(_ >> _) >> sumAll(tvars)
   }
+
+  implicit def arbSTM[A: Monoid : Gen : Order](implicit Gen: Gen[STM[A]]): Arbitrary[STM[A]] = Arbitrary(Gen)
+
+  implicit val genInt: Gen[Int] = Gen.posNum[Int]
+  implicit val genString: Gen[String] = Gen.alphaNumStr
+
 }
 
-class STMLaws extends AnyFunSuite with Discipline with Configuration {
-  // checkAll("STM[String]", MonoidTests[STM[String]].monoid)
+class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
+  checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)
 }
