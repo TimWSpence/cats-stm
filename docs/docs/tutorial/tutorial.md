@@ -150,5 +150,5 @@ def main: IO[Unit] = for {
   _ <- santa(elfGroup, reinGroup).foreverM.void
 } yield ()
 
-main.timeout(5.seconds).attempt.unsafeRunSync
+main.timeout(2.seconds).attempt.unsafeRunSync
 ```
