@@ -4,13 +4,13 @@ import java.util.concurrent.atomic.AtomicLong
 
 import cats.effect.Async
 import cats.{Monad, Monoid, MonoidK}
+
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.collection.mutable.{Map => MMap}
 import scala.compat.java8.FunctionConverters._
-import java.util.concurrent.atomic.AtomicReference
 
 /**
   * Monad representing transactions involving one or more

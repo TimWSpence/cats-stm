@@ -4,7 +4,6 @@ import cats._
 import cats.implicits._
 import cats.effect._
 import cats.kernel.laws.discipline._
-import cats.laws.AlternativeLaws
 import cats.laws.discipline._
 import cats.laws.discipline.eq._
 import cats.laws.discipline.arbitrary._
