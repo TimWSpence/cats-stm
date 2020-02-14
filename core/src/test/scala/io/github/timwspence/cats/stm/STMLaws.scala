@@ -19,7 +19,7 @@ import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 import Implicits._
 
-object Implicits extends LowPriorityImplicits {
+object Implicits {
   implicit def eqTResult[A](implicit A: Eq[A]): Eq[TResult[A]] = new Eq[TResult[A]] {
 
     override def eqv(x: TResult[A], y: TResult[A]): Boolean = (x, y) match {
@@ -71,19 +71,11 @@ object Implicits extends LowPriorityImplicits {
   //   } yield stms.reduce(_ >> _) >> sumAll(tvars)
   // }
 
-  implicit def arbSTM[A: Monoid: Gen: Order](implicit Gen: Gen[STM[A]]): Arbitrary[STM[A]] = Arbitrary(Gen)
+  implicit def arbSTM[A](implicit Gen: Arbitrary[A]): Arbitrary[STM[A]] = Arbitrary(genSTM(Gen.arbitrary))
 
   implicit val genInt: Gen[Int]       = Gen.posNum[Int]
   implicit val genString: Gen[String] = Gen.alphaNumStr
 
-}
-
-trait LowPriorityImplicits {
-  // Generates non-interesting arbitrary STMs using pure
-  // Necessary as the Monad laws require Arbitrary[A => B]
-  // And Function does not satisfy the (Monoid, Ord) constraints
-  // we used above to generate more complex STM  values
-  implicit def arbSTMNoConstraints[A](implicit A: Arbitrary[A]): Arbitrary[STM[A]] = Arbitrary(A.arbitrary.map(STM.pure))
 }
 
 class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
@@ -93,7 +85,11 @@ class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
 
   checkAll("STM[Int]", FunctorTests[STM].functor[Int, Int, Int])
 
+  checkAll("STM[Int]", ApplicativeTests[STM].applicative[Int, Int, Int])
+
   checkAll("STM[Int]", MonadTests[STM].monad[Int, Int, Int])
 
-  checkAll("STM[Int]", AlternativeTests[STM].alternative[Int, Int, Int])
+  checkAll("STM[Int]", SemigroupKTests[STM].semigroupK[Int])
+
+  checkAll("STM[Int]", MonoidKTests[STM].monoidK[Int])
 }
