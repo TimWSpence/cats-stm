@@ -3,7 +3,7 @@ package io.github.timwspence.cats.stm
 import java.util.concurrent.atomic.AtomicLong
 
 import cats.effect.Async
-import cats.{Alternative, Monad, Monoid}
+import cats.{Monad, Monoid, MonoidK}
 import io.github.timwspence.cats.stm.STM.internal._
 
 import scala.annotation.tailrec
@@ -116,7 +116,7 @@ object STM {
     */
   val unit: STM[Unit] = pure(())
 
-  implicit val stmMonad: Monad[STM] with Alternative[STM] = new Monad[STM] with Alternative[STM] {
+  implicit val stmMonad: Monad[STM] with MonoidK[STM] = new Monad[STM] with MonoidK[STM] {
     override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] = fa.flatMap(f)
 
     override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
