@@ -7,8 +7,8 @@ val CatsEffectVersion = "2.0.0"
 val DisciplineVersion = "1.0.1"
 val ScalaTestVersion = "3.1.0-RC2"
 val ScalaCheckVersion = "1.14.3"
-val ScalaTestPlusScalaCheck = "3.1.0.1-RC2"
-val ScalaJava8CompatVersion = "0.9.0"
+val ScalaTestPlusScalaCheck = "3.1.0.0-RC2"
+val ScalaJava8CompatVersion = "0.9.1"
 
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
