@@ -4,7 +4,7 @@ enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
-val DisciplineVersion = "1.0.0"
+val DisciplineVersion = "1.0.1"
 val ScalaTestVersion = "3.1.1"
 val ScalaCheckVersion = "1.14.3"
 val ScalaTestPlusScalaCheck = "3.1.0.1-RC2"
