@@ -39,6 +39,7 @@ object Main extends IOApp {
         _       <- accountForTim.modify(_ - 100)
         _       <- accountForSteve.modify(_ + 100)
       } yield ()
+    }
 
   private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] = for {
     _ <- IO.sleep(5000.millis)
@@ -47,9 +48,9 @@ object Main extends IOApp {
 
   private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
     amountForTim   <- accountForTim.get.commit[IO]
-    _              <- IO(println(s"Tim: $b"))
+    _              <- IO(println(s"Tim: $amountForTim"))
     amountForSteve <- accountForSteve.get.commit[IO]
-    _              <- IO(println(s"Steve: $b"))
+    _              <- IO(println(s"Steve: $amountForSteve"))
   } yield ()
 
 }
