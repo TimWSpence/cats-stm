@@ -31,13 +31,14 @@ object Main extends IOApp {
     _               <- printBalances(accountForTim, accountForSteve)
   } yield ExitCode.Success
 
-  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = STM.atomically[IO] {
-    for {
-      balance <- accountForTim.get
-      _       <- STM.check(balance > 100)
-      _       <- accountForTim.modify(_ - 100)
-      _       <- accountForSteve.modify(_ + 100)
-    } yield ()
+  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+    STM.atomically[IO] {
+      for {
+        balance <- accountForTim.get
+        _       <- STM.check(balance > 100)
+        _       <- accountForTim.modify(_ - 100)
+        _       <- accountForSteve.modify(_ + 100)
+      } yield ()
 
   private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] = for {
     _ <- IO.sleep(5000.millis)
