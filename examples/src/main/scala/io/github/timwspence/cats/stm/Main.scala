@@ -1,7 +1,7 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.{ExitCode, IO, IOApp}
-import io.github.timwspence.cats.stm.{TVar, STM}
+//import io.github.timwspence.cats.stm.{TVar, STM}
 import scala.concurrent.duration._
 
 object Main extends IOApp {
