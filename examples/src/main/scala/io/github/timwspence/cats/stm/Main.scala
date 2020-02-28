@@ -6,14 +6,15 @@ import scala.concurrent.duration._
 
 object Main extends IOApp {
 
-  override def run(args: List[String]): IO[ExitCode] = for {
-    accountForTim   <- TVar.of[Long](100).commit[IO]
-    accountForSteve <- TVar.of[Long](0).commit[IO]
-    _               <- printBalances(accountForTim, accountForSteve)
-    _               <- giveTimMoreMoney(accountForTim).start
-    _               <- transfer(accountForTim, accountForSteve)
-    _               <- printBalances(accountForTim, accountForSteve)
-  } yield ExitCode.Success
+  override def run(args: List[String]): IO[ExitCode] =
+    for {
+      accountForTim   <- TVar.of[Long](100).commit[IO]
+      accountForSteve <- TVar.of[Long](0).commit[IO]
+      _               <- printBalances(accountForTim, accountForSteve)
+      _               <- giveTimMoreMoney(accountForTim).start
+      _               <- transfer(accountForTim, accountForSteve)
+      _               <- printBalances(accountForTim, accountForSteve)
+    } yield ExitCode.Success
 
   private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
     STM.atomically[IO] {
@@ -25,16 +26,20 @@ object Main extends IOApp {
       } yield ()
     }
 
-  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] = for {
-    _ <- IO.sleep(5000.millis)
-    _ <- STM.atomically[IO](accountForTim.modify(_ + 1))
-  } yield ()
+  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] =
+    for {
+      _ <- IO.sleep(5000.millis)
+      _ <- STM.atomically[IO](accountForTim.modify(_ + 1))
+    } yield ()
 
-  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
-    amountForTim   <- accountForTim.get.commit[IO]
-    _              <- IO(println(s"Tim: $amountForTim"))
-    amountForSteve <- accountForSteve.get.commit[IO]
-    _              <- IO(println(s"Steve: $amountForSteve"))
-  } yield ()
+  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+    for {
+      (amountForTim, amountForSteve) <- STM.atomically[IO](for {
+        t <- accountForTim.get
+        s <- accountForSteve.get
+      } yield (t, s))
+      _ <- IO(println(s"Tim: $amountForTim"))
+      _ <- IO(println(s"Steve: $amountForSteve"))
+    } yield ()
 
 }

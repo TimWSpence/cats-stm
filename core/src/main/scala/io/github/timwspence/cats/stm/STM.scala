@@ -80,9 +80,7 @@ object STM {
   /**
     * Convenience definition.
     */
-  def retry[A]: STM[A] = STM { _ =>
-    TRetry
-  }
+  def retry[A]: STM[A] = STM(_ => TRetry)
 
   /**
     * Fallback to an alternative `STM` action if the first one
@@ -100,16 +98,12 @@ object STM {
     * Abort a transaction. Will raise {@code error} whenever
     * evaluated with [[atomically]].
     */
-  def abort[A](error: Throwable): STM[A] = STM { _ =>
-    TFailure(error)
-  }
+  def abort[A](error: Throwable): STM[A] = STM(_ => TFailure(error))
 
   /**
     * Monadic return.
     */
-  def pure[A](a: A): STM[A] = STM { _ =>
-    TSuccess(a)
-  }
+  def pure[A](a: A): STM[A] = STM(_ => TSuccess(a))
 
   /**
     * Alias for `pure(())`.

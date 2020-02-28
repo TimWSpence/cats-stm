@@ -91,9 +91,7 @@ object SantaClausProblem extends IOApp {
   def reindeer2(group: Group, id: Int): IO[Unit] =
     helper1(group, deliverToys(id))
 
-  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap { n =>
-    Timer[IO].sleep(n.micros)
-  }
+  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => Timer[IO].sleep(n.micros))
 
   def elf(g: Group, i: Int): IO[Fiber[IO, Nothing]] =
     (elf2(g, i) >> randomDelay).foreverM.start
@@ -109,7 +107,7 @@ object SantaClausProblem extends IOApp {
         } yield rhs(value)
     }
     for {
-      act <- STM.atomically[IO] { actions.reduceLeft(_.orElse(_)) }
+      act <- STM.atomically[IO](actions.reduceLeft(_.orElse(_)))
       _   <- act
     } yield ()
   }
@@ -126,12 +124,8 @@ object SantaClausProblem extends IOApp {
       _ <- IO(println("----------"))
       _ <- choose[(Gate, Gate)](
         NonEmptyList.of(
-          (reinGroup.await, { g: (Gate, Gate) =>
-            run("deliver toys", g)
-          }),
-          (elfGroup.await, { g: (Gate, Gate) =>
-            run("meet in study", g)
-          })
+          (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) }),
+          (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g) })
         )
       )
     } yield ()
