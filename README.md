@@ -16,7 +16,7 @@ The core abstraction is the `TVar` (transactional var), which exposes operations
 monad.
 
 Here is a contrived example of what this looks like in practice. We use the
-check combinator to retry transferring money from Tim and Steve until we have
+`check` combinator to retry transferring money from Tim and Steve until we have
 enough money in Tim's account:
 
 ```scala
