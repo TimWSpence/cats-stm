@@ -15,6 +15,10 @@ The core abstraction is the `TVar` (transactional var), which exposes operations
 `STM` monad. Once constructed, `STM` actions can be atomically evaluated in the `IO`
 monad.
 
+Here is a contrived example of what this looks like in practice. We use the
+check combinator to retry transferring money from Tim and Steve until we have
+enough money in Tim's account:
+
 ```scala
 import cats.effect.{ExitCode, IO, IOApp}
 import io.github.timwspence.cats.stm.{TVar, STM}
