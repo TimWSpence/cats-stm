@@ -68,7 +68,7 @@ object Main extends IOApp {
 ### Documentation
 
 The documentation is built using [sbt microsites](https://47deg.github.io/sbt-microsites/). You
-can generate it via `sbt makeMicrosite`. You can view it locally via `cd docs/target/site && jekyll serve`.
+can generate it via `sbt docs/makeMicrosite`. You can view it locally via `cd docs/target/site && jekyll serve`.
 
 ### Credits
 

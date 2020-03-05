@@ -21,20 +21,22 @@ You can find more details in the [docs](docs/) but usage looks something like th
 ```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
 import io.github.timwspence.cats.stm.{TVar, STM}
+import scala.concurrent.duration._
 
 object Main extends IOApp {
 
-  override def run(args: List[String]): IO[ExitCode] = for {
-    accountForTim   <- TVar.of[Long](100).commit[IO]
-    accountForSteve <- TVar.of[Long](0).commit[IO]
-    _               <- printBalances(accountForTim, accountForSteve)
-    _               <- giveTimMoreMoney(accountForTim).start
-    _               <- transfer(accountForTim, accountForSteve)
-    _               <- printBalances(accountForTim, accountForSteve)
-  } yield ExitCode.Success
+  override def run(args: List[String]): IO[ExitCode] =
+    for {
+      accountForTim   <- TVar.of[Long](100).commit[IO]
+      accountForSteve <- TVar.of[Long](0).commit[IO]
+      _               <- printBalances(accountForTim, accountForSteve)
+      _               <- giveTimMoreMoney(accountForTim).start
+      _               <- transfer(accountForTim, accountForSteve)
+      _               <- printBalances(accountForTim, accountForSteve)
+    } yield ExitCode.Success
 
-  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
-    _ <- STM.atomically[IO] {
+  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+    STM.atomically[IO] {
       for {
         balance <- accountForTim.get
         _       <- STM.check(balance > 100)
@@ -42,20 +44,24 @@ object Main extends IOApp {
         _       <- accountForSteve.modify(_ + 100)
       } yield ()
     }
-  } yield ()
 
-  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] = for {
-    _ <- IO(Thread.sleep(5000))
-    _ <- STM.atomically[IO](accountForTim.modify(_ + 1))
-  } yield ()
+  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] =
+    for {
+      _ <- IO.sleep(5000.millis)
+      _ <- STM.atomically[IO](accountForTim.modify(_ + 1))
+    } yield ()
 
-  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] = for {
-    _ <- accountForTim.get.commit[IO].flatMap(b => IO(println(s"Tim: $b")))
-    _ <- accountForSteve.get.commit[IO].flatMap(b => IO(println(s"Steve: $b")))
-  } yield ()
+  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+    for {
+      (amountForTim, amountForSteve) <- STM.atomically[IO](for {
+        t <- accountForTim.get
+        s <- accountForSteve.get
+      } yield (t, s))
+      _ <- IO(println(s"Tim: $amountForTim"))
+      _ <- IO(println(s"Steve: $amountForSteve"))
+    } yield ()
 
 }
-
 Main.run(List()).unsafeRunSync
 ```
 
