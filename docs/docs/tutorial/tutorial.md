@@ -25,7 +25,8 @@ def deliverToys(id: Int): IO[Unit] = IO(println(show"Reindeer $id delivering toy
 sealed abstract case class Gate(capacity: Int, tv: TVar[Int]){
   def pass: IO[Unit] = Gate.pass(this)
   def operate: IO[Unit] = Gate.operate(this)
-}; object Gate{
+}
+object Gate{
   def of(capacity: Int) =
     TVar.of(0).map(new Gate(capacity, _){})
 
@@ -56,7 +57,8 @@ sealed abstract case class Group(
 ){
   def join: IO[(Gate, Gate)] = Group.join(this)
   def await: STM[(Gate, Gate)] = Group.await(this)
-}; object Group {
+}
+object Group {
   def of(n: Int): IO[Group] = STM.atomically[IO]{
     for {
       g1 <- Gate.of(n)
