@@ -4,7 +4,7 @@ import cats.effect.{ContextShift, IO, Timer}
 import cats.instances.string._
 import cats.syntax.semigroup._
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite 
+import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.concurrent.ExecutionContext
 
@@ -52,9 +52,7 @@ class TQueueTest extends AsyncFunSuite with Matchers {
       world  <- tqueue.peek
     } yield hello |+| world
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe "helloworld"
-    }
+    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "helloworld"
   }
 
 }

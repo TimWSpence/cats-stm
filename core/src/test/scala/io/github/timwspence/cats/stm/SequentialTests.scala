@@ -85,9 +85,9 @@ class SequentialTests extends AsyncFunSuite with Matchers {
 
     val prog = for {
       _ <- (for {
-        _ <- Timer[IO].sleep(2 seconds)
-        _ <- from.modify(_ + 1).commit[IO]
-      } yield ()).start
+          _ <- Timer[IO].sleep(2 seconds)
+          _ <- from.modify(_ + 1).commit[IO]
+        } yield ()).start
       _ <- STM.atomically[IO] {
         for {
           balance <- from.get
@@ -124,9 +124,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      account.value shouldBe 50
-    }
+    for (_ <- prog.unsafeToFuture) yield account.value shouldBe 50
   }
 
   test("OrElse reverts changes if retrying") {
@@ -147,9 +145,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      account.value shouldBe 50
-    }
+    for (_ <- prog.unsafeToFuture) yield account.value shouldBe 50
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
@@ -190,12 +186,11 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _       <- tvar.modify(_ + 1)
     } yield ()
 
-    val background: IO[Unit] = (
+    val background: IO[Unit] =
       for {
         _ <- Timer[IO].sleep(2 seconds)
         _ <- tvar.modify(_ + 1).commit[IO]
       } yield ()
-    )
 
     val prog = for {
       fiber <- background.start
@@ -218,7 +213,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     *  which caused problems if two transactions produced by the same
     *  atomically invocation both needed to retry - they would have the same
     *  id and hence we would only register one to retry
-   */
+    */
   test("Atomically is referentially transparent") {
     val flag = TVar.of(false).commit[IO].unsafeRunSync
     val tvar = TVar.of(0L).commit[IO].unsafeRunSync
@@ -231,12 +226,11 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       } yield ()
     }
 
-    val background: IO[Unit] = (
+    val background: IO[Unit] =
       for {
         _ <- Timer[IO].sleep(2 seconds)
         _ <- flag.set(true).commit[IO]
       } yield ()
-    )
 
     val prog = for {
       fiber <- background.start
@@ -245,9 +239,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _     <- fiber.join
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      tvar.value shouldBe 2
-    }
+    for (_ <- prog.unsafeToFuture) yield tvar.value shouldBe 2
   }
 
 }

@@ -20,9 +20,7 @@ class TSemaphoreTest extends AsyncFunSuite with Matchers {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe 0
-    }
+    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe 0
   }
 
   test("Release increments the number of permits") {
@@ -32,9 +30,7 @@ class TSemaphoreTest extends AsyncFunSuite with Matchers {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe 1
-    }
+    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe 1
   }
 
 }

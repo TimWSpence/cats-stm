@@ -17,33 +17,34 @@ final class TQueue[A] private[stm] (private val tvar: TVar[Queue[A]]) {
   /**
     * Dequeue the first element. Retries if currently empty.
     */
-  def read: STM[A] = tvar.get.flatMap {
-    case q if q.isEmpty => STM.retry
-    case q => {
-      val (head, tail) = q.dequeue
-      tvar.set(tail) >> STM.pure(head)
+  def read: STM[A] =
+    tvar.get.flatMap {
+      case q if q.isEmpty => STM.retry
+      case q =>
+        val (head, tail) = q.dequeue
+        tvar.set(tail) >> STM.pure(head)
     }
-  }
 
   /**
     * Peek the first element. Retries if empty.
     */
-  def peek: STM[A] = tvar.get.flatMap {
-    case q if q.isEmpty => STM.retry
-    case q              => STM.pure(q.head)
-  }
+  def peek: STM[A] =
+    tvar.get.flatMap {
+      case q if q.isEmpty => STM.retry
+      case q              => STM.pure(q.head)
+    }
 
   /**
     * Attempt to dequeue the first element. Returns
     * `None` if empty, `Some(head)` otherwise.
     */
-  def tryRead: STM[Option[A]] = tvar.get.flatMap {
-    case q if q.isEmpty => STM.pure(None)
-    case q => {
-      val (head, tail) = q.dequeue
-      tvar.set(tail) >> STM.pure(Some(head))
+  def tryRead: STM[Option[A]] =
+    tvar.get.flatMap {
+      case q if q.isEmpty => STM.pure(None)
+      case q =>
+        val (head, tail) = q.dequeue
+        tvar.set(tail) >> STM.pure(Some(head))
     }
-  }
 
   /**
     * Attempt to peek the first element. Returns

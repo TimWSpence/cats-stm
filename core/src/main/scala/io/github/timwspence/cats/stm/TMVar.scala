@@ -15,36 +15,40 @@ final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends An
     * Store a value. Retries if the `TMVar` already
     * contains a value.
     */
-  def put(a: A): STM[Unit] = tvar.get.flatMap {
-    case Some(_) => STM.retry
-    case None    => tvar.set(Some(a))
-  }
+  def put(a: A): STM[Unit] =
+    tvar.get.flatMap {
+      case Some(_) => STM.retry
+      case None    => tvar.set(Some(a))
+    }
 
   /**
     * Read the current value. Retries if empty.
     */
-  def read: STM[A] = tvar.get.flatMap {
-    case Some(value) => STM.pure(value)
-    case None        => STM.retry
-  }
+  def read: STM[A] =
+    tvar.get.flatMap {
+      case Some(value) => STM.pure(value)
+      case None        => STM.retry
+    }
 
   /**
     * Read the current value and empty it at the same
     * time. Retries if empty.
     */
-  def take: STM[A] = tvar.get.flatMap {
-    case Some(value) => tvar.set(None) >> STM.pure(value)
-    case None        => STM.retry
-  }
+  def take: STM[A] =
+    tvar.get.flatMap {
+      case Some(value) => tvar.set(None) >> STM.pure(value)
+      case None        => STM.retry
+    }
 
   /**
     * Try to store a value. Returns `false` if put failed,
     * `true` otherwise.
     */
-  def tryPut(a: A): STM[Boolean] = tvar.get.flatMap {
-    case Some(_) => STM.pure(false)
-    case None    => tvar.set(Some(a)) >> STM.pure(true)
-  }
+  def tryPut(a: A): STM[Boolean] =
+    tvar.get.flatMap {
+      case Some(_) => STM.pure(false)
+      case None    => tvar.set(Some(a)) >> STM.pure(true)
+    }
 
   /**
     * Try to read the current value. Returns `None` if
@@ -56,10 +60,11 @@ final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends An
     * Try to take the current value. Returns `None` if
     * empty, `Some(current)` otherwise.
     */
-  def tryTake: STM[Option[A]] = tvar.get.flatMap {
-    case v @ Some(_) => tvar.set(None) >> STM.pure(v)
-    case None        => STM.pure(None)
-  }
+  def tryTake: STM[Option[A]] =
+    tvar.get.flatMap {
+      case v @ Some(_) => tvar.set(None) >> STM.pure(v)
+      case None        => STM.pure(None)
+    }
 
   /**
     * Check if currently empty.

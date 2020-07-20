@@ -24,35 +24,38 @@ final class STM[A] private[stm] (private[stm] val run: TLog => TResult[A]) exten
   /**
     * Functor map on `STM`.
     */
-  final def map[B](f: A => B): STM[B] = STM { log =>
-    run(log) match {
-      case TSuccess(value) => TSuccess(f(value))
-      case e @ TFailure(_) => e
-      case TRetry          => TRetry
+  final def map[B](f: A => B): STM[B] =
+    STM { log =>
+      run(log) match {
+        case TSuccess(value) => TSuccess(f(value))
+        case e @ TFailure(_) => e
+        case TRetry          => TRetry
+      }
     }
-  }
 
   /**
     * Monadic bind on `STM`.
     */
-  final def flatMap[B](f: A => STM[B]): STM[B] = STM { log =>
-    run(log) match {
-      case TSuccess(value) => f(value).run(log)
-      case e @ TFailure(_) => e
-      case TRetry          => TRetry
+  final def flatMap[B](f: A => STM[B]): STM[B] =
+    STM { log =>
+      run(log) match {
+        case TSuccess(value) => f(value).run(log)
+        case e @ TFailure(_) => e
+        case TRetry          => TRetry
+      }
     }
-  }
 
   /**
     * Try an alternative `STM` action if this one retries.
     */
-  final def orElse(fallback: STM[A]): STM[A] = STM { log =>
-    val revert = log.snapshot
-    run(log) match {
-      case TRetry => { revert(); fallback.run(log) }
-      case r      => r
+  final def orElse(fallback: STM[A]): STM[A] =
+    STM { log =>
+      val revert = log.snapshot
+      run(log) match {
+        case TRetry => revert(); fallback.run(log)
+        case r      => r
+      }
     }
-  }
 
   /**
     * Commit this `STM` action as an `IO` action. The mutable
@@ -113,17 +116,19 @@ object STM {
   implicit val stmMonad: Monad[STM] with MonoidK[STM] = new Monad[STM] with MonoidK[STM] {
     override def flatMap[A, B](fa: STM[A])(f: A => STM[B]): STM[B] = fa.flatMap(f)
 
-    override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] = STM { log =>
-      @tailrec
-      def step(a: A): TResult[B] = f(a).run(log) match {
-        case TSuccess(Left(a1)) => step(a1)
-        case TSuccess(Right(b)) => TSuccess(b)
-        case e @ TFailure(_)    => e
-        case TRetry             => TRetry
-      }
+    override def tailRecM[A, B](a: A)(f: A => STM[Either[A, B]]): STM[B] =
+      STM { log =>
+        @tailrec
+        def step(a: A): TResult[B] =
+          f(a).run(log) match {
+            case TSuccess(Left(a1)) => step(a1)
+            case TSuccess(Right(b)) => TSuccess(b)
+            case e @ TFailure(_)    => e
+            case TRetry             => TRetry
+          }
 
-      step(a)
-    }
+        step(a)
+      }
 
     override def pure[A](x: A): STM[A] = STM.pure(x)
 
@@ -132,48 +137,47 @@ object STM {
     override def combineK[A](x: STM[A], y: STM[A]): STM[A] = x.orElse(y)
   }
 
-  implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[STM[A]] = new Monoid[STM[A]] {
-    override def empty: STM[A] = STM.pure(M.empty)
+  implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[STM[A]] =
+    new Monoid[STM[A]] {
+      override def empty: STM[A] = STM.pure(M.empty)
 
-    override def combine(x: STM[A], y: STM[A]): STM[A] = STM { log =>
-      x.run(log) match {
-        case TSuccess(value1) =>
-          y.run(log) match {
-            case TSuccess(value2) => TSuccess(M.combine(value1, value2))
-            case r                => r
+      override def combine(x: STM[A], y: STM[A]): STM[A] =
+        STM { log =>
+          x.run(log) match {
+            case TSuccess(value1) =>
+              y.run(log) match {
+                case TSuccess(value2) => TSuccess(M.combine(value1, value2))
+                case r                => r
+              }
+            case r => r
           }
-        case r => r
-      }
+        }
     }
-  }
 
   final class AtomicallyPartiallyApplied[F[_]] {
     def apply[A](stm: STM[A])(implicit F: Async[F]): F[A] =
       F.async { (cb: (Either[Throwable, A] => Unit)) =>
-        def attempt: Pending = () => {
-          val txId                         = IdGen.incrementAndGet
-          var result: Either[Throwable, A] = null
-          val log                          = TLog.empty
-          STM.synchronized {
-            try {
-              stm.run(log) match {
-                case TSuccess(value) => {
-                  for (entry <- log.values) {
+        def attempt: Pending =
+          () => {
+            val txId                         = IdGen.incrementAndGet
+            var result: Either[Throwable, A] = null
+            val log                          = TLog.empty
+            STM.synchronized {
+              try stm.run(log) match {
+                case TSuccess(value) =>
+                  for (entry <- log.values)
                     entry.commit
-                  }
                   result = Right(value)
                   collectPending(log)
                   rerunPending
-                }
                 case TFailure(error) => result = Left(error)
                 case TRetry          => registerPending(txId, attempt, log)
+              } catch {
+                case e: Throwable => result = Left(e)
               }
-            } catch {
-              case e: Throwable => result = Left(e)
             }
+            if (result != null) cb(result)
           }
-          if (result != null) cb(result)
-        }
 
         attempt()
       }
@@ -181,9 +185,8 @@ object STM {
     private def registerPending(txId: TxId, pending: Pending, log: TLog): Unit = {
       //TODO could replace this with an onComplete callback instead of passing etvars everywhere
       val txn = Txn(txId, pending, log.values.map(entry => ETVar(entry.tvar)).toSet)
-      for (entry <- log.values) {
+      for (entry <- log.values)
         entry.tvar.pending.updateAndGet(asJavaUnaryOperator(m => m + (txId -> txn)))
-      }
     }
 
     private def collectPending(log: TLog): Unit = {
@@ -191,15 +194,13 @@ object STM {
       for (entry <- log.values) {
         val updated = entry.tvar.pending.getAndSet(Map())
         for ((k, v) <- updated) {
-          for (e <- v.tvs) {
+          for (e <- v.tvs)
             e.tv.pending.getAndUpdate(asJavaUnaryOperator(m => m - k))
-          }
           pending = pending + (k -> v)
         }
       }
-      for (p <- pending.values) {
+      for (p <- pending.values)
         pendingQueue = pendingQueue.enqueue(p)
-      }
 
     }
 
@@ -230,13 +231,13 @@ object STM {
         val snapshot: Map[TxId, Any] = map.toMap.map {
           case (id, e) => id -> e.current
         }
-        () => {
-          for (pair <- map) {
-            if (snapshot contains (pair._1)) {
+        () =>
+          for (pair <- map)
+            if (snapshot contains (pair._1))
               //The entry was already modified at
               //some point in the transaction
               pair._2.unsafeSet(snapshot(pair._1))
-            } else {
+            else
               //The entry was introduced in the attempted
               //part of the transaction that we are now
               //reverting so we reset to the initial
@@ -247,9 +248,6 @@ object STM {
               //pending transactions for this tvar if
               //the whole transaction fails.
               pair._2.reset
-            }
-          }
-        }
       }
 
     }
@@ -271,10 +269,11 @@ object STM {
     }
 
     object ETVar {
-      def apply[A](t: TVar[A]): ETVar = new ETVar {
-        override type Repr = A
-        override val tv = t
-      }
+      def apply[A](t: TVar[A]): ETVar =
+        new ETVar {
+          override type Repr = A
+          override val tv = t
+        }
     }
 
     abstract class TLogEntry {
@@ -295,12 +294,13 @@ object STM {
 
     object TLogEntry {
 
-      def apply[A](tvar0: TVar[A], current0: A): TLogEntry = new TLogEntry {
-        override type Repr = A
-        override var current: A    = current0
-        override val initial: A    = tvar0.value
-        override val tvar: TVar[A] = tvar0
-      }
+      def apply[A](tvar0: TVar[A], current0: A): TLogEntry =
+        new TLogEntry {
+          override type Repr = A
+          override var current: A    = current0
+          override val initial: A    = tvar0.value
+          override val tvar: TVar[A] = tvar0
+        }
 
     }
 

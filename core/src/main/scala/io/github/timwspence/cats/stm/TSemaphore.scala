@@ -16,10 +16,11 @@ final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
     * Acquire a permit. Retries if no permits are
     * available.
     */
-  def acquire: STM[Unit] = tvar.get.flatMap {
-    case 0 => STM.retry
-    case _ => tvar.modify(_ - 1)
-  }
+  def acquire: STM[Unit] =
+    tvar.get.flatMap {
+      case 0 => STM.retry
+      case _ => tvar.modify(_ - 1)
+    }
 
   /**
     * Release a currently held permit.

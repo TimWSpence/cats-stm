@@ -2,7 +2,7 @@ package io.github.timwspence.cats.stm
 
 import cats.effect.{ContextShift, IO, Timer}
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite 
+import org.scalatest.funsuite.AsyncFunSuite
 
 import scala.concurrent.ExecutionContext
 
@@ -19,9 +19,7 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe "hello"
-    }
+    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
   }
 
   test("Set changes current value") {
@@ -44,9 +42,7 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe "HELLO"
-    }
+    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "HELLO"
   }
 
   test("Pending transaction is removed on success") {

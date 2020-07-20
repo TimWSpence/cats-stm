@@ -20,29 +20,32 @@ final class TVar[A] private[stm] (
     * Get the current value as an
     * `STM` action.
     */
-  def get: STM[A] = STM { log =>
-    val entry = getOrInsert(log)
-    TSuccess(entry.unsafeGet[A])
-  }
+  def get: STM[A] =
+    STM { log =>
+      val entry = getOrInsert(log)
+      TSuccess(entry.unsafeGet[A])
+    }
 
   /**
     * Set the current value as an
     * `STM` action.
     */
-  def set(a: A): STM[Unit] = STM { log =>
-    val entry = getOrInsert(log)
-    TSuccess(entry.unsafeSet(a))
-  }
+  def set(a: A): STM[Unit] =
+    STM { log =>
+      val entry = getOrInsert(log)
+      TSuccess(entry.unsafeSet(a))
+    }
 
   /**
     * Modify the current value as an
     * `STM` action.
     */
-  def modify(f: A => A): STM[Unit] = STM { log =>
-    val entry   = getOrInsert(log)
-    val updated = f(entry.unsafeGet[A])
-    TSuccess(entry.unsafeSet(updated))
-  }
+  def modify(f: A => A): STM[Unit] =
+    STM { log =>
+      val entry   = getOrInsert(log)
+      val updated = f(entry.unsafeGet[A])
+      TSuccess(entry.unsafeSet(updated))
+    }
 
   private def getOrInsert(log: TLog): TLogEntry =
     if (log.contains(id))
@@ -57,9 +60,10 @@ final class TVar[A] private[stm] (
 
 object TVar {
 
-  def of[A](value: A): STM[TVar[A]] = STM { _ =>
-    val id = IdGen.incrementAndGet
-    TSuccess(new TVar(id, value, new AtomicReference(Map())))
-  }
+  def of[A](value: A): STM[TVar[A]] =
+    STM { _ =>
+      val id = IdGen.incrementAndGet
+      TSuccess(new TVar(id, value, new AtomicReference(Map())))
+    }
 
 }

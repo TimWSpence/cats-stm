@@ -52,21 +52,23 @@ object SantaClausProblem extends IOApp {
     def await: STM[(Gate, Gate)] = Group.await(this)
   }
   object Group {
-    def of(n: Int): IO[Group] = STM.atomically[IO] {
-      for {
-        g1 <- Gate.of(n)
-        g2 <- Gate.of(n)
-        tv <- TVar.of((n, g1, g2))
-      } yield new Group(n, tv) {}
-    }
+    def of(n: Int): IO[Group] =
+      STM.atomically[IO] {
+        for {
+          g1 <- Gate.of(n)
+          g2 <- Gate.of(n)
+          tv <- TVar.of((n, g1, g2))
+        } yield new Group(n, tv) {}
+      }
 
-    def join(g: Group): IO[(Gate, Gate)] = STM.atomically[IO] {
-      for {
-        (nLeft, g1, g2) <- g.tv.get
-        _               <- STM.check(nLeft > 0)
-        _               <- g.tv.set((nLeft - 1, g1, g2))
-      } yield (g1, g2)
-    }
+    def join(g: Group): IO[(Gate, Gate)] =
+      STM.atomically[IO] {
+        for {
+          (nLeft, g1, g2) <- g.tv.get
+          _               <- STM.check(nLeft > 0)
+          _               <- g.tv.set((nLeft - 1, g1, g2))
+        } yield (g1, g2)
+      }
     def await(g: Group): STM[(Gate, Gate)] =
       for {
         (nLeft, g1, g2) <- g.tv.get
@@ -100,12 +102,13 @@ object SantaClausProblem extends IOApp {
     (reindeer2(g, i) >> randomDelay).foreverM.start
 
   def choose[A](choices: NonEmptyList[(STM[A], A => IO[Unit])]): IO[Unit] = {
-    def actions: NonEmptyList[STM[IO[Unit]]] = choices.map {
-      case (guard, rhs) =>
-        for {
-          value <- guard
-        } yield rhs(value)
-    }
+    def actions: NonEmptyList[STM[IO[Unit]]] =
+      choices.map {
+        case (guard, rhs) =>
+          for {
+            value <- guard
+          } yield rhs(value)
+      }
     for {
       act <- STM.atomically[IO](actions.reduceLeft(_.orElse(_)))
       _   <- act
