@@ -2,11 +2,8 @@ package io.github.timwspence.cats.stm
 
 import cats._
 import cats.implicits._
-import cats.effect._
 import cats.kernel.laws.discipline._
 import cats.laws.discipline._
-import cats.laws.discipline.eq._
-import cats.laws.discipline.arbitrary._
 
 import io.github.timwspence.cats.stm.STM.internal.{TFailure, TLog, TResult, TRetry, TSuccess}
 

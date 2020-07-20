@@ -1,6 +1,6 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, Fiber, IO, Timer}
+import cats.effect.{ContextShift, IO, Timer}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AsyncFunSuite
 
@@ -35,26 +35,6 @@ class SequentialTests extends AsyncFunSuite with Matchers {
     for (_ <- prog.unsafeToFuture) yield {
       from.value shouldBe 0
       to.value shouldBe 100
-    }
-  }
-
-  test("Whole transaction is aborted if exception is thrown") {
-    val from = TVar.of(100).commit[IO].unsafeRunSync
-    val to   = TVar.of(0).commit[IO].unsafeRunSync
-
-    val prog = for {
-      _ <- STM.atomically[IO] {
-        for {
-          balance <- from.get
-          _       <- from.modify(_ - balance)
-          _       <- to.modify(throw new RuntimeException("Boom"))
-        } yield ()
-      }
-    } yield ()
-
-    for (_ <- prog.attempt.unsafeToFuture) yield {
-      from.value shouldBe 100
-      to.value shouldBe 0
     }
   }
 

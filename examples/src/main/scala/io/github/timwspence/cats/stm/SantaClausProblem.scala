@@ -4,7 +4,6 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.global
 
 object SantaClausProblem extends IOApp {
 
