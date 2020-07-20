@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
   organization := "io.github.timwspence",
   organizationName := "timwspence",
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.2",
   crossScalaVersions := Seq("2.11.12", "2.12.10", scalaVersion.value),
   scalacOptions ++= Seq(
     "-deprecation",

@@ -166,7 +166,7 @@ object STM {
               try stm.run(log) match {
                 case TSuccess(value) =>
                   for (entry <- log.values)
-                    entry.commit
+                    entry.commit()
                   result = Right(value)
                   collectPending(log)
                   rerunPending
@@ -247,7 +247,7 @@ object STM {
               //executing transaction to the set of
               //pending transactions for this tvar if
               //the whole transaction fails.
-              pair._2.reset
+              pair._2.reset()
       }
 
     }
@@ -286,9 +286,9 @@ object STM {
 
       def unsafeSet[A](a: A): Unit = current = a.asInstanceOf[Repr]
 
-      def commit: Unit = tvar.value = current
+      def commit(): Unit = tvar.value = current
 
-      def reset: Unit = current = initial
+      def reset(): Unit = current = initial
 
     }
 
