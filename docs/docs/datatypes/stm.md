@@ -18,7 +18,7 @@ import io.github.timwspence.cats.stm.{STM, TVar}
 val prog: IO[(Int, Int)] = for {
   to   <- TVar.of(0).commit[IO]
   from <- TVar.of(100).commit[IO]
-  txn  <- STM.atomically[IO] {
+  _  <- STM.atomically[IO] {
     for {
       balance <- from.get
       _       <- from.modify(_ - balance)
@@ -99,7 +99,6 @@ Transactions can be aborted via `STM.abort`:
 
 ```scala mdoc:reset
 import cats.effect.IO
-import cats.syntax.flatMap._
 import io.github.timwspence.cats.stm.{STM, TVar}
 
 val to   = TVar.of(1).commit[IO].unsafeRunSync

@@ -11,8 +11,6 @@ A convenience implementation of a semaphore in the `STM` monad, built on top of
 
 ```scala mdoc
 import cats.effect.IO
-import cats.syntax.semigroup._
-import cats.instances.string._
 
 import io.github.timwspence.cats.stm.{STM, TSemaphore}
 

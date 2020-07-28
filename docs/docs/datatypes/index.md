@@ -23,8 +23,8 @@ case class Account(private var balance: Long) {
 def transfer(from: Account, to: Account, amount: Long): Unit = {
   from.synchronized {
     to.synchronized {
-      from.modify(_ - 100)
-      to.modify(_ + 100)
+      from.modify(_ - amount)
+      to.modify(_ + amount)
     }
   }
 }
