@@ -4,7 +4,7 @@ enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "2.0.0"
 val CatsEffectVersion = "2.0.0"
-val DisciplineVersion = "1.0.0"
+val DisciplineVersion = "0.2.3"
 val ScalaTestVersion = "3.2.0"
 val ScalaCheckVersion = "1.14.3"
 val MunitVersion = "0.7.11"
@@ -51,7 +51,7 @@ lazy val commonSettings = Seq(
   organizationName := "timwspence",
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
   scalaVersion := "2.13.2",
-  crossScalaVersions := Seq("2.11.12", "2.12.10", scalaVersion.value),
+  crossScalaVersions := Seq("2.12.10", scalaVersion.value),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
@@ -66,9 +66,7 @@ lazy val commonSettings = Seq(
     "org.scala-lang.modules"     %% "scala-java8-compat"        % ScalaJava8CompatVersion,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
     "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
-    "org.typelevel"              %% "discipline-scalatest"      % DisciplineVersion % Test,
-    //TODO migrate laws tests away from scalatest and remove this
-    "org.scalatest"              %% "scalatest"                 % ScalaTestVersion % Test,
+    "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
