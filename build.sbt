@@ -7,7 +7,9 @@ val CatsEffectVersion = "2.0.0"
 val DisciplineVersion = "1.0.0"
 val ScalaTestVersion = "3.2.0"
 val ScalaCheckVersion = "1.14.3"
-val ScalaTestPlusScalaCheck = "3.1.0.0-RC2"
+val MunitVersion = "0.7.11"
+val MunitCatsEffectVersion = "0.1.0"
+val ScalacheckEffectVersion = "0.0.3"
 val ScalaJava8CompatVersion = "0.9.1"
 
 lazy val `cats-stm` = project.in(file("."))
@@ -23,6 +25,7 @@ lazy val core = project.in(file("core"))
   .settings(
     name := "cats-stm",
   )
+  .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(initialCommands in console := """
     import cats._
     import cats.implicits._
@@ -66,7 +69,9 @@ lazy val commonSettings = Seq(
     "org.typelevel"              %% "discipline-scalatest"      % DisciplineVersion % Test,
     "org.scalatest"              %% "scalatest"                 % ScalaTestVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
-    "org.scalatestplus"          %% "scalatestplus-scalacheck"  % ScalaTestPlusScalaCheck % Test,
+    "org.scalameta"              %% "munit"                     % MunitVersion % Test,
+    "org.typelevel"              %% "scalacheck-effect"         % ScalacheckEffectVersion % Test,
+    "org.typelevel"              %% "munit-cats-effect"         % MunitCatsEffectVersion % Test
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),

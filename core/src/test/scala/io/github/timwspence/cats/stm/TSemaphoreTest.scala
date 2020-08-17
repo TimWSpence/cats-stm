@@ -1,17 +1,10 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite
+import cats.effect.IO
 
-import scala.concurrent.ExecutionContext
+import munit.CatsEffectSuite
 
-class TSemaphoreTest extends AsyncFunSuite with Matchers {
-  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+class TSemaphoreTest extends CatsEffectSuite {
 
   test("Acquire decrements the number of permits") {
     val prog: STM[Long] = for {
@@ -20,7 +13,7 @@ class TSemaphoreTest extends AsyncFunSuite with Matchers {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe 0
+    for (value <- prog.commit[IO]) yield assertEquals(value, 0L)
   }
 
   test("Release increments the number of permits") {
@@ -30,7 +23,7 @@ class TSemaphoreTest extends AsyncFunSuite with Matchers {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe 1
+    for (value <- prog.commit[IO]) yield assertEquals(value, 1L)
   }
 
 }

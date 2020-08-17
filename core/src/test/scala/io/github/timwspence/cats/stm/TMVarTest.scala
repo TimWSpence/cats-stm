@@ -1,17 +1,10 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite
+import cats.effect.IO
 
-import scala.concurrent.ExecutionContext
+import munit.CatsEffectSuite
 
-class TMVarTest extends AsyncFunSuite with Matchers {
-  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+class TMVarTest extends CatsEffectSuite {
 
   test("Read returns current value when not empty") {
     val prog: STM[String] = for {
@@ -19,7 +12,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       value <- tmvar.read
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
   }
 
   test("Read does not modify value when not empty") {
@@ -29,7 +22,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       value <- tmvar.read
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
   }
 
   test("Take returns current value when not empty") {
@@ -38,7 +31,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       value <- tmvar.take
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
   }
 
   test("Take empties tmvar when not empty") {
@@ -48,7 +41,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe true
+    for (value <- prog.commit[IO]) yield assert(value)
   }
 
   test("Put stores a value when empty") {
@@ -58,7 +51,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       value <- tmvar.take
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
   }
 
   test("TryPut returns true when empty") {
@@ -67,7 +60,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       result <- tmvar.tryPut("hello")
     } yield result
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe true
+    for (value <- prog.commit[IO]) yield assert(value)
   }
 
   test("TryPut returns false when not empty") {
@@ -76,7 +69,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       result <- tmvar.tryPut("hello")
     } yield result
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe false
+    for (value <- prog.commit[IO]) yield assert(!value)
   }
 
   test("IsEmpty is false when not empty") {
@@ -85,7 +78,7 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe false
+    for (value <- prog.commit[IO]) yield assert(!value)
   }
 
   test("IsEmpty is true when empty") {
@@ -94,6 +87,6 @@ class TMVarTest extends AsyncFunSuite with Matchers {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe true
+    for (value <- prog.commit[IO]) yield assert(value)
   }
 }
