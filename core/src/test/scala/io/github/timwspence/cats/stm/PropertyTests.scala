@@ -4,7 +4,9 @@ import cats.implicits._
 
 import cats.effect.IO
 
-import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
+//TODO replace this with ScalaCheckEffectSuite and remove the `.check()`
+//once it is released
+import munit.{CatsEffectSuite, ScalaCheckSuite}
 
 import org.scalacheck.effect.PropF
 
@@ -19,7 +21,7 @@ import scala.util.Random
   * adds the same amount to another tvar. The sum of the tvar values
   * should be invariant under the execution of all these transactions.
   */
-class MaintainsInvariants extends ScalaCheckEffectSuite with CatsEffectSuite {
+class MaintainsInvariants extends CatsEffectSuite with ScalaCheckSuite {
 
   val tvarGen: Gen[TVar[Long]] = for {
     value <- Gen.posNum[Long]
@@ -46,15 +48,17 @@ class MaintainsInvariants extends ScalaCheckEffectSuite with CatsEffectSuite {
   } yield (total, tvars, run)
 
   test("Transactions maintain invariants") {
-    PropF.forAllF(gen) { g =>
-      val total = g._1
-      val tvars = g._2
-      val txn   = g._3
+    PropF
+      .forAllF(gen) { g =>
+        val total = g._1
+        val tvars = g._2
+        val txn   = g._3
 
-      txn.map { _ =>
-        assertEquals(tvars.map(_.value).sum, total)
+        txn.map { _ =>
+          assertEquals(tvars.map(_.value).sum, total)
+        }
       }
-    }
+      .check()
   }
 
 }

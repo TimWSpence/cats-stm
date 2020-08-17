@@ -67,9 +67,11 @@ lazy val commonSettings = Seq(
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
     "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
     "org.typelevel"              %% "discipline-scalatest"      % DisciplineVersion % Test,
+    //TODO migrate laws tests away from scalatest and remove this
     "org.scalatest"              %% "scalatest"                 % ScalaTestVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
+    "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
     "org.typelevel"              %% "scalacheck-effect"         % ScalacheckEffectVersion % Test,
     "org.typelevel"              %% "munit-cats-effect"         % MunitCatsEffectVersion % Test
   ),
