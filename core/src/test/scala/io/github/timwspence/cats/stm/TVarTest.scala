@@ -1,17 +1,10 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite
+import cats.effect.IO
 
-import scala.concurrent.ExecutionContext
+import munit.CatsEffectSuite
 
-class TVarTest extends AsyncFunSuite with Matchers {
-  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+class TVarTest extends CatsEffectSuite {
 
   test("Get returns current value") {
     val prog: STM[String] = for {
@@ -19,7 +12,7 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "hello"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
   }
 
   test("Set changes current value") {
@@ -29,10 +22,7 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe "world"
-      value shouldBe "world"
-    }
+    for (value <- prog.commit[IO]) yield assertEquals(value, "world")
   }
 
   test("Modify changes current value") {
@@ -42,7 +32,7 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "HELLO"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "HELLO")
   }
 
   test("Pending transaction is removed on success") {
@@ -53,11 +43,11 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value shouldBe "FOO"
+    for (value <- prog.commit[IO]) yield {
+      assertEquals(value, "FOO")
 
-      tvar.value shouldBe "FOO"
-      tvar.pending.get.isEmpty shouldBe true
+      assertEquals(tvar.value, "FOO")
+      assert(tvar.pending.get.isEmpty)
     }
   }
 
@@ -70,10 +60,10 @@ class TVarTest extends AsyncFunSuite with Matchers {
       value <- tvar.get
     } yield value
 
-    for (_ <- prog.commit[IO].attempt.unsafeToFuture) yield {
-      tvar.value shouldBe "foo"
+    for (_ <- prog.commit[IO].attempt) yield {
+      assertEquals(tvar.value, "foo")
 
-      tvar.pending.get.isEmpty shouldBe true
+      assert(tvar.pending.get.isEmpty)
     }
   }
 }

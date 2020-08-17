@@ -7,11 +7,9 @@ import cats.laws.discipline._
 
 import io.github.timwspence.cats.stm.STM.internal.{TFailure, TLog, TResult, TRetry, TSuccess}
 
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.prop.Configuration
+import munit.DisciplineSuite
 
-import org.typelevel.discipline.scalatest.FunSuiteDiscipline
+import org.scalacheck.{Arbitrary, Gen}
 
 import Implicits._
 
@@ -49,7 +47,7 @@ object Implicits {
 
 }
 
-class STMLaws extends AnyFunSuite with FunSuiteDiscipline with Configuration {
+class STMLaws extends DisciplineSuite {
   checkAll("STM[Int]", SemigroupTests[STM[Int]].semigroup)
 
   checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)

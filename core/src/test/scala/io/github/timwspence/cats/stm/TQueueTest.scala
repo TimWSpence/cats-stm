@@ -1,19 +1,12 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
-import cats.instances.string._
-import cats.syntax.semigroup._
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite
+import cats.implicits._
 
-import scala.concurrent.ExecutionContext
+import cats.effect.IO
 
-class TQueueTest extends AsyncFunSuite with Matchers {
-  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+import munit.CatsEffectSuite
 
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+class TQueueTest extends CatsEffectSuite {
 
   test("Read removes the first element") {
     val prog: STM[(String, Boolean)] = for {
@@ -23,9 +16,9 @@ class TQueueTest extends AsyncFunSuite with Matchers {
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value._1 shouldBe "hello"
-      value._2 shouldBe true
+    for (value <- prog.commit[IO]) yield {
+      assertEquals(value._1, "hello")
+      assert(value._2)
     }
   }
 
@@ -37,9 +30,9 @@ class TQueueTest extends AsyncFunSuite with Matchers {
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield {
-      value._1 shouldBe "hello"
-      value._2 shouldBe false
+    for (value <- prog.commit[IO]) yield {
+      assertEquals(value._1, "hello")
+      assert(!value._2)
     }
   }
 
@@ -52,7 +45,7 @@ class TQueueTest extends AsyncFunSuite with Matchers {
       world  <- tqueue.peek
     } yield hello |+| world
 
-    for (value <- prog.commit[IO].unsafeToFuture) yield value shouldBe "helloworld"
+    for (value <- prog.commit[IO]) yield assertEquals(value, "helloworld")
   }
 
 }

@@ -1,22 +1,16 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.{ContextShift, IO, Timer}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AsyncFunSuite
+import cats.effect.{IO, Timer}
 
-import scala.concurrent.ExecutionContext
+import munit.CatsEffectSuite
+
 import scala.concurrent.duration._
 
 /**
   * Basic tests for correctness in the absence of
   * (most) concurrency
   */
-class SequentialTests extends AsyncFunSuite with Matchers {
-  implicit override val executionContext: ExecutionContext = ExecutionContext.Implicits.global
-
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+class SequentialTests extends CatsEffectSuite {
 
   test("Basic transaction is executed") {
     val from = TVar.of(100).commit[IO].unsafeRunSync
@@ -32,9 +26,9 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      from.value shouldBe 0
-      to.value shouldBe 100
+    for (_ <- prog) yield {
+      assertEquals(from.value, 0)
+      assertEquals(to.value, 100)
     }
   }
 
@@ -52,9 +46,9 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for (_ <- prog.attempt.unsafeToFuture) yield {
-      from.value shouldBe 100
-      to.value shouldBe 0
+    for (_ <- prog.attempt) yield {
+      assertEquals(from.value, 100)
+      assertEquals(to.value, 0)
     }
   }
 
@@ -78,10 +72,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for (_ <- prog.attempt.unsafeToFuture) yield {
-      from.value shouldBe 1
-      to.value shouldBe 100
-      checkCounter should be > 1
+    for (_ <- prog.attempt) yield {
+      assertEquals(from.value, 1)
+      assertEquals(to.value, 100)
+      assert(checkCounter > 1)
     }
   }
 
@@ -104,7 +98,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield account.value shouldBe 50
+    for (_ <- prog) yield assertEquals(account.value, 50)
   }
 
   test("OrElse reverts changes if retrying") {
@@ -125,7 +119,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _ <- first.orElse(second).commit[IO]
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield account.value shouldBe 50
+    for (_ <- prog) yield assertEquals(account.value, 50)
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
@@ -151,9 +145,9 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       }
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      account.value shouldBe 50
-      other.value shouldBe 100
+    for (_ <- prog) yield {
+      assertEquals(account.value, 50)
+      assertEquals(other.value, 100)
     }
   }
 
@@ -178,10 +172,10 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _     <- fiber.join
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield {
-      tvar.value shouldBe 2
+    for (_ <- prog) yield {
+      assertEquals(tvar.value, 2L)
 
-      tvar.pending.get.isEmpty shouldBe true
+      assert(tvar.pending.get.isEmpty)
     }
   }
 
@@ -219,7 +213,7 @@ class SequentialTests extends AsyncFunSuite with Matchers {
       _     <- fiber.join
     } yield ()
 
-    for (_ <- prog.unsafeToFuture) yield tvar.value shouldBe 2
+    for (_ <- prog) yield assertEquals(tvar.value, 2L)
   }
 
 }
