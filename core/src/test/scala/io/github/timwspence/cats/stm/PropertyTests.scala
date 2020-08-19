@@ -59,6 +59,12 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckSuite {
         }
       }
       .check()
+      .map { res =>
+        //Remove this when
+        //https://github.com/typelevel/scalacheck-effect/blob/main/munit/shared/src/main/scala/munit/ScalaCheckEffectSuite.scala
+        //is released
+        assert(res.passed)
+      }
   }
 
 }
