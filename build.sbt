@@ -8,7 +8,7 @@ val DisciplineVersion = "0.2.4"
 val ScalaCheckVersion = "1.14.3"
 val MunitVersion = "0.7.11"
 val MunitCatsEffectVersion = "0.3.0"
-val ScalacheckEffectVersion = "0.0.3"
+val ScalacheckEffectVersion = "0.1.0"
 val ScalaJava8CompatVersion = "0.9.1"
 
 lazy val `cats-stm` = project.in(file("."))
