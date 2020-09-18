@@ -69,7 +69,7 @@ lazy val commonSettings = Seq(
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
-    "org.typelevel"              %% "scalacheck-effect"         % ScalacheckEffectVersion % Test,
+    "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
     "org.typelevel"              %% "munit-cats-effect"         % MunitCatsEffectVersion % Test
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
