@@ -1,5 +1,6 @@
 package io.github.timwspence.cats.stm
 
+import cats.implicits._
 import cats.effect.{IO, Timer}
 
 import munit.CatsEffectSuite
@@ -214,6 +215,31 @@ class SequentialTests extends CatsEffectSuite {
     } yield ()
 
     for (_ <- prog) yield assertEquals(tvar.value, 2L)
+  }
+
+  test("stack-safe construction") {
+    val tvar = TVar.of(0L).commit[IO].unsafeRunSync
+
+    IO.pure(
+      1.to(10000).foldLeft(STM.unit) { (prog, _) =>
+        prog >> tvar.modify(_ + 1)
+      }
+    )
+
+  }
+
+  test("stack-safe evaluation") {
+    val tvar = TVar.of(0).commit[IO].unsafeRunSync
+    val iterations = 100000
+
+    STM.atomically[IO](
+      1.to(iterations).foldLeft(STM.unit) { (prog, _) =>
+        prog >> tvar.modify(_ + 1)
+      } >> tvar.get
+    ).map { res =>
+      assertEquals(res, iterations)
+    }
+
   }
 
 }
