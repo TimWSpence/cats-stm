@@ -27,8 +27,8 @@ object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     for {
-      accountForTim   <- TVar.of[Long](100).commit[IO]
-      accountForSteve <- TVar.of[Long](0).commit[IO]
+      accountForTim   <- TVar.of[Long](100).atomically[IO]
+      accountForSteve <- TVar.of[Long](0).atomically[IO]
       _               <- printBalances(accountForTim, accountForSteve)
       _               <- giveTimMoreMoney(accountForTim).start
       _               <- transfer(accountForTim, accountForSteve)

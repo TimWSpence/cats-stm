@@ -27,5 +27,5 @@ val txn: STM[String] = for {
   world     <- tmvar.read           //Would block if empty.
 } yield hello |+| world
 
-val result = txn.commit[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync
 ```

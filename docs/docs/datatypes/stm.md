@@ -16,8 +16,8 @@ import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
 val prog: IO[(Int, Int)] = for {
-  to   <- TVar.of(0).commit[IO]
-  from <- TVar.of(100).commit[IO]
+  to   <- TVar.of(0).atomically[IO]
+  from <- TVar.of(100).atomically[IO]
   _  <- STM.atomically[IO] {
     for {
       balance <- from.get
@@ -25,8 +25,8 @@ val prog: IO[(Int, Int)] = for {
       _       <- to.modify(_ + balance)
     } yield ()
   }
-  t   <- to.get.commit[IO]
-  f   <- from.get.commit[IO]
+  t   <- to.get.atomically[IO]
+  f   <- from.get.atomically[IO]
 } yield f -> t
 
 val result = prog.unsafeRunSync
@@ -41,8 +41,8 @@ val result = prog.unsafeRunSync
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.of(1).commit[IO].unsafeRunSync
-val from = TVar.of(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync
+val from = TVar.of(0).atomically[IO].unsafeRunSync
 
 val txn: IO[Unit]  = STM.atomically[IO] {
   for {
@@ -68,8 +68,8 @@ alternative action if the first retries:
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.of(1).commit[IO].unsafeRunSync
-val from = TVar.of(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync
+val from = TVar.of(0).atomically[IO].unsafeRunSync
 
 val transferHundred: STM[Unit] = for {
   b <- from.get
@@ -90,7 +90,7 @@ val txn  = for {
   t    <- to.get
 } yield f -> t
 
-val result = txn.commit[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync
 ```
 
 ### Aborting
@@ -101,8 +101,8 @@ Transactions can be aborted via `STM.abort`:
 import cats.effect.IO
 import io.github.timwspence.cats.stm.{STM, TVar}
 
-val to   = TVar.of(1).commit[IO].unsafeRunSync
-val from = TVar.of(0).commit[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync
+val from = TVar.of(0).atomically[IO].unsafeRunSync
 
 val txn  = for {
   balance <- from.get
@@ -114,7 +114,7 @@ val txn  = for {
   _ <- to.modify(_ + 100)
 } yield ()
 
-val result = txn.commit[IO].attempt.unsafeRunSync
+val result = txn.atomically[IO].attempt.unsafeRunSync
 ```
 
 Note that aborting a transaction will not modify any of the `TVar`s involved.

@@ -13,7 +13,7 @@ class TSemaphoreTest extends CatsEffectSuite {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, 0L)
+    for (value <- prog.atomically[IO]) yield assertEquals(value, 0L)
   }
 
   test("Release increments the number of permits") {
@@ -23,7 +23,7 @@ class TSemaphoreTest extends CatsEffectSuite {
       value <- tsem.available
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, 1L)
+    for (value <- prog.atomically[IO]) yield assertEquals(value, 1L)
   }
 
 }

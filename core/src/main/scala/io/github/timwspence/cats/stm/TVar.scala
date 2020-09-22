@@ -13,57 +13,43 @@ import io.github.timwspence.cats.stm.STM.internal._
 final class TVar[A] private[stm] (
   private[stm] val id: Long,
   @volatile private[stm] var value: A,
-  private[stm] val pending: AtomicReference[Map[TxId, Txn]]
+  private[stm] val pending: AtomicReference[Map[TxId, RetryFiber]]
 ) {
 
   /**
     * Get the current value as an
     * `STM` action.
     */
-  def get: STM[A] =
-    STM { log =>
-      val entry = getOrInsert(log)
-      TSuccess(entry.unsafeGet[A])
-    }
+  def get: STM[A] = Get(this)
 
   /**
     * Set the current value as an
     * `STM` action.
     */
-  def set(a: A): STM[Unit] =
-    STM { log =>
-      val entry = getOrInsert(log)
-      TSuccess(entry.unsafeSet(a))
-    }
+  def set(a: A): STM[Unit] = modify(_ => a)
 
   /**
     * Modify the current value as an
     * `STM` action.
     */
-  def modify(f: A => A): STM[Unit] =
-    STM { log =>
-      val entry   = getOrInsert(log)
-      val updated = f(entry.unsafeGet[A])
-      TSuccess(entry.unsafeSet(updated))
-    }
+  def modify(f: A => A): STM[Unit] = Modify(this, f)
 
-  private def getOrInsert(log: TLog): TLogEntry =
-    if (log.contains(id))
-      log(id)
-    else {
-      val entry = TLogEntry(this, value)
-      log += id -> entry
-      entry
-    }
+  private[stm] def registerRetry(txId: TxId, fiber: RetryFiber): Unit = {
+    pending.updateAndGet(m => m + (txId -> fiber))
+    ()
+  }
+
+  private[stm] def unregisterRetry(txId: TxId): Unit = {
+    pending.updateAndGet(m => m - txId)
+    ()
+  }
+
+  private[stm] def unregisterAll(): Map[TxId, RetryFiber] = pending.getAndSet(Map.empty)
 
 }
 
 object TVar {
 
-  def of[A](value: A): STM[TVar[A]] =
-    STM { _ =>
-      val id = IdGen.incrementAndGet
-      TSuccess(new TVar(id, value, new AtomicReference(Map())))
-    }
+  def of[A](value: A): STM[TVar[A]] = Alloc(value)
 
 }

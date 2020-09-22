@@ -28,8 +28,8 @@ object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     for {
-      accountForTim   <- TVar.of[Long](100).commit[IO]
-      accountForSteve <- TVar.of[Long](0).commit[IO]
+      accountForTim   <- TVar.of[Long](100).atomically[IO]
+      accountForSteve <- TVar.of[Long](0).atomically[IO]
       _               <- printBalances(accountForTim, accountForSteve)
       _               <- giveTimMoreMoney(accountForTim).start
       _               <- transfer(accountForTim, accountForSteve)
@@ -73,7 +73,3 @@ can generate it via `sbt docs/makeMicrosite`. You can view it locally via `cd do
 ### Credits
 
 This software was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and informed by ZIO which has a common origin in that paper via the [stm package](http://hackage.haskell.org/package/stm).
-
-## Tool Sponsorship
-
-<img width="185px" height="44px" align="right" src="https://www.yourkit.com/images/yklogo.png"/>Development of Cats STM is generously supported in part by [YourKit](https://www.yourkit.com) through the use of their excellent Java profiler.

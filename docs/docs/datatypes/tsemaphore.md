@@ -21,5 +21,5 @@ val txn: STM[Long] = for {
   _     <- tsem.release
 } yield zero
 
-val result = txn.commit[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync
 ```
