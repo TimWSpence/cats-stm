@@ -25,28 +25,29 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
     value <- Gen.posNum[Long]
   } yield TVar.of(value).atomically[IO].unsafeRunSync
 
-  def txnGen(count: TVar[Int]): List[TVar[Long]] => Gen[STM[Unit]] = tvars =>
-    for {
-      fromIdx <- Gen.choose(0, tvars.length - 1)
-      toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
-      txn <- for {
-        balance <- tvars(fromIdx).get
-        transfer = Math.abs(Random.nextLong()) % balance
-        _ <- tvars(fromIdx).modify(_ - transfer)
-        _ <- tvars(toIdx).modify(_ + transfer)
-      } yield ()
-      _ <- count.modify(_ + 1)
-    } yield txn
+  def txnGen(count: TVar[Int]): List[TVar[Long]] => Gen[STM[Unit]] =
+    tvars =>
+      for {
+        fromIdx <- Gen.choose(0, tvars.length - 1)
+        toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
+        txn <- for {
+          balance <- tvars(fromIdx).get
+          transfer = Math.abs(Random.nextLong()) % balance
+          _ <- tvars(fromIdx).modify(_ - transfer)
+          _ <- tvars(toIdx).modify(_ + transfer)
+        } yield ()
+        _ <- count.modify(_ + 1)
+      } yield txn
 
   val gen: Gen[(Long, List[TVar[Long]], IO[Unit], IO[(Int, Int)])] = for {
     tvars <- Gen.listOfN(50, tvarGen)
     count <- Gen.const(TVar.of(0).atomically[IO].unsafeRunSync)
     total = tvars.foldLeft(0L)((acc, tvar) => acc + tvar.value)
     txns <- Gen.listOf(txnGen(count)(tvars))
-    commit = txns.traverse(_.atomically[IO].start)
-    run    = commit.flatMap(l => l.traverse(_.join)).void
+    commit  = txns.traverse(_.atomically[IO].start)
+    run     = commit.flatMap(l => l.traverse(_.join)).void
     numTxns = txns.length
-    c  = count.get.atomically[IO].map((_, numTxns))
+    c       = count.get.atomically[IO].map((_, numTxns))
   } yield (total, tvars, run, c)
 
   test("Transactions maintain invariants") {

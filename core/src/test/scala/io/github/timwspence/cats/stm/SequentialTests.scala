@@ -88,16 +88,15 @@ class SequentialTests extends CatsEffectSuite {
       _       <- STM.check(current > 10)
     } yield current
 
-    val background: IO[Unit] = 1.to(11)
+    val background: IO[Unit] = 1
+      .to(11)
       .toList
-      .traverse_( _ =>
-        tvar.modify(_ + 1).atomically[IO] >> IO.sleep(100.millis)
-      )
+      .traverse_(_ => tvar.modify(_ + 1).atomically[IO] >> IO.sleep(100.millis))
 
     val prog = for {
       fiber <- background.start
-      res <- retry.atomically[IO]
-      _ <- fiber.join
+      res   <- retry.atomically[IO]
+      _     <- fiber.join
     } yield res
 
     prog.map { res =>
@@ -127,7 +126,6 @@ class SequentialTests extends CatsEffectSuite {
 
     for (_ <- prog) yield assertEquals(account.value, 50)
   }
-
 
   test("OrElse reverts changes if retrying") {
     val account = TVar.of(100).atomically[IO].unsafeRunSync
@@ -264,8 +262,8 @@ class SequentialTests extends CatsEffectSuite {
 
     val prog = for {
       fiber <- background.start
-      ret1     <- retry.start
-      ret2     <- retry.start
+      ret1  <- retry.start
+      ret2  <- retry.start
       _     <- fiber.join
       _     <- ret1.join
       _     <- ret2.join
