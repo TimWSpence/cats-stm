@@ -183,8 +183,6 @@ object STM {
 
   private[stm] object internal {
 
-    val debug: AtomicReference[Map[TxId, Set[TVarId]]] = new AtomicReference(Map.empty)
-
     //TODO this shouldn't be blocking with synchronized and requiring
     //another (blocking) threadpool
     def criticalSection[F[_]] =
@@ -242,7 +240,6 @@ object STM {
                   var pending: List[RetryFiber] = Nil
                   if (!log.isDirty) {
                     commit = true
-                    // println(s"committing fiber ${txId}")
                     log.commit()
                     pending = log.collectPending()
                   }
