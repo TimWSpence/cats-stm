@@ -45,8 +45,6 @@ sealed abstract class STM[+A] {
 
 }
 
-//TODO find non-thread blocking alternative to synchronized or else shift to
-//blocking pool for it
 object STM {
 
   val blocker: Blocker = Blocker.liftExecutorService(
@@ -187,6 +185,8 @@ object STM {
 
     val debug: AtomicReference[Map[TxId, Set[TVarId]]] = new AtomicReference(Map.empty)
 
+    //TODO this shouldn't be blocking with synchronized and requiring
+    //another (blocking) threadpool
     def criticalSection[F[_]] =
       new CriticialSectionPartiallyApplied[F]
 
@@ -359,19 +359,17 @@ object STM {
 
       def isDirty: Boolean = values.exists(_.isDirty)
 
-      def snapshot(): TLog = TLog(Map.from(map.view.mapValues(_.snapshot())))
+      def snapshot(): TLog = TLog(map.map { case (k, v) => k -> v.snapshot() }.toMap)
 
       //Use tlog as a base and add to it any tvars in the current log, but with their
       //current values reset to initial
       //tlog should already have been snapshotted
       def delta(tlog: TLog): TLog =
         TLog(
-          Map.from(
-            map.foldLeft(tlog.map) { (acc, p) =>
-              val (id, e) = p
-              if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.tvar, e.tvar.value))
-            }
-          )
+          map.foldLeft(tlog.map) { (acc, p) =>
+            val (id, e) = p
+            if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.tvar, e.tvar.value))
+          }
         )
 
       def commit(): Unit = values.foreach(_.commit())
