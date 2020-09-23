@@ -9,7 +9,6 @@ val ScalaCheckVersion = "1.14.3"
 val MunitVersion = "0.7.12"
 val MunitCatsEffectVersion = "0.3.0"
 val ScalacheckEffectVersion = "0.2.0"
-val ScalaJava8CompatVersion = "0.9.1"
 
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
@@ -62,7 +61,6 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
     "org.typelevel"              %% "cats-core"                 % CatsVersion,
-    "org.scala-lang.modules"     %% "scala-java8-compat"        % ScalaJava8CompatVersion,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
     "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
     "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
