@@ -41,7 +41,7 @@ sealed abstract class STM[+A] {
   /**
     * Run transaction atomically
     */
-  def atomically[F[+_]: Concurrent: ContextShift]: F[A] = STM.atomically[F](this)
+  final def atomically[F[+_]: Concurrent: ContextShift]: F[A] = STM.atomically[F](this)
 
 }
 
