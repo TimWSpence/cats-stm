@@ -4,8 +4,6 @@ import cats.implicits._
 
 import cats.effect.IO
 
-//TODO replace this with ScalaCheckEffectSuite and remove the `.check()`
-//once it is released
 import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
 
 import org.scalacheck.effect.PropF
@@ -25,27 +23,32 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
 
   val tvarGen: Gen[TVar[Long]] = for {
     value <- Gen.posNum[Long]
-  } yield TVar.of(value).commit[IO].unsafeRunSync
+  } yield TVar.of(value).atomically[IO].unsafeRunSync
 
-  val txnGen: List[TVar[Long]] => Gen[STM[Unit]] = tvars =>
-    for {
-      fromIdx <- Gen.choose(0, tvars.length - 1)
-      toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
-      txn <- for {
-        balance <- tvars(fromIdx).get
-        transfer = Math.abs(Random.nextLong()) % balance
-        _ <- tvars(fromIdx).modify(_ - transfer)
-        _ <- tvars(toIdx).modify(_ + transfer)
-      } yield ()
-    } yield txn
+  def txnGen(count: TVar[Int]): List[TVar[Long]] => Gen[STM[Unit]] =
+    tvars =>
+      for {
+        fromIdx <- Gen.choose(0, tvars.length - 1)
+        toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
+        txn <- for {
+          balance <- tvars(fromIdx).get
+          transfer = Math.abs(Random.nextLong()) % balance
+          _ <- tvars(fromIdx).modify(_ - transfer)
+          _ <- tvars(toIdx).modify(_ + transfer)
+        } yield ()
+        _ <- count.modify(_ + 1)
+      } yield txn
 
-  val gen: Gen[(Long, List[TVar[Long]], IO[Unit])] = for {
+  val gen: Gen[(Long, List[TVar[Long]], IO[Unit], IO[(Int, Int)])] = for {
     tvars <- Gen.listOfN(50, tvarGen)
+    count <- Gen.const(TVar.of(0).atomically[IO].unsafeRunSync)
     total = tvars.foldLeft(0L)((acc, tvar) => acc + tvar.value)
-    txns <- Gen.listOf(txnGen(tvars))
-    commit = txns.traverse(_.commit[IO].start)
-    run    = commit.flatMap(l => l.traverse(_.join)).void
-  } yield (total, tvars, run)
+    txns <- Gen.listOf(txnGen(count)(tvars))
+    commit  = txns.traverse(_.atomically[IO].start)
+    run     = commit.flatMap(l => l.traverse(_.join)).void
+    numTxns = txns.length
+    c       = count.get.atomically[IO].map((_, numTxns))
+  } yield (total, tvars, run, c)
 
   test("Transactions maintain invariants") {
     PropF
@@ -53,9 +56,13 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
         val total = g._1
         val tvars = g._2
         val txn   = g._3
+        val count = g._4
 
-        txn.map { _ =>
-          assertEquals(tvars.map(_.value).sum, total)
+        txn.flatMap { _ =>
+          count.map { res =>
+            assertEquals(tvars.map(_.value).sum, total)
+            assertEquals(res._1, res._2)
+          }
         }
       }
   }

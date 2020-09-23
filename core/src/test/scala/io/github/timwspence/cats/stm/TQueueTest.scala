@@ -16,7 +16,7 @@ class TQueueTest extends CatsEffectSuite {
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.commit[IO]) yield {
+    for (value <- prog.atomically[IO]) yield {
       assertEquals(value._1, "hello")
       assert(value._2)
     }
@@ -30,7 +30,7 @@ class TQueueTest extends CatsEffectSuite {
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.commit[IO]) yield {
+    for (value <- prog.atomically[IO]) yield {
       assertEquals(value._1, "hello")
       assert(!value._2)
     }
@@ -45,7 +45,7 @@ class TQueueTest extends CatsEffectSuite {
       world  <- tqueue.peek
     } yield hello |+| world
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, "helloworld")
+    for (value <- prog.atomically[IO]) yield assertEquals(value, "helloworld")
   }
 
 }

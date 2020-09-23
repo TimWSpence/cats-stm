@@ -12,7 +12,7 @@ class TMVarTest extends CatsEffectSuite {
       value <- tmvar.read
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
+    for (value <- prog.atomically[IO]) yield assertEquals(value, "hello")
   }
 
   test("Read does not modify value when not empty") {
@@ -22,7 +22,7 @@ class TMVarTest extends CatsEffectSuite {
       value <- tmvar.read
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
+    for (value <- prog.atomically[IO]) yield assertEquals(value, "hello")
   }
 
   test("Take returns current value when not empty") {
@@ -31,7 +31,7 @@ class TMVarTest extends CatsEffectSuite {
       value <- tmvar.take
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
+    for (value <- prog.atomically[IO]) yield assertEquals(value, "hello")
   }
 
   test("Take empties tmvar when not empty") {
@@ -41,7 +41,7 @@ class TMVarTest extends CatsEffectSuite {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO]) yield assert(value)
+    for (value <- prog.atomically[IO]) yield assert(value)
   }
 
   test("Put stores a value when empty") {
@@ -51,7 +51,7 @@ class TMVarTest extends CatsEffectSuite {
       value <- tmvar.take
     } yield value
 
-    for (value <- prog.commit[IO]) yield assertEquals(value, "hello")
+    for (value <- prog.atomically[IO]) yield assertEquals(value, "hello")
   }
 
   test("TryPut returns true when empty") {
@@ -60,7 +60,7 @@ class TMVarTest extends CatsEffectSuite {
       result <- tmvar.tryPut("hello")
     } yield result
 
-    for (value <- prog.commit[IO]) yield assert(value)
+    for (value <- prog.atomically[IO]) yield assert(value)
   }
 
   test("TryPut returns false when not empty") {
@@ -69,7 +69,7 @@ class TMVarTest extends CatsEffectSuite {
       result <- tmvar.tryPut("hello")
     } yield result
 
-    for (value <- prog.commit[IO]) yield assert(!value)
+    for (value <- prog.atomically[IO]) yield assert(!value)
   }
 
   test("IsEmpty is false when not empty") {
@@ -78,7 +78,7 @@ class TMVarTest extends CatsEffectSuite {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO]) yield assert(!value)
+    for (value <- prog.atomically[IO]) yield assert(!value)
   }
 
   test("IsEmpty is true when empty") {
@@ -87,6 +87,6 @@ class TMVarTest extends CatsEffectSuite {
       empty <- tmvar.isEmpty
     } yield empty
 
-    for (value <- prog.commit[IO]) yield assert(value)
+    for (value <- prog.atomically[IO]) yield assert(value)
   }
 }

@@ -13,11 +13,14 @@ You can think of this as a mutable memory location that may contain a value.
 Writes will block if full and reads will block if empty.
 
 ```scala mdoc
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.syntax.semigroup._
 import cats.instances.string._
+import scala.concurrent.ExecutionContext.global
 
 import io.github.timwspence.cats.stm.{STM, TMVar}
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val txn: STM[String] = for {
   tmvar     <- TMVar.empty[String]
@@ -27,5 +30,5 @@ val txn: STM[String] = for {
   world     <- tmvar.read           //Would block if empty.
 } yield hello |+| world
 
-val result = txn.commit[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync
 ```
