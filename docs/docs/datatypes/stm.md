@@ -12,8 +12,12 @@ number: 3
 `STM.atomically`:
 
 ```scala mdoc:reset
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import io.github.timwspence.cats.stm.{STM, TVar}
+
+import scala.concurrent.ExecutionContext.global
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val prog: IO[(Int, Int)] = for {
   to   <- TVar.of(0).atomically[IO]
@@ -38,8 +42,12 @@ val result = prog.unsafeRunSync
 `STM.check`:
 
 ```scala mdoc:reset
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import io.github.timwspence.cats.stm.{STM, TVar}
+
+import scala.concurrent.ExecutionContext.global
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val to   = TVar.of(1).atomically[IO].unsafeRunSync
 val from = TVar.of(0).atomically[IO].unsafeRunSync
@@ -65,8 +73,12 @@ is committed.
 alternative action if the first retries:
 
 ```scala mdoc:reset
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import io.github.timwspence.cats.stm.{STM, TVar}
+
+import scala.concurrent.ExecutionContext.global
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val to   = TVar.of(1).atomically[IO].unsafeRunSync
 val from = TVar.of(0).atomically[IO].unsafeRunSync
@@ -98,8 +110,12 @@ val result = txn.atomically[IO].unsafeRunSync
 Transactions can be aborted via `STM.abort`:
 
 ```scala mdoc:reset
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import io.github.timwspence.cats.stm.{STM, TVar}
+
+import scala.concurrent.ExecutionContext.global
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val to   = TVar.of(1).atomically[IO].unsafeRunSync
 val from = TVar.of(0).atomically[IO].unsafeRunSync

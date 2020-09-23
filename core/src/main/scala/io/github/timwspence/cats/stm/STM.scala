@@ -11,8 +11,8 @@ import cats.effect.concurrent.Deferred
 import scala.annotation.tailrec
 
 import io.github.timwspence.cats.stm.STM.internal._
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.Executors
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.{Executors, ThreadFactory}
 
 /**
   * Monad representing transactions involving one or more
@@ -49,10 +49,18 @@ sealed abstract class STM[+A] {
 //blocking pool for it
 object STM {
 
-  //TODO make these daemon threads at least
-  //preferably find a way to get rid of synchronized so we don't need theese blocking calls
-  //at all
-  val blocker: Blocker = Blocker.liftExecutorService(Executors.newCachedThreadPool())
+  val blocker: Blocker = Blocker.liftExecutorService(
+    Executors.newCachedThreadPool(
+      new ThreadFactory {
+        val ctr = new AtomicInteger(0)
+        def newThread(r: Runnable): Thread = {
+          val back = new Thread(r, s"stm-blocking-${ctr.getAndIncrement()}")
+          back.setDaemon(true)
+          back
+        }
+      }
+    )
+  )
 
   /**
     * Commit the `STM` action as an `IO` action. The mutable

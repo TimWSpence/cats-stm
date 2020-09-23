@@ -10,9 +10,13 @@ A `TVar` (transactional variable) is a mutable memory location that can be be
 read and modified via `STM` actions.
 
 ```scala mdoc
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 
 import io.github.timwspence.cats.stm._
+
+import scala.concurrent.ExecutionContext.global
+
+implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
 val to   = TVar.of(0).atomically[IO].unsafeRunSync
 val from = TVar.of(100).atomically[IO].unsafeRunSync
