@@ -1,4 +1,4 @@
-project/metals.sbt
+metals.sbt
 
 # Created by https://www.gitignore.io/api/vim,sbt,emacs,scala,ensime,intellij+all
 # Edit at https://www.gitignore.io/?templates=vim,sbt,emacs,scala,ensime,intellij+all

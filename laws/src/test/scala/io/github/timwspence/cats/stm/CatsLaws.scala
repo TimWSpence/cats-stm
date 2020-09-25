@@ -87,7 +87,7 @@ object Implicits {
 
 }
 
-class STMLaws extends DisciplineSuite {
+class CatsLaws extends DisciplineSuite {
   checkAll("STM[Int]", SemigroupTests[STM[Int]].semigroup)
 
   checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)
