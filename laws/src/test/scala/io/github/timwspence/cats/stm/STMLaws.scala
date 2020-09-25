@@ -19,7 +19,7 @@ trait STMLaws {
   def abortOrElse[A](error: Throwable, stm: STM[A]) =
     (STM.abort[A](error) orElse stm) <-> STM.abort[A](error)
 
-  def retryOrElseRetry[A]() =
+  def retryOrElseRetry[A] =
     (STM.retry[A] orElse STM.retry[A]) <-> STM.retry[A]
 
 }
