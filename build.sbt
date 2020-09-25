@@ -14,6 +14,7 @@ lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
   .aggregate(
     core,
+    laws,
     docs,
     examples
   )
