@@ -30,6 +30,9 @@ trait STMLaws {
   def retryOrElse[A](stm: STM[A]) =
     (STM.retry[A] orElse stm) <-> stm
 
+  def orElseRetry[A](stm: STM[A]) =
+    (stm orElse STM.retry[A]) <-> stm
+
   def abortOrElse[A](error: Throwable, stm: STM[A]) =
     (STM.abort[A](error) orElse stm) <-> STM.abort[A](error)
 
@@ -59,6 +62,7 @@ trait STMTests extends Laws {
       "set then retry is retry"       -> forAll(laws.setThenRetry[A] _),
       "set then abort is abort"       -> forAll(laws.setThenAbort[A] _),
       "retry orElse stm is stm"       -> forAll(laws.retryOrElse[A] _),
+      "stm orElse retry is stm"       -> forAll(laws.orElseRetry[A] _),
       "abort orElse stm is abort"     -> forAll(laws.abortOrElse[A] _),
       "bind distributes over orElse"  -> forAll(laws.bindDistributesOverOrElse[A] _)
     )
