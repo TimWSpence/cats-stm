@@ -31,6 +31,7 @@ trait Instances {
       (tlog1.current == tlog2.current)
     }
 
+  //A log is in the same state if all dirty entries are in the same state
   implicit def eqTLog: Eq[TLog] =
     Eq.instance { (tlog1, tlog2) =>
       tlog1.values.filter(_.isDirty).toList.sortBy(_.tvar.id) ===
