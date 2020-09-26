@@ -24,9 +24,25 @@ trait Instances {
 
     }
 
-  //TODO check log as well
+  implicit def eqTLogEntry: Eq[TLogEntry] =
+    Eq.instance { (tlog1, tlog2) =>
+      (tlog1.tvar.id == tlog2.tvar.id) &&
+      (tlog1.initial == tlog2.initial) &&
+      (tlog1.current == tlog2.current)
+    }
+
+  implicit def eqTLog: Eq[TLog] =
+    Eq.instance { (tlog1, tlog2) =>
+      tlog1.values.filter(_.isDirty).toList.sortBy(_.tvar.id) ===
+        tlog2.values.filter(_.isDirty).toList.sortBy(_.tvar.id)
+    }
+
   implicit def eqSTM[A](implicit A: Eq[A]): Eq[STM[A]] =
-    Eq.instance((stm1, stm2) => eval(stm1)._1 === eval(stm2)._1)
+    Eq.instance { (stm1, stm2) =>
+      val (res1, log1) = eval(stm1)
+      val (res2, log2) = eval(stm2)
+      res1 === res2 && log1 === log2
+    }
 
   implicit def arbSTM[A: Arbitrary: Cogen]: Arbitrary[STM[A]] =
     Arbitrary(
