@@ -8,8 +8,6 @@ import org.scalacheck._, Prop.forAll
 
 import org.typelevel.discipline._
 
-import io.github.timwspence.cats.stm._
-
 trait STMLaws {
 
   def getThenGet[A](tvar: TVar[A]) =
