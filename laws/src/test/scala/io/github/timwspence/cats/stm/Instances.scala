@@ -15,7 +15,7 @@ trait Instances {
 
       override def eqv(x: TResult[A], y: TResult[A]): Boolean =
         (x, y) match {
-          case (TSuccess(a1), TSuccess(a2)) => a1 == a2
+          case (TSuccess(a1), TSuccess(a2)) => a1 === a2
           case (TRetry, TRetry)             => true
           case (TFailure(_), TFailure(_))   => true // This is a bit dubious but we don't have an
           // Eq instance for Throwable so ¯\_(ツ)_/¯
@@ -26,7 +26,7 @@ trait Instances {
 
   implicit def eqTLogEntry: Eq[TLogEntry] =
     Eq.instance { (tlog1, tlog2) =>
-      (tlog1.tvar.id == tlog2.tvar.id) &&
+      (tlog1.tvar.id === tlog2.tvar.id) &&
       (tlog1.initial == tlog2.initial) &&
       (tlog1.current == tlog2.current)
     }
