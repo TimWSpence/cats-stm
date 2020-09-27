@@ -14,6 +14,7 @@ lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
   .aggregate(
     core,
+    laws,
     docs,
     examples
   )
@@ -33,6 +34,22 @@ lazy val core = project.in(file("core"))
     implicit val T: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
     """
   )
+
+lazy val laws = project.in(file("laws"))
+  .settings(commonSettings, releaseSettings, mimaSettings)
+  .settings(
+    name := "cats-stm",
+  )
+  .settings(testFrameworks += new TestFramework("munit.Framework"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
+      "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
+      "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
+    )
+  )
+  .dependsOn(core)
+
 
 lazy val docs = project.in(file("docs"))
   .settings(commonSettings, skipOnPublishSettings, micrositeSettings)
@@ -62,8 +79,6 @@ lazy val commonSettings = Seq(
     "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
     "org.typelevel"              %% "cats-core"                 % CatsVersion,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
-    "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
-    "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,

@@ -348,19 +348,21 @@ object STM {
           current
         }
 
-      def modify(tvar: TVar[Any], f: Any => Any): Unit = {
-        val current = get(tvar)
-        val entry   = map(tvar.id)
-        entry.unsafeSet(f(current))
-      }
+      def modify(tvar: TVar[Any], f: Any => Any): Unit =
+        if (map.contains(tvar.id)) {
+          val e       = map(tvar.id)
+          val current = e.unsafeGet[Any]
+          val entry   = e.unsafeSet[Any](f(current))
+          map = map + (tvar.id -> entry)
+        } else {
+          val current = tvar.value
+          map = map + (tvar.id -> TLogEntry(tvar, f(current)))
+        }
 
       def isDirty: Boolean = values.exists(_.isDirty)
 
-      def snapshot(): TLog = TLog(map.map { case (k, v) => k -> v.snapshot() }.toMap)
+      def snapshot(): TLog = TLog(map)
 
-      //Use tlog as a base and add to it any tvars in the current log, but with their
-      //current values reset to initial
-      //tlog should already have been snapshotted
       def delta(tlog: TLog): TLog =
         TLog(
           map.foldLeft(tlog.map) { (acc, p) =>
@@ -413,7 +415,7 @@ object STM {
 
       def unsafeGet[A]: A = current.asInstanceOf[A]
 
-      def unsafeSet[A](a: A): Unit = current = a.asInstanceOf[Repr]
+      def unsafeSet[A](a: A): TLogEntry = TLogEntry[Repr](tvar, a.asInstanceOf[Repr])
 
       def commit(): Unit = tvar.value = current
 
