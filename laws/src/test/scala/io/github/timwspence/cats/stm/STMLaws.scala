@@ -17,7 +17,7 @@ trait STMLaws {
     (tvar.set(a) >> tvar.get) <-> (tvar.set(a) >> STM.pure(a))
 
   def setThenSet[A](a: A, b: A, tvar: TVar[A]) =
-    (tvar.set(a) >> tvar.set(b)) <-> tvar.set(a)
+    (tvar.set(a) >> tvar.set(b)) <-> tvar.set(b)
 
   def setThenRetry[A](a: A, tvar: TVar[A]) =
     (tvar.set(a) >> STM.retry[A]) <-> STM.retry[A]
