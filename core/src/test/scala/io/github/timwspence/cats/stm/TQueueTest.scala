@@ -1,9 +1,7 @@
 package io.github.timwspence.cats.stm
 
-import cats.implicits._
-
 import cats.effect.IO
-
+import cats.implicits._
 import munit.CatsEffectSuite
 
 class TQueueTest extends CatsEffectSuite {

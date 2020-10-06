@@ -1,16 +1,12 @@
 package io.github.timwspence.cats.stm
 
-import cats.implicits._
+import scala.util.Random
 
 import cats.effect.IO
-
+import cats.implicits._
 import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
-
-import org.scalacheck.effect.PropF
-
 import org.scalacheck._
-
-import scala.util.Random
+import org.scalacheck.effect.PropF
 
 /**
   * Test that concurrently executing transactions behave correctly.

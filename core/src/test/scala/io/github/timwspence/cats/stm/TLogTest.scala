@@ -1,11 +1,9 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-
-import munit.CatsEffectSuite
-
-import io.github.timwspence.cats.stm.STM.internal._
 import cats.effect.concurrent.Deferred
+import io.github.timwspence.cats.stm.STM.internal._
+import munit.CatsEffectSuite
 
 class TLogTest extends CatsEffectSuite {
 

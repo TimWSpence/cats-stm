@@ -1,18 +1,16 @@
 package io.github.timwspence.cats.stm
 
-import java.util.concurrent.atomic.AtomicLong
-
-import cats.implicits._
-import cats.{Monoid, MonoidK, StackSafeMonad}
-import cats.effect.{Blocker, Concurrent, ContextShift}
-import cats.effect.implicits._
-import cats.effect.concurrent.Deferred
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
+import java.util.concurrent.{Executors, ThreadFactory}
 
 import scala.annotation.tailrec
 
+import cats.effect.concurrent.Deferred
+import cats.effect.implicits._
+import cats.effect.{Blocker, Concurrent, ContextShift}
+import cats.implicits._
+import cats.{Monoid, MonoidK, StackSafeMonad}
 import io.github.timwspence.cats.stm.STM.internal._
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import java.util.concurrent.{Executors, ThreadFactory}
 
 /**
   * Monad representing transactions involving one or more
