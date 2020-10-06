@@ -20,7 +20,7 @@ install:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION scalafmtCheckAll
-  - test $TRAVIS_SCALA_VERSION == 2.13.2 && sbt $TRAVIS_SCALA_VERSION scalafixAll --check
+  - test $TRAVIS_SCALA_VERSION == 2.13.2 && sbt "$TRAVIS_SCALA_VERSION scalafixAll --check"
   - sbt ++$TRAVIS_SCALA_VERSION test
   - sbt ++$TRAVIS_SCALA_VERSION mimaReportBinaryIssues
   - sbt ++$TRAVIS_SCALA_VERSION docs/makeMicrosite
