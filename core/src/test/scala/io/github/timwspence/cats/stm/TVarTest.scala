@@ -1,10 +1,9 @@
 package io.github.timwspence.cats.stm
 
-import cats.effect.IO
-
-import munit.CatsEffectSuite
-
 import scala.concurrent.duration._
+
+import cats.effect.IO
+import munit.CatsEffectSuite
 
 class TVarTest extends CatsEffectSuite {
 

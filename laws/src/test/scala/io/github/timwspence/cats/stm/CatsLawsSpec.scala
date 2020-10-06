@@ -3,7 +3,6 @@ package io.github.timwspence.cats.stm
 import cats.implicits._
 import cats.kernel.laws.discipline._
 import cats.laws.discipline._
-
 import munit.DisciplineSuite
 
 class CatsLawsSpec extends DisciplineSuite with Instances {

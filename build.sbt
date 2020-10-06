@@ -10,6 +10,15 @@ val MunitVersion = "0.7.12"
 val MunitCatsEffectVersion = "0.3.0"
 val ScalacheckEffectVersion = "0.2.0"
 
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.2"
+inThisBuild(
+  List(
+    scalaVersion := "2.13.2",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
+  )
+)
+
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings, releaseSettings, skipOnPublishSettings)
   .aggregate(

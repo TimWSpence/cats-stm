@@ -1,8 +1,8 @@
 package io.github.timwspence.cats.stm
 
-import cats.syntax.flatMap._
-
 import scala.collection.immutable.Queue
+
+import cats.syntax.flatMap._
 
 /**
   * Convenience definition of a queue in the `STM` monad.

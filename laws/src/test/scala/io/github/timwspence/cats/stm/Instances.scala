@@ -1,13 +1,14 @@
 package io.github.timwspence.cats.stm
 
+import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+
 import cats._
 import cats.implicits._
-
-import io.github.timwspence.cats.stm.STM.internal._
-
-import org.scalacheck.{Arbitrary, Cogen, Gen, Prop}, Arbitrary.{arbitrary => arb}
-import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import cats.kernel.laws.IsEq
+import io.github.timwspence.cats.stm.STM.internal._
+import org.scalacheck.{Arbitrary, Cogen, Gen, Prop}
+
+import Arbitrary.{arbitrary => arb}
 
 trait Instances {
   implicit def eqTResult[A: Eq]: Eq[TResult[A]] =

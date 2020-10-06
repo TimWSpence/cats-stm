@@ -1,11 +1,10 @@
 package io.github.timwspence.cats.stm
 
-import cats.implicits._
-import cats.effect.{IO, Timer}
-
-import munit.CatsEffectSuite
-
 import scala.concurrent.duration._
+
+import cats.effect.{IO, Timer}
+import cats.implicits._
+import munit.CatsEffectSuite
 
 /**
   * Basic tests for correctness in the absence of

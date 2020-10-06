@@ -3,10 +3,10 @@ package io.github.timwspence.cats.stm
 import cats.Eq
 import cats.implicits._
 import cats.laws._
-
-import org.scalacheck._, Prop.forAll
-
+import org.scalacheck._
 import org.typelevel.discipline._
+
+import Prop.forAll
 
 trait STMLaws {
 

@@ -1,9 +1,10 @@
 package io.github.timwspence.cats.stm
 // import io.github.timwspence.cats.stm._
+import scala.concurrent.duration._
+
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import scala.concurrent.duration._
 
 object SantaClausProblem extends IOApp {
 
