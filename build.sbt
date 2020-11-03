@@ -4,10 +4,10 @@ enablePlugins(MicrositesPlugin)
 
 val CatsVersion = "2.2.0"
 val CatsEffectVersion = "2.2.0"
-val DisciplineVersion = "0.3.0"
+val DisciplineVersion = "1.0.0"
 val ScalaCheckVersion = "1.14.3"
 val MunitVersion = "0.7.15"
-val MunitCatsEffectVersion = "0.3.0"
+val MunitCatsEffectVersion = "1.0.0"
 val ScalacheckEffectVersion = "0.3.0"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.3"
