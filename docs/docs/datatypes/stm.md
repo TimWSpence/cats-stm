@@ -33,7 +33,7 @@ val prog: IO[(Int, Int)] = for {
   f   <- from.get.atomically[IO]
 } yield f -> t
 
-val result = prog.unsafeRunSync
+val result = prog.unsafeRunSync()
 ```
 
 ### Retries
@@ -49,8 +49,8 @@ import scala.concurrent.ExecutionContext.global
 
 implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
-val to   = TVar.of(1).atomically[IO].unsafeRunSync
-val from = TVar.of(0).atomically[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync()
+val from = TVar.of(0).atomically[IO].unsafeRunSync()
 
 val txn: IO[Unit]  = STM.atomically[IO] {
   for {
@@ -62,7 +62,7 @@ val txn: IO[Unit]  = STM.atomically[IO] {
 }
 ```
 
-`txn.unsafeRunSync` will block until the transaction succeeds (or throws an
+`txn.unsafeRunSync()` will block until the transaction succeeds (or throws an
 exception!). Internally, this is implemented by keeping track of which `TVar`s are
 involved in a transaction and retrying any pending transactions every time a `TVar`
 is committed.
@@ -80,8 +80,8 @@ import scala.concurrent.ExecutionContext.global
 
 implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
-val to   = TVar.of(1).atomically[IO].unsafeRunSync
-val from = TVar.of(0).atomically[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync()
+val from = TVar.of(0).atomically[IO].unsafeRunSync()
 
 val transferHundred: STM[Unit] = for {
   b <- from.get
@@ -102,7 +102,7 @@ val txn  = for {
   t    <- to.get
 } yield f -> t
 
-val result = txn.atomically[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync()
 ```
 
 ### Aborting
@@ -117,8 +117,8 @@ import scala.concurrent.ExecutionContext.global
 
 implicit val CS: ContextShift[IO] = IO.contextShift(global)
 
-val to   = TVar.of(1).atomically[IO].unsafeRunSync
-val from = TVar.of(0).atomically[IO].unsafeRunSync
+val to   = TVar.of(1).atomically[IO].unsafeRunSync()
+val from = TVar.of(0).atomically[IO].unsafeRunSync()
 
 val txn  = for {
   balance <- from.get
@@ -130,7 +130,7 @@ val txn  = for {
   _ <- to.modify(_ + 100)
 } yield ()
 
-val result = txn.atomically[IO].attempt.unsafeRunSync
+val result = txn.atomically[IO].attempt.unsafeRunSync()
 ```
 
 Note that aborting a transaction will not modify any of the `TVar`s involved.

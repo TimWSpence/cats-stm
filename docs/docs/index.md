@@ -62,7 +62,7 @@ object Main extends IOApp {
     } yield ()
 
 }
-Main.run(List()).unsafeRunSync
+Main.run(List()).unsafeRunSync()
 ```
 
 ### Credits
