@@ -17,7 +17,10 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 `libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.8.0"`
 
 You can find more details in the [docs](docs/) but usage looks something like the following.
-Here we transfer money transactionally from Tim to Steve once Tim has sufficient balance.
+
+Here is a contrived example of what this looks like in practice. We use the
+`check` combinator to retry transferring money from Tim and Steve until we have
+enough money in Tim's account:
 
 ```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
