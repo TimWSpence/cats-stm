@@ -28,5 +28,5 @@ val txn: STM[String] = for {
   world  <- tqueue.peek
 } yield hello |+| world
 
-val result = txn.atomically[IO].unsafeRunSync
+val result = txn.atomically[IO].unsafeRunSync()
 ```
