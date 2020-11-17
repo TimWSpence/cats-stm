@@ -16,7 +16,8 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 `libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.8.0"`
 
-You can find more details in the [docs](docs/) but usage looks something like the following:
+You can find more details in the [docs](docs/) but usage looks something like the following.
+Here we transfer money transactionally from Tim to Steve once Tim has sufficient balance.
 
 ```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
