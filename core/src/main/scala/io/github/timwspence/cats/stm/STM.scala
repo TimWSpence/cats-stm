@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 TimWSpence
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.github.timwspence.cats.stm
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
@@ -200,6 +216,7 @@ object STM {
     val IdGen = new AtomicLong()
 
     final case class Pure[A](a: A)                                extends STM[A]
+    final case class Delay[A](thunk: () => A)                     extends STM[A]
     final case class Alloc[A](a: A)                               extends STM[TVar[A]]
     final case class Bind[A, B](stm: STM[B], f: B => STM[A])      extends STM[A]
     final case class Get[A](tvar: TVar[A])                        extends STM[A]
@@ -288,9 +305,6 @@ object STM {
         }
     }
 
-    //Note that this should always be suspended using F.delay as it increments the global
-    //id generator. However, we don't want eval itself suspended as we want it to be
-    //tail-recursive and compiled to a loop
     def eval[A](stm: STM[A]): (TResult[A], TLog) = {
       var conts: List[Cont]                             = Nil
       var fallbacks: List[(STM[Any], TLog, List[Cont])] = Nil
@@ -307,7 +321,8 @@ object STM {
               conts = conts.tail
               go(f(a))
             }
-          case Alloc(a) => go(Pure((new TVar(IdGen.incrementAndGet(), a, new AtomicReference(Map())))))
+          case Delay(thunk) => go(Pure(thunk()))
+          case Alloc(a)     => go(Delay(() => (new TVar(IdGen.incrementAndGet(), a, new AtomicReference(Map())))))
           case Bind(stm, f) =>
             conts = f :: conts
             go(stm)
