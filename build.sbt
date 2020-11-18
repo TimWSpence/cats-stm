@@ -56,7 +56,7 @@ val MunitVersion = "0.7.17"
 val MunitCatsEffectVersion = "0.3.0"
 val ScalacheckEffectVersion = "0.3.0"
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.3"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
 inThisBuild(
   List(
     scalaVersion := Scala213,
