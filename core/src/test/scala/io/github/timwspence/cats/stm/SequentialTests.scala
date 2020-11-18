@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 TimWSpence
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.github.timwspence.cats.stm
 
 import scala.concurrent.duration._
@@ -13,8 +29,8 @@ import munit.CatsEffectSuite
 class SequentialTests extends CatsEffectSuite {
 
   test("Basic transaction is executed") {
-    val from = TVar.of(100).atomically[IO].unsafeRunSync
-    val to   = TVar.of(0).atomically[IO].unsafeRunSync
+    val from = TVar.of(100).atomically[IO].unsafeRunSync()
+    val to   = TVar.of(0).atomically[IO].unsafeRunSync()
 
     val prog = for {
       _ <- STM.atomically[IO] {
@@ -33,8 +49,8 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Abort primitive aborts whole transaction") {
-    val from = TVar.of(100).atomically[IO].unsafeRunSync
-    val to   = TVar.of(0).atomically[IO].unsafeRunSync
+    val from = TVar.of(100).atomically[IO].unsafeRunSync()
+    val to   = TVar.of(0).atomically[IO].unsafeRunSync()
 
     val prog = for {
       _ <- STM.atomically[IO] {
@@ -53,8 +69,8 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Check retries until transaction succeeds") {
-    val from         = TVar.of(100).atomically[IO].unsafeRunSync
-    val to           = TVar.of(0).atomically[IO].unsafeRunSync
+    val from         = TVar.of(100).atomically[IO].unsafeRunSync()
+    val to           = TVar.of(0).atomically[IO].unsafeRunSync()
     var checkCounter = 0
 
     val prog = for {
@@ -80,7 +96,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("check retries repeatedly") {
-    val tvar = TVar.of(0).atomically[IO].unsafeRunSync
+    val tvar = TVar.of(0).atomically[IO].unsafeRunSync()
 
     val retry: STM[Int] = for {
       current <- tvar.get
@@ -105,7 +121,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("OrElse runs second transaction if first retries") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync
+    val account = TVar.of(100).atomically[IO].unsafeRunSync()
 
     val first = for {
       balance <- account.get
@@ -127,7 +143,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("OrElse reverts changes if retrying") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync
+    val account = TVar.of(100).atomically[IO].unsafeRunSync()
 
     val first = for {
       _ <- account.modify(_ - 100)
@@ -148,8 +164,8 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync
-    val other   = TVar.of(100).atomically[IO].unsafeRunSync
+    val account = TVar.of(100).atomically[IO].unsafeRunSync()
+    val other   = TVar.of(100).atomically[IO].unsafeRunSync()
 
     val first = for {
       _ <- other.modify(_ - 100)
@@ -177,7 +193,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("nested orElse") {
-    val tvar = TVar.of(100).atomically[IO].unsafeRunSync
+    val tvar = TVar.of(100).atomically[IO].unsafeRunSync()
 
     val first = for {
       _ <- tvar.modify(_ - 100)
@@ -205,7 +221,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Transaction is retried if TVar in if branch is subsequently modified") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync
+    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
 
     val retry: STM[Unit] = for {
       current <- tvar.get
@@ -242,8 +258,8 @@ class SequentialTests extends CatsEffectSuite {
     *  id and hence we would only register one to retry
     */
   test("Atomically is referentially transparent") {
-    val flag = TVar.of(false).atomically[IO].unsafeRunSync
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync
+    val flag = TVar.of(false).atomically[IO].unsafeRunSync()
+    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
 
     val retry: IO[Unit] = STM.atomically[IO] {
       for {
@@ -272,7 +288,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Atomically is referentially transparent 2") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync
+    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
 
     val inc: IO[Unit] = tvar.modify(_ + 1).atomically[IO]
 
@@ -284,7 +300,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Modify is referentially transparent 2") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync
+    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
 
     val inc: STM[Unit] = tvar.modify(_ + 1)
 
@@ -296,7 +312,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("stack-safe construction") {
-    val tvar       = TVar.of(0L).atomically[IO].unsafeRunSync
+    val tvar       = TVar.of(0L).atomically[IO].unsafeRunSync()
     val iterations = 100000
 
     IO.pure(
@@ -308,7 +324,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("stack-safe evaluation") {
-    val tvar       = TVar.of(0).atomically[IO].unsafeRunSync
+    val tvar       = TVar.of(0).atomically[IO].unsafeRunSync()
     val iterations = 100000
 
     STM
