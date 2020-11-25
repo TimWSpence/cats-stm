@@ -14,93 +14,109 @@
  * limitations under the License.
  */
 
-package io.github.timwspence.cats.stm
+// /*
+//  * Copyright 2020 TimWSpence
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-import cats.syntax.flatMap._
+// package io.github.timwspence.cats.stm
 
-/**
-  * Convenience definition providing `MVar`-like behaviour
-  * in the `STM` monad. That is, a `TMVar` is a mutable memory
-  * location which is either empty or contains a value.
-  *
-  * Analogous to `cats.effect.concurrent.MVar`.
-  */
-final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends AnyVal {
+// import cats.syntax.flatMap._
 
-  /**
-    * Store a value. Retries if the `TMVar` already
-    * contains a value.
-    */
-  def put(a: A): STM[Unit] =
-    tvar.get.flatMap {
-      case Some(_) => STM.retry
-      case None    => tvar.set(Some(a))
-    }
+// /**
+//   * Convenience definition providing `MVar`-like behaviour
+//   * in the `STM` monad. That is, a `TMVar` is a mutable memory
+//   * location which is either empty or contains a value.
+//   *
+//   * Analogous to `cats.effect.concurrent.MVar`.
+//   */
+// final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) extends AnyVal {
 
-  /**
-    * Read the current value. Retries if empty.
-    */
-  def read: STM[A] =
-    tvar.get.flatMap {
-      case Some(value) => STM.pure(value)
-      case None        => STM.retry
-    }
+//   /**
+//     * Store a value. Retries if the `TMVar` already
+//     * contains a value.
+//     */
+//   def put(a: A): STM[Unit] =
+//     tvar.get.flatMap {
+//       case Some(_) => STM.retry
+//       case None    => tvar.set(Some(a))
+//     }
 
-  /**
-    * Read the current value and empty it at the same
-    * time. Retries if empty.
-    */
-  def take: STM[A] =
-    tvar.get.flatMap {
-      case Some(value) => tvar.set(None) >> STM.pure(value)
-      case None        => STM.retry
-    }
+//   /**
+//     * Read the current value. Retries if empty.
+//     */
+//   def read: STM[A] =
+//     tvar.get.flatMap {
+//       case Some(value) => STM.pure(value)
+//       case None        => STM.retry
+//     }
 
-  /**
-    * Try to store a value. Returns `false` if put failed,
-    * `true` otherwise.
-    */
-  def tryPut(a: A): STM[Boolean] =
-    tvar.get.flatMap {
-      case Some(_) => STM.pure(false)
-      case None    => tvar.set(Some(a)) >> STM.pure(true)
-    }
+//   /**
+//     * Read the current value and empty it at the same
+//     * time. Retries if empty.
+//     */
+//   def take: STM[A] =
+//     tvar.get.flatMap {
+//       case Some(value) => tvar.set(None) >> STM.pure(value)
+//       case None        => STM.retry
+//     }
 
-  /**
-    * Try to read the current value. Returns `None` if
-    * empty, `Some(current)` otherwise.
-    */
-  def tryRead: STM[Option[A]] = tvar.get
+//   /**
+//     * Try to store a value. Returns `false` if put failed,
+//     * `true` otherwise.
+//     */
+//   def tryPut(a: A): STM[Boolean] =
+//     tvar.get.flatMap {
+//       case Some(_) => STM.pure(false)
+//       case None    => tvar.set(Some(a)) >> STM.pure(true)
+//     }
 
-  /**
-    * Try to take the current value. Returns `None` if
-    * empty, `Some(current)` otherwise.
-    */
-  def tryTake: STM[Option[A]] =
-    tvar.get.flatMap {
-      case v @ Some(_) => tvar.set(None) >> STM.pure(v)
-      case None        => STM.pure(None)
-    }
+//   /**
+//     * Try to read the current value. Returns `None` if
+//     * empty, `Some(current)` otherwise.
+//     */
+//   def tryRead: STM[Option[A]] = tvar.get
 
-  /**
-    * Check if currently empty.
-    */
-  def isEmpty: STM[Boolean] = tryRead.map(_.isEmpty)
+//   /**
+//     * Try to take the current value. Returns `None` if
+//     * empty, `Some(current)` otherwise.
+//     */
+//   def tryTake: STM[Option[A]] =
+//     tvar.get.flatMap {
+//       case v @ Some(_) => tvar.set(None) >> STM.pure(v)
+//       case None        => STM.pure(None)
+//     }
 
-}
+//   /**
+//     * Check if currently empty.
+//     */
+//   def isEmpty: STM[Boolean] = tryRead.map(_.isEmpty)
 
-object TMVar {
+// }
 
-  /**
-    * Create a new `TMVar`, initialized with a value.
-    */
-  def of[A](value: A): STM[TMVar[A]] = make(Some(value))
+// object TMVar {
 
-  /**
-    * Create a new empty `TMVar`.
-    */
-  def empty[A]: STM[TMVar[A]] = make(None)
+//   /**
+//     * Create a new `TMVar`, initialized with a value.
+//     */
+//   def of[A](value: A): STM[TMVar[A]] = make(Some(value))
 
-  private def make[A](value: Option[A]): STM[TMVar[A]] = TVar.of(value).map(tvar => new TMVar[A](tvar))
+//   /**
+//     * Create a new empty `TMVar`.
+//     */
+//   def empty[A]: STM[TMVar[A]] = make(None)
 
-}
+//   private def make[A](value: Option[A]): STM[TMVar[A]] = TVar.of(value).map(tvar => new TMVar[A](tvar))
+
+// }

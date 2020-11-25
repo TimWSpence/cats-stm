@@ -14,41 +14,57 @@
  * limitations under the License.
  */
 
-package io.github.timwspence.cats.stm
+// /*
+//  * Copyright 2020 TimWSpence
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-/**
-  * Convenience definition of a semaphore in the `STM` monad.
-  *
-  * Analogous to `cats.effect.concurrent.Semaphore`.
-  */
-final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
+// package io.github.timwspence.cats.stm
 
-  /**
-    * Get the number of permits currently available.
-    */
-  def available: STM[Long] = tvar.get
+// /**
+//   * Convenience definition of a semaphore in the `STM` monad.
+//   *
+//   * Analogous to `cats.effect.concurrent.Semaphore`.
+//   */
+// final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
 
-  /**
-    * Acquire a permit. Retries if no permits are
-    * available.
-    */
-  def acquire: STM[Unit] =
-    tvar.get.flatMap {
-      case 0 => STM.retry
-      case _ => tvar.modify(_ - 1)
-    }
+//   /**
+//     * Get the number of permits currently available.
+//     */
+//   def available: STM[Long] = tvar.get
 
-  /**
-    * Release a currently held permit.
-    */
-  def release: STM[Unit] = tvar.modify(_ + 1)
-}
+//   /**
+//     * Acquire a permit. Retries if no permits are
+//     * available.
+//     */
+//   def acquire: STM[Unit] =
+//     tvar.get.flatMap {
+//       case 0 => STM.retry
+//       case _ => tvar.modify(_ - 1)
+//     }
 
-object TSemaphore {
+//   /**
+//     * Release a currently held permit.
+//     */
+//   def release: STM[Unit] = tvar.modify(_ + 1)
+// }
 
-  /**
-    * Create a new `TSem` with `permits` available permits.
-    */
-  def make(permits: Long): STM[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
+// object TSemaphore {
 
-}
+//   /**
+//     * Create a new `TSem` with `permits` available permits.
+//     */
+//   def make(permits: Long): STM[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
+
+// }

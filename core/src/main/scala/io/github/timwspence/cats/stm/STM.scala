@@ -20,7 +20,6 @@ import cats.effect.{Concurrent, Resource}
 import cats.effect.concurrent.{Deferred, Ref, Semaphore}
 import cats.{Monoid, MonoidK, StackSafeMonad}
 import cats.implicits._
-import java.util.concurrent.atomic.AtomicLong
 import scala.annotation.tailrec
 
 trait STM[F[_]] {
@@ -34,7 +33,7 @@ trait STM[F[_]] {
 
     def set(a: A): Txn[Unit] = modify(_ => a)
 
-    private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] = retries.modify(signal :: _)
+    private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] = retries.update(signal :: _)
 
   }
 
@@ -42,7 +41,7 @@ trait STM[F[_]] {
     def of[A](a: A): Txn[TVar[A]] = Alloc(a)
   }
 
-  sealed abstract class Txn[A] {
+  sealed abstract class Txn[+A] {
 
     /**
       * Functor map on `STM`.
@@ -109,10 +108,9 @@ trait STM[F[_]] {
     final case class TFailure(error: Throwable) extends TResult[Nothing]
     final case object TRetry                    extends TResult[Nothing]
 
-    val IdGen = new AtomicLong()
-
     type Cont = Any => Txn[Any]
     type TVarId = Long
+    type TxId   = Long
 
     case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
@@ -216,7 +214,7 @@ trait STM[F[_]] {
 
     }
 
-    def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Sync[F]): F[(TResult[A], TLog)] = {
+    def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Concurrent[F]): F[(TResult[A], TLog)] = {
       var conts: List[Cont]                             = Nil
       var fallbacks: List[(Txn[Any], TLog, List[Cont])] = Nil
       var log: TLog                                     = TLog.empty
@@ -225,7 +223,7 @@ trait STM[F[_]] {
       //each invocation takes a fresh id and ioref for producing a new tvar if necessary
       //so terminates with result or after creating new tvar
       @tailrec
-      def go(nextId: TVarId, ref: Ref[F, List[Deferred[F, Unit]]], txn: Txn[Any]): Either[Txn[Any], TResult[Any]] =
+      def go(nextId: TVarId, lock: Semaphore[F], ref: Ref[F, List[Deferred[F, Unit]]], txn: Txn[Any]): Either[Txn[Any], TResult[Any]] =
         txn match {
           case Pure(a) =>
             if (conts.isEmpty)
@@ -233,17 +231,17 @@ trait STM[F[_]] {
             else {
               val f = conts.head
               conts = conts.tail
-              go(f(a))
+              go(nextId, lock, ref, f(a))
             }
-          case Alloc(a)     => Left(Pure((new TVar(nextId, a, ref))))
+          case Alloc(a)     => Left(Pure((new TVar(nextId, a, lock, ref))))
           case Bind(stm, f) =>
             conts = f :: conts
-            go(stm)
-          case Get(tvar)       => go(Pure(log.get(tvar)))
-          case Modify(tvar, f) => go(Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f)))
+            go(nextId, lock, ref, stm)
+          case Get(tvar)       => go(nextId, lock, ref, Pure(log.get(tvar)))
+          case Modify(tvar, f) => go(nextId, lock, ref, Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f)))
           case OrElse(attempt, fallback) =>
             fallbacks = (fallback, log.snapshot(), conts) :: fallbacks
-            go(attempt)
+            go(nextId, lock, ref, attempt)
           case Abort(error) =>
             Right(TFailure(error))
           case Retry() =>
@@ -253,21 +251,22 @@ trait STM[F[_]] {
               log = log.delta(lg)
               conts = cts
               fallbacks = fallbacks.tail
-              go(fb)
+              go(nextId, lock, ref, fb)
             }
         }
 
-      def run(txn: Txn[Any]): F[(TResult[A], TLog)] = for {
+      def run(txn: Txn[Any]): F[TResult[Any]] = for {
         id <- idGen.updateAndGet(_ + 1)
+        lock <- Semaphore[F](1)
         ref <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
-        res = go(id, ref, txn) match {
+        res <- go(id, lock, ref, txn) match {
           case Left(t) => run(t)
           case Right(v) => F.pure(v)
         }
       } yield res
 
       //Safe by construction
-      run(txn).map(res => res.asInstanceOf[TResult[A]] -> log)
+      run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
     }
 
   }

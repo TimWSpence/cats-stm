@@ -14,58 +14,74 @@
  * limitations under the License.
  */
 
-package io.github.timwspence.cats.stm
+// /*
+//  * Copyright 2020 TimWSpence
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-import java.util.concurrent.atomic.AtomicReference
+// package io.github.timwspence.cats.stm
 
-import io.github.timwspence.cats.stm.STM.internal._
+// import java.util.concurrent.atomic.AtomicReference
 
-/**
-  * Transactional variable - a mutable memory location
-  * that can be read or written to via `STM` actions.
-  *
-  * Analagous to `cats.effect.concurrent.Ref`.
-  */
-final class TVar[A] private[stm] (
-  private[stm] val id: Long,
-  @volatile private[stm] var value: A,
-  private[stm] val pending: AtomicReference[Map[TxId, RetryFiber]]
-) {
+// import io.github.timwspence.cats.stm.STM.internal._
 
-  /**
-    * Get the current value as an
-    * `STM` action.
-    */
-  def get: STM[A] = Get(this)
+// /**
+//   * Transactional variable - a mutable memory location
+//   * that can be read or written to via `STM` actions.
+//   *
+//   * Analagous to `cats.effect.concurrent.Ref`.
+//   */
+// final class TVar[A] private[stm] (
+//   private[stm] val id: Long,
+//   @volatile private[stm] var value: A,
+//   private[stm] val pending: AtomicReference[Map[TxId, RetryFiber]]
+// ) {
 
-  /**
-    * Set the current value as an
-    * `STM` action.
-    */
-  def set(a: A): STM[Unit] = modify(_ => a)
+//   /**
+//     * Get the current value as an
+//     * `STM` action.
+//     */
+//   def get: STM[A] = Get(this)
 
-  /**
-    * Modify the current value as an
-    * `STM` action.
-    */
-  def modify(f: A => A): STM[Unit] = Modify(this, f)
+//   /**
+//     * Set the current value as an
+//     * `STM` action.
+//     */
+//   def set(a: A): STM[Unit] = modify(_ => a)
 
-  private[stm] def registerRetry(txId: TxId, fiber: RetryFiber): Unit = {
-    pending.updateAndGet(m => m + (txId -> fiber))
-    ()
-  }
+//   /**
+//     * Modify the current value as an
+//     * `STM` action.
+//     */
+//   def modify(f: A => A): STM[Unit] = Modify(this, f)
 
-  private[stm] def unregisterRetry(txId: TxId): Unit = {
-    pending.updateAndGet(m => m - txId)
-    ()
-  }
+//   private[stm] def registerRetry(txId: TxId, fiber: RetryFiber): Unit = {
+//     pending.updateAndGet(m => m + (txId -> fiber))
+//     ()
+//   }
 
-  private[stm] def unregisterAll(): Map[TxId, RetryFiber] = pending.getAndSet(Map.empty)
+//   private[stm] def unregisterRetry(txId: TxId): Unit = {
+//     pending.updateAndGet(m => m - txId)
+//     ()
+//   }
 
-}
+//   private[stm] def unregisterAll(): Map[TxId, RetryFiber] = pending.getAndSet(Map.empty)
 
-object TVar {
+// }
 
-  def of[A](value: A): STM[TVar[A]] = Alloc(value)
+// object TVar {
 
-}
+//   def of[A](value: A): STM[TVar[A]] = Alloc(value)
+
+// }
