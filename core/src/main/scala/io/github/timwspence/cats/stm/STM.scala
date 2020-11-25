@@ -18,7 +18,7 @@ package io.github.timwspence.cats.stm
 
 import cats.effect.{Concurrent, Resource}
 import cats.effect.concurrent.{Deferred, Ref, Semaphore}
-import cats.{Monoid, MonoidK, StackSafeMonad}
+import cats.{Monad, Monoid, MonoidK, StackSafeMonad}
 import cats.implicits._
 import scala.annotation.tailrec
 
@@ -26,7 +26,12 @@ trait STM[F[_]] {
   import Internals._
 
   //TODO should we split this into public trait and private impl?
-  class TVar[A] private[stm] (val id: TVarId, @volatile var value: A, val lock: Semaphore[F], val retries: Ref[F, List[Deferred[F, Unit]]]) {
+  class TVar[A] private[stm] (
+    val id: TVarId,
+    @volatile var value: A,
+    val lock: Semaphore[F],
+    val retries: Ref[F, List[Deferred[F, Unit]]]
+  ) {
     def get: Txn[A] = Get(this)
 
     def modify(f: A => A): Txn[Unit] = Modify(this, f)
@@ -108,7 +113,7 @@ trait STM[F[_]] {
     final case class TFailure(error: Throwable) extends TResult[Nothing]
     final case object TRetry                    extends TResult[Nothing]
 
-    type Cont = Any => Txn[Any]
+    type Cont   = Any => Txn[Any]
     type TVarId = Long
     type TxId   = Long
 
@@ -148,7 +153,18 @@ trait STM[F[_]] {
           }
         )
 
-      def commit(): Unit = values.foreach(_.commit())
+      def commit(implicit F: Concurrent[F]): F[Unit] = F.delay(values.foreach(_.commit()))
+
+      def signal(implicit F: Monad[F]): F[Unit] =
+        values.toList.traverse_(e =>
+          for {
+            signals <- e.tvar.retries.getAndSet(Nil)
+            _       <- signals.traverse_(_.complete(()))
+          } yield ()
+        )
+
+      def registerRetry(signal: Deferred[F, Unit])(implicit F: Monad[F]): F[Unit] =
+        values.toList.traverse_(e => e.tvar.registerRetry(signal))
 
       // def registerRetry(txId: TxId, fiber: RetryFiber): Unit = {
       //   fiber.tvars = values.map(_.tvar).toSet
@@ -219,11 +235,15 @@ trait STM[F[_]] {
       var fallbacks: List[(Txn[Any], TLog, List[Cont])] = Nil
       var log: TLog                                     = TLog.empty
 
-      //TODO can split this into tailrec returns left or right
-      //each invocation takes a fresh id and ioref for producing a new tvar if necessary
-      //so terminates with result or after creating new tvar
+      //Construction of a TVar requires allocating state but we want this to be tail-recursive
+      //and non-effectful so we trampoline it with run
       @tailrec
-      def go(nextId: TVarId, lock: Semaphore[F], ref: Ref[F, List[Deferred[F, Unit]]], txn: Txn[Any]): Either[Txn[Any], TResult[Any]] =
+      def go(
+        nextId: TVarId,
+        lock: Semaphore[F],
+        ref: Ref[F, List[Deferred[F, Unit]]],
+        txn: Txn[Any]
+      ): Either[Txn[Any], TResult[Any]] =
         txn match {
           case Pure(a) =>
             if (conts.isEmpty)
@@ -233,7 +253,7 @@ trait STM[F[_]] {
               conts = conts.tail
               go(nextId, lock, ref, f(a))
             }
-          case Alloc(a)     => Left(Pure((new TVar(nextId, a, lock, ref))))
+          case Alloc(a) => Left(Pure((new TVar(nextId, a, lock, ref))))
           case Bind(stm, f) =>
             conts = f :: conts
             go(nextId, lock, ref, stm)
@@ -255,15 +275,18 @@ trait STM[F[_]] {
             }
         }
 
-      def run(txn: Txn[Any]): F[TResult[Any]] = for {
-        id <- idGen.updateAndGet(_ + 1)
-        lock <- Semaphore[F](1)
-        ref <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
-        res <- go(id, lock, ref, txn) match {
-          case Left(t) => run(t)
-          case Right(v) => F.pure(v)
-        }
-      } yield res
+      def run(txn: Txn[Any]): F[TResult[Any]] =
+        for {
+          id   <- idGen.updateAndGet(_ + 1)
+          lock <- Semaphore[F](1)
+          ref  <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
+          //Trampoline so we can generate a new id/lock/ref to supply
+          //if we need to contruct a new tvar
+          res <- go(id, lock, ref, txn) match {
+            case Left(t)  => run(t)
+            case Right(v) => F.pure(v)
+          }
+        } yield res
 
       //Safe by construction
       run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
@@ -271,26 +294,39 @@ trait STM[F[_]] {
 
   }
 
-
 }
 
 object STM {
   def apply[F[_]](implicit F: Concurrent[F]): Resource[F, STM[F]] =
     for {
-      idGen <- Resource.liftF(Ref.of[F, Long](0))
+      idGen  <- Resource.liftF(Ref.of[F, Long](0))
+      global <- Resource.liftF(Semaphore[F](1)) //TODO remove this and just lock each tvar
     } yield new STM[F] {
       import Internals._
 
-      def commit[A](txn: Txn[A]): F[A] = for {
-        signal <- Deferred[F, Unit]
-        p <- eval(idGen, txn)
-        (res, log) = p
-        r <- res match {
-          case TSuccess(a) => ???
-          case TFailure(e) => ???
-          case TRetry => ???
-        }
-      } yield  r
+      def commit[A](txn: Txn[A]): F[A] =
+        for {
+          signal <- Deferred[F, Unit]
+          p      <- eval(idGen, txn)
+          (res, log) = p
+          r <- res match {
+            //Double-checked dirtyness
+            case TSuccess(a) =>
+              if (log.isDirty) commit(txn)
+              else
+                for {
+                  committed <- global.withPermit(
+                    if (log.isDirty) F.pure(false)
+                    else
+                      log.commit.as(true)
+                  )
+                  r <- if (committed) log.signal >> F.pure(a) else commit(txn)
+                } yield r
+            case TFailure(e) => if (log.isDirty) commit(txn) else F.raiseError(e)
+            //TODO make this safely cancellable
+            case TRetry => if (log.isDirty) commit(txn) else log.registerRetry(signal) >> signal.get >> commit(txn)
+          }
+        } yield r
     }
 
 }
