@@ -61,13 +61,13 @@ trait STM[F[_]] {
     /**
       * Try an alternative `STM` action if this one retries.
       */
-    final def orElse(other: Txn[A]): Txn[A] = OrElse(this, other)
+    final def orElse[B >: A](other: Txn[B]): Txn[B] = OrElse(this, other)
   }
 
   object Txn {
     def pure[A](a: A): Txn[A] = Pure(a)
 
-    def retry[A]: Txn[A] = Retry()
+    def retry[A]: Txn[A] = Retry
 
     implicit val txnMonad: StackSafeMonad[Txn] with MonoidK[Txn] =
       new StackSafeMonad[Txn] with MonoidK[Txn] {
@@ -99,19 +99,19 @@ trait STM[F[_]] {
 
   private[stm] object Internals {
 
-    final case class Pure[A](a: A)                                extends Txn[A]
-    final case class Alloc[A](a: A)                               extends Txn[TVar[A]]
-    final case class Bind[A, B](stm: Txn[B], f: B => Txn[A])      extends Txn[A]
-    final case class Get[A](tvar: TVar[A])                        extends Txn[A]
-    final case class Modify[A](tvar: TVar[A], f: A => A)          extends Txn[Unit]
-    final case class OrElse[A](attempt: Txn[A], fallback: Txn[A]) extends Txn[A]
-    final case class Abort[A](error: Throwable)                   extends Txn[A]
-    final case class Retry[A]()                                   extends Txn[A]
+    case class Pure[A](a: A)                                extends Txn[A]
+    case class Alloc[A](a: A)                               extends Txn[TVar[A]]
+    case class Bind[A, B](stm: Txn[B], f: B => Txn[A])      extends Txn[A]
+    case class Get[A](tvar: TVar[A])                        extends Txn[A]
+    case class Modify[A](tvar: TVar[A], f: A => A)          extends Txn[Unit]
+    case class OrElse[A](attempt: Txn[A], fallback: Txn[A]) extends Txn[A]
+    case class Abort(error: Throwable)                      extends Txn[Nothing]
+    case object Retry                                       extends Txn[Nothing]
 
     sealed trait TResult[+A]                    extends Product with Serializable
-    final case class TSuccess[A](value: A)      extends TResult[A]
-    final case class TFailure(error: Throwable) extends TResult[Nothing]
-    final case object TRetry                    extends TResult[Nothing]
+    case class TSuccess[A](value: A)      extends TResult[A]
+    case class TFailure(error: Throwable) extends TResult[Nothing]
+    case object TRetry                    extends TResult[Nothing]
 
     type Cont   = Any => Txn[Any]
     type TVarId = Long
@@ -264,7 +264,7 @@ trait STM[F[_]] {
             go(nextId, lock, ref, attempt)
           case Abort(error) =>
             Right(TFailure(error))
-          case Retry() =>
+          case Retry =>
             if (fallbacks.isEmpty) Right(TRetry)
             else {
               val (fb, lg, cts) = fallbacks.head
@@ -323,8 +323,11 @@ object STM {
                   r <- if (committed) log.signal >> F.pure(a) else commit(txn)
                 } yield r
             case TFailure(e) => if (log.isDirty) commit(txn) else F.raiseError(e)
-            //TODO make this safely cancellable
-            case TRetry => if (log.isDirty) commit(txn) else log.registerRetry(signal) >> signal.get >> commit(txn)
+            //TODO make retry blocking safely cancellable
+            case TRetry =>
+              if (log.isDirty)
+                commit(txn)
+              else log.registerRetry(signal) >> signal.get >> commit(txn)
           }
         } yield r
     }
