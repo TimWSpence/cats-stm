@@ -28,12 +28,15 @@ import munit.CatsEffectSuite
   */
 class SequentialTests extends CatsEffectSuite {
 
+  val stm = STM[IO]().unsafeRunSync()
+  import stm._
+
   test("Basic transaction is executed") {
-    val from = TVar.of(100).atomically[IO].unsafeRunSync()
-    val to   = TVar.of(0).atomically[IO].unsafeRunSync()
+    val from = stm.commit(TVar.of(100)).unsafeRunSync()
+    val to   = stm.commit(TVar.of(0)).unsafeRunSync()
 
     val prog = for {
-      _ <- STM.atomically[IO] {
+      _ <- stm.commit {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
@@ -49,15 +52,15 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Abort primitive aborts whole transaction") {
-    val from = TVar.of(100).atomically[IO].unsafeRunSync()
-    val to   = TVar.of(0).atomically[IO].unsafeRunSync()
+    val from = stm.commit(TVar.of(100)).unsafeRunSync()
+    val to   = stm.commit(TVar.of(0)).unsafeRunSync()
 
     val prog = for {
-      _ <- STM.atomically[IO] {
+      _ <- stm.commit {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
-          _       <- STM.abort[Unit](new RuntimeException("Boom"))
+          _       <- stm.abort(new RuntimeException("Boom"))
         } yield ()
       }
     } yield ()
@@ -69,19 +72,19 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Check retries until transaction succeeds") {
-    val from         = TVar.of(100).atomically[IO].unsafeRunSync()
-    val to           = TVar.of(0).atomically[IO].unsafeRunSync()
+    val from         = stm.commit(TVar.of(100)).unsafeRunSync()
+    val to           = stm.commit(TVar.of(0)).unsafeRunSync()
     var checkCounter = 0
 
     val prog = for {
       _ <- (for {
           _ <- Timer[IO].sleep(2 seconds)
-          _ <- from.modify(_ + 1).atomically[IO]
+          _ <- stm.commit(from.modify(_ + 1))
         } yield ()).start
-      _ <- STM.atomically[IO] {
+      _ <- stm.commit {
         for {
           balance <- from.get
-          _       <- { checkCounter += 1; STM.check(balance > 100) }
+          _       <- { checkCounter += 1; stm.check(balance > 100) }
           _       <- from.modify(_ - 100)
           _       <- to.modify(_ + 100)
         } yield ()
@@ -96,21 +99,21 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("check retries repeatedly") {
-    val tvar = TVar.of(0).atomically[IO].unsafeRunSync()
+    val tvar = stm.commit(TVar.of(0)).unsafeRunSync()
 
-    val retry: STM[Int] = for {
+    val retry: Txn[Int] = for {
       current <- tvar.get
-      _       <- STM.check(current > 10)
+      _       <- stm.check(current > 10)
     } yield current
 
     val background: IO[Unit] = 1
       .to(11)
       .toList
-      .traverse_(_ => tvar.modify(_ + 1).atomically[IO] >> IO.sleep(100.millis))
+      .traverse_(_ => stm.commit(tvar.modify(_ + 1)) >> IO.sleep(100.millis))
 
     val prog = for {
       fiber <- background.start
-      res   <- retry.atomically[IO]
+      res   <- stm.commit(retry)
       _     <- fiber.join
     } yield res
 
@@ -121,65 +124,65 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("OrElse runs second transaction if first retries") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync()
+    val account = stm.commit(TVar.of(100)).unsafeRunSync()
 
     val first = for {
       balance <- account.get
-      _       <- STM.check(balance > 100)
+      _       <- stm.check(balance > 100)
       _       <- account.modify(_ - 100)
     } yield ()
 
     val second = for {
       balance <- account.get
-      _       <- STM.check(balance > 50)
+      _       <- stm.check(balance > 50)
       _       <- account.modify(_ - 50)
     } yield ()
 
     val prog = for {
-      _ <- first.orElse(second).atomically[IO]
+      _ <- stm.commit(first.orElse(second))
     } yield ()
 
     for (_ <- prog) yield assertEquals(account.value, 50)
   }
 
   test("OrElse reverts changes if retrying") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync()
+    val account = stm.commit(TVar.of(100)).unsafeRunSync()
 
     val first = for {
       _ <- account.modify(_ - 100)
-      _ <- STM.retry[Unit]
+      _ <- stm.retry
     } yield ()
 
     val second = for {
       balance <- account.get
-      _       <- STM.check(balance > 50)
+      _       <- stm.check(balance > 50)
       _       <- account.modify(_ - 50)
     } yield ()
 
     val prog = for {
-      _ <- first.orElse(second).atomically[IO]
+      _ <- stm.commit(first.orElse(second))
     } yield ()
 
     for (_ <- prog) yield assertEquals(account.value, 50)
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
-    val account = TVar.of(100).atomically[IO].unsafeRunSync()
-    val other   = TVar.of(100).atomically[IO].unsafeRunSync()
+    val account = stm.commit(TVar.of(100)).unsafeRunSync()
+    val other   = stm.commit(TVar.of(100)).unsafeRunSync()
 
     val first = for {
       _ <- other.modify(_ - 100)
-      _ <- STM.retry[Unit]
+      _ <- stm.retry
     } yield ()
 
     val second = for {
       balance <- account.get
-      _       <- STM.check(balance > 50)
+      _       <- stm.check(balance > 50)
       _       <- account.modify(_ - 50)
     } yield ()
 
     val prog = for {
-      _ <- STM.atomically[IO] {
+      _ <- stm.commit {
         for {
           _ <- first.orElse(second)
         } yield ()
@@ -193,27 +196,27 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("nested orElse") {
-    val tvar = TVar.of(100).atomically[IO].unsafeRunSync()
+    val tvar = stm.commit(TVar.of(100)).unsafeRunSync()
 
     val first = for {
       _ <- tvar.modify(_ - 100)
-      _ <- STM.retry[Unit]
+      _ <- stm.retry
     } yield ()
 
     val second = for {
       _       <- tvar.modify(_ - 10)
       balance <- tvar.get
-      _       <- STM.check(balance == 50)
+      _       <- stm.check(balance == 50)
       _       <- tvar.modify(_ - 50)
     } yield ()
 
     val third = for {
       balance <- tvar.get
-      _       <- STM.check(balance == 100)
+      _       <- stm.check(balance == 100)
       _       <- tvar.modify(_ - 50)
     } yield ()
 
-    val prog = (first.orElse(second).orElse(third) >> tvar.get).atomically[IO]
+    val prog = stm.commit((first.orElse(second).orElse(third) >> tvar.get))
 
     prog.map { res =>
       assertEquals(res, 50)
@@ -221,30 +224,30 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Transaction is retried if TVar in if branch is subsequently modified") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
+    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
 
-    val retry: STM[Unit] = for {
+    val retry: Txn[Unit] = for {
       current <- tvar.get
-      _       <- STM.check(current > 0)
+      _       <- stm.check(current > 0)
       _       <- tvar.modify(_ + 1)
     } yield ()
 
     val background: IO[Unit] =
       for {
         _ <- Timer[IO].sleep(2 seconds)
-        _ <- tvar.modify(_ + 1).atomically[IO]
+        _ <- stm.commit(tvar.modify(_ + 1))
       } yield ()
 
     val prog = for {
       fiber <- background.start
-      _     <- retry.orElse(STM.retry).atomically[IO]
+      _     <- stm.commit(retry.orElse(stm.retry))
       _     <- fiber.join
     } yield ()
 
     for (_ <- prog) yield {
       assertEquals(tvar.value, 2L)
 
-      assert(tvar.pending.get.isEmpty)
+      // assert(tvar.pending.get.isEmpty)
     }
   }
 
@@ -258,13 +261,13 @@ class SequentialTests extends CatsEffectSuite {
     *  id and hence we would only register one to retry
     */
   test("Atomically is referentially transparent") {
-    val flag = TVar.of(false).atomically[IO].unsafeRunSync()
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
+    val flag = stm.commit(TVar.of(false)).unsafeRunSync()
+    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
 
-    val retry: IO[Unit] = STM.atomically[IO] {
+    val retry: IO[Unit] = stm.commit {
       for {
         current <- flag.get
-        _       <- STM.check(current)
+        _       <- stm.check(current)
         _       <- tvar.modify(_ + 1)
       } yield ()
     }
@@ -272,7 +275,7 @@ class SequentialTests extends CatsEffectSuite {
     val background: IO[Unit] =
       for {
         _ <- Timer[IO].sleep(2 seconds)
-        _ <- flag.set(true).atomically[IO]
+        _ <- stm.commit(flag.set(true))
       } yield ()
 
     val prog = for {
@@ -288,11 +291,11 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Atomically is referentially transparent 2") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
+    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
 
-    val inc: IO[Unit] = tvar.modify(_ + 1).atomically[IO]
+    val inc: IO[Unit] = stm.commit(tvar.modify(_ + 1))
 
-    val prog = inc >> inc >> inc >> inc >> inc >> tvar.get.atomically[IO]
+    val prog = inc >> inc >> inc >> inc >> inc >> stm.commit(tvar.get)
 
     prog.map { res =>
       assertEquals(res, 5L)
@@ -300,11 +303,11 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("Modify is referentially transparent 2") {
-    val tvar = TVar.of(0L).atomically[IO].unsafeRunSync()
+    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
 
-    val inc: STM[Unit] = tvar.modify(_ + 1)
+    val inc: Txn[Unit] = tvar.modify(_ + 1)
 
-    val prog = (inc >> inc >> inc >> inc >> inc >> tvar.get).atomically[IO]
+    val prog = stm.commit(inc >> inc >> inc >> inc >> inc >> tvar.get)
 
     prog.map { res =>
       assertEquals(res, 5L)
@@ -312,11 +315,11 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("stack-safe construction") {
-    val tvar       = TVar.of(0L).atomically[IO].unsafeRunSync()
+    val tvar       = stm.commit(TVar.of(0L)).unsafeRunSync()
     val iterations = 100000
 
     IO.pure(
-      1.to(iterations).foldLeft(STM.unit) { (prog, _) =>
+      1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
         prog >> tvar.modify(_ + 1)
       }
     )
@@ -324,12 +327,12 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("stack-safe evaluation") {
-    val tvar       = TVar.of(0).atomically[IO].unsafeRunSync()
+    val tvar       = stm.commit(TVar.of(0)).unsafeRunSync()
     val iterations = 100000
 
-    STM
-      .atomically[IO](
-        1.to(iterations).foldLeft(STM.unit) { (prog, _) =>
+    stm
+      .commit(
+        1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
           prog >> tvar.modify(_ + 1)
         } >> tvar.get
       )

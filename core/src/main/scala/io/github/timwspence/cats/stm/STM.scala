@@ -103,6 +103,8 @@ trait STM[F[_]] {
 
   val unit: Txn[Unit] = Pure(())
 
+  def abort(e: Throwable): Txn[Nothing] = Abort(e)
+
   private[stm] object Internals {
 
     case class Pure[A](a: A)                                extends Txn[A]
@@ -161,11 +163,11 @@ trait STM[F[_]] {
 
       def commit(implicit F: Concurrent[F]): F[Unit] = F.delay(values.foreach(_.commit()))
 
-      def signal(implicit F: Monad[F]): F[Unit] =
+      def signal(implicit F: Concurrent[F]): F[Unit] =
         values.toList.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
-            _       <- signals.traverse_(_.complete(()))
+            _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
           } yield ()
         )
 
@@ -292,6 +294,7 @@ object STM {
           signal <- Deferred[F, Unit]
           p      <- eval(idGen, txn)
           (res, log) = p
+          // _ <- F.delay(println(s"res: $res log: $log"))
           r <- res match {
             //Double-checked dirtyness
             case TSuccess(a) =>
@@ -301,7 +304,7 @@ object STM {
                   committed <- global.withPermit(
                     if (log.isDirty) F.pure(false)
                     else
-                      log.commit.as(true)
+                      F.delay(println("committing")) >> log.commit.as(true)
                   )
                   r <- if (committed) log.signal >> F.pure(a) else commit(txn)
                 } yield r
@@ -309,8 +312,11 @@ object STM {
             //TODO make retry blocking safely cancellable
             case TRetry =>
               if (log.isDirty)
+                //TODO we could probably split commit so we don't reallocate a signal every time
                 commit(txn)
-              else log.registerRetry(signal) >> signal.get >> commit(txn)
+              //TODO remove signal from tvars when we wake
+              //TODO we need a lock here?
+              else log.registerRetry(signal) >> signal.get >> F.delay(println("retrying")) >> commit(txn)
           }
         } yield r
     }
