@@ -60,7 +60,7 @@ class SequentialTests extends CatsEffectSuite {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
-          _       <- stm.abort(new RuntimeException("Boom"))
+          _       <- stm.abort[Unit](new RuntimeException("Boom"))
         } yield ()
       }
     } yield ()
@@ -150,7 +150,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val first = for {
       _ <- account.modify(_ - 100)
-      _ <- stm.retry
+      _ <- stm.retry[Unit]
     } yield ()
 
     val second = for {
@@ -172,7 +172,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val first = for {
       _ <- other.modify(_ - 100)
-      _ <- stm.retry
+      _ <- stm.retry[Unit]
     } yield ()
 
     val second = for {
@@ -200,7 +200,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val first = for {
       _ <- tvar.modify(_ - 100)
-      _ <- stm.retry
+      _ <- stm.retry[Unit]
     } yield ()
 
     val second = for {

@@ -92,18 +92,15 @@ trait STM[F[_]] {
       }
   }
 
-  //TODO do we need this or will it be found successfully on the companion object?
-  // implicit val T: Monad[Txn]
-
   def commit[A](txn: Txn[A]): F[A]
 
   def check(cond: Boolean): Txn[Unit] = if (cond) unit else retry
 
-  val retry: Txn[Nothing] = Retry
+  def retry[A]: Txn[A] = Retry
 
   val unit: Txn[Unit] = Pure(())
 
-  def abort(e: Throwable): Txn[Nothing] = Abort(e)
+  def abort[A](e: Throwable): Txn[A] = Abort(e)
 
   private[stm] object Internals {
 
