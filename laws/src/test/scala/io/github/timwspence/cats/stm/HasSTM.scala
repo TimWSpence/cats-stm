@@ -17,19 +17,9 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import cats.implicits._
-import cats.kernel.laws.discipline._
-import cats.laws.discipline._
-import munit.DisciplineSuite
 
-class CatsLawsSpec extends Instances with DisciplineSuite {
+trait HasSTM {
 
-  override val stm: STM[IO] = STM[IO]().unsafeRunSync()
-  import stm._
+  val stm: STM[IO]
 
-  checkAll("Txn[Int]", MonoidTests[Txn[Int]].monoid)
-
-  checkAll("Txn[Int]", MonadTests[Txn].monad[Int, Int, Int])
-
-  checkAll("Txn[Int]", MonoidKTests[Txn].monoidK[Int])
 }

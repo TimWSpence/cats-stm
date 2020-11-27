@@ -30,8 +30,7 @@ import Arbitrary.{arbitrary => arb}
 import cats.effect.concurrent.{Deferred, Ref}
 import cats.effect.concurrent.Semaphore
 
-trait Instances extends CatsEffectSuite {
-  val stm: STM[IO] = STM[IO]().unsafeRunSync()
+trait Instances extends CatsEffectSuite with HasSTM {
   import stm._
   import stm.Internals._
 

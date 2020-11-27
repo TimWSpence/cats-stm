@@ -93,13 +93,15 @@ trait STM[F[_]] {
       }
   }
 
+  def pure[A](a: A): Txn[A] = Txn.pure(a)
+
   def commit[A](txn: Txn[A]): F[A]
 
   def check(cond: Boolean): Txn[Unit] = if (cond) unit else retry
 
   def retry[A]: Txn[A] = Retry
 
-  val unit: Txn[Unit] = Pure(())
+  val unit: Txn[Unit] = pure(())
 
   def abort[A](e: Throwable): Txn[A] = Abort(e)
 
