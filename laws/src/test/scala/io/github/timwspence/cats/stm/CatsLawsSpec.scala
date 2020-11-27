@@ -21,10 +21,12 @@ import cats.kernel.laws.discipline._
 import cats.laws.discipline._
 import munit.DisciplineSuite
 
-class CatsLawsSpec extends DisciplineSuite with Instances {
-  checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)
+class CatsLawsSpec extends Instances with DisciplineSuite {
+  import stm._
 
-  checkAll("STM[Int]", MonadTests[STM].monad[Int, Int, Int])
+  checkAll("Txn[Int]", MonoidTests[Txn[Int]].monoid)
 
-  checkAll("STM[Int]", MonoidKTests[STM].monoidK[Int])
+  checkAll("Txn[Int]", MonadTests[Txn].monad[Int, Int, Int])
+
+  checkAll("Txn[Int]", MonoidKTests[Txn].monoidK[Int])
 }

@@ -244,11 +244,9 @@ class SequentialTests extends CatsEffectSuite {
       _     <- fiber.join
     } yield ()
 
-    for (_ <- prog) yield {
-      assertEquals(tvar.value, 2L)
+    for (_ <- prog) yield assertEquals(tvar.value, 2L)
 
-      // assert(tvar.pending.get.isEmpty)
-    }
+    // assert(tvar.pending.get.isEmpty)
   }
 
   /**

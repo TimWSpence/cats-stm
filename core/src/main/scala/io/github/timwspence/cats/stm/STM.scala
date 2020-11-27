@@ -16,11 +16,12 @@
 
 package io.github.timwspence.cats.stm
 
+import scala.annotation.tailrec
+
 import cats.effect.Concurrent
 import cats.effect.concurrent.{Deferred, Ref, Semaphore}
-import cats.{Monad, Monoid, MonoidK, StackSafeMonad}
 import cats.implicits._
-import scala.annotation.tailrec
+import cats.{Monad, Monoid, MonoidK, StackSafeMonad}
 
 trait STM[F[_]] {
   import Internals._
@@ -113,7 +114,7 @@ trait STM[F[_]] {
     case class Abort(error: Throwable)                      extends Txn[Nothing]
     case object Retry                                       extends Txn[Nothing]
 
-    sealed trait TResult[+A]                    extends Product with Serializable
+    sealed trait TResult[+A]              extends Product with Serializable
     case class TSuccess[A](value: A)      extends TResult[A]
     case class TFailure(error: Throwable) extends TResult[Nothing]
     case object TRetry                    extends TResult[Nothing]
@@ -301,7 +302,8 @@ object STM {
                   committed <- global.withPermit(
                     if (log.isDirty) F.pure(false)
                     else
-                      F.delay(println("committing")) >> log.commit.as(true)
+                      // F.delay(println("committing")) >> log.commit.as(true)
+                      log.commit.as(true)
                   )
                   r <- if (committed) log.signal >> F.pure(a) else commit(txn)
                 } yield r
@@ -319,4 +321,3 @@ object STM {
     }
 
 }
-
