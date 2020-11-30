@@ -18,7 +18,7 @@ package io.github.timwspence.cats.stm
 
 import scala.concurrent.duration._
 
-import cats.effect.{IO, Timer}
+import cats.effect.IO
 import cats.implicits._
 import munit.CatsEffectSuite
 import scala.util.Random
@@ -79,7 +79,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val prog = for {
       _ <- (for {
-          _ <- Timer[IO].sleep(2 seconds)
+          _ <- IO.sleep(2 seconds)
           _ <- stm.commit(from.modify(_ + 1))
         } yield ()).start
       _ <- stm.commit {
@@ -99,7 +99,7 @@ class SequentialTests extends CatsEffectSuite {
     }
   }
 
-  test("check retries repeatedly") {
+  test("Check retries repeatedly") {
     val tvar = stm.commit(TVar.of(0)).unsafeRunSync()
 
     val retry: Txn[Int] = for {
@@ -235,7 +235,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val background: IO[Unit] =
       for {
-        _ <- Timer[IO].sleep(2 seconds)
+        _ <- IO.sleep(2 seconds)
         _ <- stm.commit(tvar.modify(_ + 1))
       } yield ()
 
@@ -273,7 +273,7 @@ class SequentialTests extends CatsEffectSuite {
 
     val background: IO[Unit] =
       for {
-        _ <- Timer[IO].sleep(2 seconds)
+        _ <- IO.sleep(2 seconds)
         _ <- stm.commit(flag.set(true))
       } yield ()
 
@@ -369,7 +369,7 @@ class SequentialTests extends CatsEffectSuite {
   test("SO much contention and retrying") {
     for {
       tvar <- stm.commit(TVar.of(0))
-      fs <- Random.shuffle(List.range(0, 1000)).parTraverse { n =>
+      fs <- Random.shuffle(List.range(0, 100)).parTraverse { n =>
         stm
           .commit(
             for {
@@ -382,7 +382,42 @@ class SequentialTests extends CatsEffectSuite {
       }
       _   <- fs.traverse_(_.join)
       v   <- stm.commit(tvar.get)
-      res <- IO(assertEquals(v, 1000))
+      res <- IO(assertEquals(v, 100))
+    } yield res
+  }
+
+  test("unblock all transactions") {
+    for {
+      tvar1 <- stm.commit(TVar.of(0))
+      tvar2 <- stm.commit(TVar.of(0))
+      f1 <-
+        stm
+          .commit(
+            for {
+              current <- tvar1.get
+              _       <- stm.check(current == 1)
+              _       <- tvar1.set(2)
+            } yield current
+          )
+          .start
+      f2 <-
+        stm
+          .commit(
+            for {
+              current <- tvar2.get
+              _       <- stm.check(current == 1)
+              _       <- tvar2.set(2)
+            } yield current
+          )
+          .start
+      _  <- stm.commit(tvar1.set(1) >> tvar2.set(1))
+      _  <- f1.join.timeout(1.second)
+      _  <- f2.join.timeout(1.second)
+      v1 <- stm.commit(tvar1.get)
+      v2 <- stm.commit(tvar2.get)
+      res <- IO {
+        assertEquals(v1 -> v2, 2 -> 2)
+      }
     } yield res
   }
 

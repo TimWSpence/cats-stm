@@ -21,6 +21,7 @@ import scala.concurrent.duration._
 import cats.data._
 import cats.effect._
 import cats.implicits._
+import cats.effect.unsafe.implicits.global
 
 object SantaClausProblem extends IOApp {
 
@@ -112,12 +113,12 @@ object SantaClausProblem extends IOApp {
   def reindeer2(group: Group, id: Int): IO[Unit] =
     helper1(group, deliverToys(id))
 
-  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => Timer[IO].sleep(n.micros))
+  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => IO.sleep(n.micros))
 
-  def elf(g: Group, i: Int): IO[Fiber[IO, Nothing]] =
+  def elf(g: Group, i: Int) =
     (elf2(g, i) >> randomDelay).foreverM.start
 
-  def reindeer(g: Group, i: Int): IO[Fiber[IO, Nothing]] =
+  def reindeer(g: Group, i: Int) =
     (reindeer2(g, i) >> randomDelay).foreverM.start
 
   def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
@@ -155,11 +156,13 @@ object SantaClausProblem extends IOApp {
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup  <- Group.of(3)
-      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
+      elfGroup <- Group.of(3)
+      _        <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
+      // _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
       reinGroup <- Group.of(9)
       _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
-      _         <- santa(elfGroup, reinGroup).foreverM.void
+      // _         <- List(1, 2, 3).traverse_(n => reindeer(reinGroup, n))
+      _ <- santa(elfGroup, reinGroup).foreverM.void
     } yield ()
 
 }

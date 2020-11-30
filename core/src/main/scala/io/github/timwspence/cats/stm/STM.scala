@@ -18,10 +18,12 @@ package io.github.timwspence.cats.stm
 
 import scala.annotation.tailrec
 
-import cats.effect.Concurrent
-import cats.effect.concurrent.{Deferred, Ref, Semaphore}
+import cats.effect.{Async, Deferred, Ref}
+import cats.effect.std.Semaphore
 import cats.implicits._
-import cats.{Monad, Monoid, MonoidK, StackSafeMonad}
+import cats.{Monoid, MonoidK, StackSafeMonad}
+import scala.util.Random
+import scala.concurrent.duration._
 
 trait STM[F[_]] {
   import Internals._
@@ -29,6 +31,7 @@ trait STM[F[_]] {
   //TODO should we split this into public trait and private impl?
   class TVar[A] private[stm] (
     val id: TVarId,
+    //TODO should this just be a Ref as well?
     @volatile var value: A,
     val lock: Semaphore[F],
     val retries: Ref[F, List[Deferred[F, Unit]]]
@@ -39,7 +42,13 @@ trait STM[F[_]] {
 
     def set(a: A): Txn[Unit] = modify(_ => a)
 
-    private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] = retries.update(signal :: _)
+    // private[stm] def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
+    //   retries.update(signal :: _) >> retries.get.flatMap { l =>
+    //     F.delay(println(s"retries is of length ${l.length} for $id"))
+    //   }
+
+    private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] =
+      retries.update(signal :: _)
 
   }
 
@@ -161,18 +170,19 @@ trait STM[F[_]] {
           }
         )
 
-      def commit(implicit F: Concurrent[F]): F[Unit] = F.delay(values.foreach(_.commit()))
+      def commit(implicit F: Async[F]): F[Unit] = F.delay(values.foreach(_.commit()))
 
-      def signal(implicit F: Concurrent[F]): F[Unit] =
+      def signal(implicit F: Async[F]): F[Unit] =
         values.toList.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
+            // _       <- F.delay(println(s"Unblocking ${signals.length} fibers for tvar ${e.tvar.id}"))
             // _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
             _ <- signals.traverse_(s => s.complete(()))
           } yield ()
         )
 
-      def registerRetry(signal: Deferred[F, Unit])(implicit F: Monad[F]): F[Unit] =
+      def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
         values.toList.traverse_(e => e.tvar.registerRetry(signal))
     }
 
@@ -216,7 +226,7 @@ trait STM[F[_]] {
 
     }
 
-    def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Concurrent[F]): F[(TResult[A], TLog)] = {
+    def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Async[F]): F[(TResult[A], TLog)] = {
       var conts: List[Cont]                             = Nil
       var fallbacks: List[(Txn[Any], TLog, List[Cont])] = Nil
       var log: TLog                                     = TLog.empty
@@ -283,7 +293,7 @@ trait STM[F[_]] {
 }
 
 object STM {
-  def apply[F[_]]()(implicit F: Concurrent[F]): F[STM[F]] =
+  def apply[F[_]]()(implicit F: Async[F]): F[STM[F]] =
     for {
       idGen  <- Ref.of[F, Long](0)
       global <- Semaphore[F](1) //TODO remove this and just lock each tvar
@@ -299,29 +309,40 @@ object STM {
           r <- res match {
             //Double-checked dirtyness
             case TSuccess(a) =>
-              if (log.isDirty) commit(txn)
-              else
-                for {
-                  committed <- global.withPermit(
-                    if (log.isDirty) F.pure(false)
-                    else
-                      // F.delay(println("committing")) >> log.commit.as(true)
-                      log.commit.as(true)
-                  )
-                  r <- if (committed) log.signal >> F.pure(a) else commit(txn)
-                } yield r
+              // if (log.isDirty) commit(txn)
+              // else
+              for {
+                committed <- global.permit.use(_ =>
+                  if (log.isDirty) F.pure(false)
+                  else
+                    // F.delay(println("committing")) >> log.commit.as(true)
+                    log.commit.as(true)
+                )
+                r <-
+                  if (committed) log.signal >> F.pure(a)
+                  else F.delay(println("Retrying success as dirty")) >> commit(txn)
+              } yield r
             case TFailure(e) => if (log.isDirty) commit(txn) else F.raiseError(e)
             //TODO make retry blocking safely cancellable
             case TRetry =>
-              if (log.isDirty)
-                //TODO we could probably split commit so we don't reallocate a signal every time
-                commit(txn)
-              //TODO remove signal from tvars when we wake
-              //TODO we need a lock here?
-              // else log.registerRetry(signal) >> signal.get >> F.delay(println("retrying")) >> commit(txn)
-              else log.registerRetry(signal) >> signal.get >> commit(txn)
+              //TODO we could probably split commit so we don't reallocate a signal every time
+              global.permit
+                .use(_ =>
+                  if (log.isDirty) F.pure(true)
+                  else log.registerRetry(signal).as(false)
+                )
+                .flatMap { retryImmediately =>
+                  //TODO remove signal from tvars when we wake
+                  if (retryImmediately) commit(txn) else signal.get >> jitter >> commit(txn)
+                }
           }
         } yield r
+
+      //TODO do we need this to avoid thundering herds?
+      private def jitter: F[Unit] =
+        F.delay(Random.nextInt(10000)).flatMap { n =>
+          F.sleep(n.micros)
+        }
     }
 
 }
