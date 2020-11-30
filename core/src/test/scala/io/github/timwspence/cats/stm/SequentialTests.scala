@@ -342,7 +342,7 @@ class SequentialTests extends CatsEffectSuite {
   }
 
   test("race retrying fiber and fiber which unblocks it") {
-    val iterations = 1000
+    val iterations = 100
 
     List.range(0, iterations).traverse { _ =>
       for {
@@ -355,11 +355,7 @@ class SequentialTests extends CatsEffectSuite {
             _       <- tvar.set(current + 1)
           } yield ()
         )
-        e <- IO.racePair(retry, unblock)
-        _ <- e match {
-          case Left((_, f))  => f.join.timeout(2.seconds)
-          case Right((f, _)) => f.join.timeout(2.seconds)
-        }
+        _ <- IO.both(retry, unblock).timeout(2.seconds)
         v   <- stm.commit(tvar.get)
         res <- IO(assertEquals(v, 2))
       } yield res
