@@ -52,7 +52,7 @@ val CatsVersion = "2.3.0"
 val CatsEffectVersion = "3.0.0-M4"
 val DisciplineVersion = "0.3.0"
 val ScalaCheckVersion = "1.15.1"
-val MunitVersion = "0.7.18"
+val MunitVersion = "0.7.19"
 val MunitCatsEffectVersion = "0.11.0"
 val ScalacheckEffectVersion = "0.3.0"
 
