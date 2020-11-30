@@ -17,13 +17,13 @@
 package io.github.timwspence.cats.stm
 
 import scala.annotation.tailrec
+import scala.concurrent.duration._
+import scala.util.Random
 
-import cats.effect.{Async, Deferred, Ref}
 import cats.effect.std.Semaphore
+import cats.effect.{Async, Deferred, Ref}
 import cats.implicits._
 import cats.{Monoid, MonoidK, StackSafeMonad}
-import scala.util.Random
-import scala.concurrent.duration._
 
 trait STM[F[_]] {
   import Internals._
@@ -41,11 +41,6 @@ trait STM[F[_]] {
     def modify(f: A => A): Txn[Unit] = Modify(this, f)
 
     def set(a: A): Txn[Unit] = modify(_ => a)
-
-    // private[stm] def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
-    //   retries.update(signal :: _) >> retries.get.flatMap { l =>
-    //     F.delay(println(s"retries is of length ${l.length} for $id"))
-    //   }
 
     private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] =
       retries.update(signal :: _)
@@ -176,9 +171,7 @@ trait STM[F[_]] {
         values.toList.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
-            // _       <- F.delay(println(s"Unblocking ${signals.length} fibers for tvar ${e.tvar.id}"))
-            // _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
-            _ <- signals.traverse_(s => s.complete(()))
+            _       <- signals.traverse_(s => s.complete(()))
           } yield ()
         )
 
@@ -303,25 +296,24 @@ object STM {
       def commit[A](txn: Txn[A]): F[A] =
         for {
           signal <- Deferred[F, Unit]
-          p      <- eval(idGen, txn)
+          //TODO why does this need to be a critical section?
+          p <- global.permit.use(_ => eval(idGen, txn))
           (res, log) = p
-          // _ <- F.delay(println(s"res: $res log: $log"))
           r <- res match {
-            //Double-checked dirtyness
+            //Double-checked dirtyness for performance
             case TSuccess(a) =>
-              // if (log.isDirty) commit(txn)
-              // else
-              for {
-                committed <- global.permit.use(_ =>
-                  if (log.isDirty) F.pure(false)
-                  else
-                    // F.delay(println("committing")) >> log.commit.as(true)
-                    log.commit.as(true)
-                )
-                r <-
-                  if (committed) log.signal >> F.pure(a)
-                  else F.delay(println("Retrying success as dirty")) >> commit(txn)
-              } yield r
+              if (log.isDirty) commit(txn)
+              else
+                for {
+                  committed <- global.permit.use(_ =>
+                    if (log.isDirty) F.pure(false)
+                    else
+                      log.commit.as(true)
+                  )
+                  r <-
+                    if (committed) log.signal >> F.pure(a)
+                    else commit(txn)
+                } yield r
             case TFailure(e) => if (log.isDirty) commit(txn) else F.raiseError(e)
             //TODO make retry blocking safely cancellable
             case TRetry =>

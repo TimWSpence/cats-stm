@@ -156,12 +156,12 @@ object SantaClausProblem extends IOApp {
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup <- Group.of(3)
-      _        <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
-      // _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
-      reinGroup <- Group.of(9)
-      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
-      // _         <- List(1, 2, 3).traverse_(n => reindeer(reinGroup, n))
+      elfGroup <- Group.of(2)
+      // _        <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
+      _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
+      reinGroup <- Group.of(4)
+      // _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
+      _ <- List(1, 2, 3, 4).traverse_(n => reindeer(reinGroup, n))
       _ <- santa(elfGroup, reinGroup).foreverM.void
     } yield ()
 

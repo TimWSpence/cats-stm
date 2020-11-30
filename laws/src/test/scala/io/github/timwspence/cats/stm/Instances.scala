@@ -27,8 +27,8 @@ import cats.kernel.laws.IsEq
 import org.scalacheck.{Arbitrary, Cogen, Gen, Prop}
 
 import Arbitrary.{arbitrary => arb}
-import cats.effect.concurrent.{Deferred, Ref}
-import cats.effect.concurrent.Semaphore
+import cats.effect.{Deferred, Ref}
+import cats.effect.std.Semaphore
 
 trait Instances extends CatsEffectSuite with HasSTM {
   import stm._

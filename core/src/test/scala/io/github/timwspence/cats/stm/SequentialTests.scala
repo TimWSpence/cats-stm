@@ -355,7 +355,7 @@ class SequentialTests extends CatsEffectSuite {
             _       <- tvar.set(current + 1)
           } yield ()
         )
-        _ <- IO.both(retry, unblock).timeout(2.seconds)
+        _   <- IO.both(retry, unblock).timeout(2.seconds)
         v   <- stm.commit(tvar.get)
         res <- IO(assertEquals(v, 2))
       } yield res
