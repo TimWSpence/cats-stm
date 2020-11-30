@@ -340,4 +340,47 @@ class SequentialTests extends CatsEffectSuite {
 
   }
 
+  test("race retrying fiber and fiber which unblocks it") {
+    val iterations = 1000
+
+    List.range(0, iterations).traverse { _ =>
+      for {
+        tvar <- stm.commit(TVar.of(0))
+        unblock = stm.commit(tvar.modify(_ + 1))
+        retry = stm.commit(
+          for {
+            current <- tvar.get
+            _       <- stm.check(current == 1)
+            _       <- tvar.set(current + 1)
+          } yield ()
+        )
+        e <- IO.racePair(retry, unblock)
+        _ <- e match {
+          case Left((_, f))  => f.join.timeout(2.seconds)
+          case Right((f, _)) => f.join.timeout(2.seconds)
+        }
+        v   <- stm.commit(tvar.get)
+        res <- IO(assertEquals(v, 2))
+      } yield res
+    }
+  }
+
+  test("SO much contention and retrying") {
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      fs <- List.range(0, 100).parTraverse { n =>
+        stm.commit(
+          for {
+            current <- tvar.get
+            _ <- stm.check(current == n)
+            _ <- tvar.set(current + 1)
+          } yield ()
+        ).start
+      }
+      _ <- fs.traverse_(_.join)
+      v <- stm.commit(tvar.get)
+      res <- IO { assertEquals(v, 100) }
+    } yield res
+  }
+
 }

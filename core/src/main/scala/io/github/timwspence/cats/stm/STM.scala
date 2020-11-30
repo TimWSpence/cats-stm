@@ -167,7 +167,8 @@ trait STM[F[_]] {
         values.toList.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
-            _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
+            // _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
+            _       <- signals.traverse_(s => s.complete(()))
           } yield ()
         )
 
@@ -317,7 +318,8 @@ object STM {
                 commit(txn)
               //TODO remove signal from tvars when we wake
               //TODO we need a lock here?
-              else log.registerRetry(signal) >> signal.get >> F.delay(println("retrying")) >> commit(txn)
+              // else log.registerRetry(signal) >> signal.get >> F.delay(println("retrying")) >> commit(txn)
+              else log.registerRetry(signal) >> signal.get >> commit(txn)
           }
         } yield r
     }
