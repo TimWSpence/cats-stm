@@ -168,7 +168,7 @@ trait STM[F[_]] {
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
             // _       <- signals.traverse_(s => F.delay(println("signalling")) >> s.complete(()))
-            _       <- signals.traverse_(s => s.complete(()))
+            _ <- signals.traverse_(s => s.complete(()))
           } yield ()
         )
 

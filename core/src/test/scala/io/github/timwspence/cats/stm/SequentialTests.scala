@@ -21,6 +21,7 @@ import scala.concurrent.duration._
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import munit.CatsEffectSuite
+import scala.util.Random
 
 /**
   * Basic tests for correctness in the absence of
@@ -368,18 +369,20 @@ class SequentialTests extends CatsEffectSuite {
   test("SO much contention and retrying") {
     for {
       tvar <- stm.commit(TVar.of(0))
-      fs <- List.range(0, 100).parTraverse { n =>
-        stm.commit(
-          for {
-            current <- tvar.get
-            _ <- stm.check(current == n)
-            _ <- tvar.set(current + 1)
-          } yield ()
-        ).start
+      fs <- Random.shuffle(List.range(0, 1000)).parTraverse { n =>
+        stm
+          .commit(
+            for {
+              current <- tvar.get
+              _       <- stm.check(current == n)
+              _       <- tvar.set(current + 1)
+            } yield ()
+          )
+          .start
       }
-      _ <- fs.traverse_(_.join)
-      v <- stm.commit(tvar.get)
-      res <- IO { assertEquals(v, 100) }
+      _   <- fs.traverse_(_.join)
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 1000))
     } yield res
   }
 
