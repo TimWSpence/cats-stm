@@ -86,8 +86,7 @@ lazy val core = project.in(file("core"))
     import cats.implicits._
     import cats.effect._
     import cats.effect.implicits._
-    implicit val CS: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
-    implicit val T: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+    import cats.effect.unsafe.implicits.global
     """
   )
 
