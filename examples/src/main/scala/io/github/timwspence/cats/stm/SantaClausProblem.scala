@@ -20,12 +20,12 @@ import scala.concurrent.duration._
 
 import cats.data._
 import cats.effect._
-import cats.implicits._
 import cats.effect.unsafe.implicits.global
+import cats.implicits._
 
 object SantaClausProblem extends IOApp {
 
-  val stm = STM[IO]().unsafeRunSync()
+  val stm = STM[IO].unsafeRunSync()
   import stm._
 
   override def run(args: List[String]): IO[ExitCode] =
@@ -156,13 +156,11 @@ object SantaClausProblem extends IOApp {
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup <- Group.of(2)
-      // _        <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
-      _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
-      reinGroup <- Group.of(4)
-      // _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
-      _ <- List(1, 2, 3, 4).traverse_(n => reindeer(reinGroup, n))
-      _ <- santa(elfGroup, reinGroup).foreverM.void
+      elfGroup  <- Group.of(3)
+      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
+      reinGroup <- Group.of(9)
+      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
+      _         <- santa(elfGroup, reinGroup).foreverM.void
     } yield ()
 
 }
