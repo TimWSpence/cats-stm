@@ -16,16 +16,32 @@
 
 package io.github.timwspence.cats.stm
 
-import munit.{CatsEffectSuite, DisciplineSuite}
 import cats.effect.IO
-import org.scalacheck.Arbitrary
+import munit.CatsEffectSuite
 
-class STMLawsSpec extends CatsEffectSuite with STMTests with Instances with DisciplineSuite with HasSTM {
-  override val stm: STM[IO] = STM[IO].unsafeRunSync()
+class TSemaphoreTest extends CatsEffectSuite {
+
+  val stm = STM[IO].unsafeRunSync()
   import stm._
 
-  implicitly[Arbitrary[Txn[Int]]]
+  test("Acquire decrements the number of permits") {
+    val prog: Txn[Long] = for {
+      tsem  <- TSemaphore.make(1)
+      _     <- tsem.acquire
+      value <- tsem.available
+    } yield value
 
-  checkAll("stm", stmLaws[Int])
+    for (value <- stm.commit(prog)) yield assertEquals(value, 0L)
+  }
+
+  test("Release increments the number of permits") {
+    val prog: Txn[Long] = for {
+      tsem  <- TSemaphore.make(0)
+      _     <- tsem.release
+      value <- tsem.available
+    } yield value
+
+    for (value <- stm.commit(prog)) yield assertEquals(value, 1L)
+  }
 
 }

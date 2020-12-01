@@ -22,36 +22,39 @@ import munit.CatsEffectSuite
 
 class TQueueTest extends CatsEffectSuite {
 
+  val stm = STM[IO].unsafeRunSync()
+  import stm._
+
   test("Read removes the first element") {
-    val prog: STM[(String, Boolean)] = for {
+    val prog: Txn[(String, Boolean)] = for {
       tqueue <- TQueue.empty[String]
       _      <- tqueue.put("hello")
       value  <- tqueue.read
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.atomically[IO]) yield {
+    for (value <- stm.commit(prog)) yield {
       assertEquals(value._1, "hello")
       assert(value._2)
     }
   }
 
   test("Peek does not remove the first element") {
-    val prog: STM[(String, Boolean)] = for {
+    val prog: Txn[(String, Boolean)] = for {
       tqueue <- TQueue.empty[String]
       _      <- tqueue.put("hello")
       value  <- tqueue.peek
       empty  <- tqueue.isEmpty
     } yield value -> empty
 
-    for (value <- prog.atomically[IO]) yield {
+    for (value <- stm.commit(prog)) yield {
       assertEquals(value._1, "hello")
       assert(!value._2)
     }
   }
 
   test("TQueue is FIFO") {
-    val prog: STM[String] = for {
+    val prog: Txn[String] = for {
       tqueue <- TQueue.empty[String]
       _      <- tqueue.put("hello")
       _      <- tqueue.put("world")
@@ -59,7 +62,7 @@ class TQueueTest extends CatsEffectSuite {
       world  <- tqueue.peek
     } yield hello |+| world
 
-    for (value <- prog.atomically[IO]) yield assertEquals(value, "helloworld")
+    for (value <- stm.commit(prog)) yield assertEquals(value, "helloworld")
   }
 
 }

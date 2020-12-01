@@ -20,9 +20,13 @@ import scala.concurrent.duration._
 
 import cats.data._
 import cats.effect._
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 
 object SantaClausProblem extends IOApp {
+
+  val stm = STM[IO].unsafeRunSync()
+  import stm._
 
   override def run(args: List[String]): IO[ExitCode] =
     mainProblem.timeout(5.seconds).as(ExitCode.Success)
@@ -40,21 +44,21 @@ object SantaClausProblem extends IOApp {
       TVar.of(0).map(new Gate(capacity, _) {})
 
     def pass(g: Gate): IO[Unit] =
-      STM.atomically[IO] {
+      stm.commit {
         for {
           nLeft <- g.tv.get
-          _     <- STM.check(nLeft > 0)
+          _     <- stm.check(nLeft > 0)
           _     <- g.tv.modify(_ - 1)
         } yield ()
       }
 
     def operate(g: Gate): IO[Unit] =
       for {
-        _ <- STM.atomically[IO](g.tv.set(g.capacity))
-        _ <- STM.atomically[IO] {
+        _ <- stm.commit(g.tv.set(g.capacity))
+        _ <- stm.commit {
           for {
             nLeft <- g.tv.get
-            _     <- STM.check(nLeft === 0)
+            _     <- stm.check(nLeft === 0)
           } yield ()
         }
       } yield ()
@@ -65,11 +69,11 @@ object SantaClausProblem extends IOApp {
     tv: TVar[(Int, Gate, Gate)]
   ) {
     def join: IO[(Gate, Gate)]   = Group.join(this)
-    def await: STM[(Gate, Gate)] = Group.await(this)
+    def await: Txn[(Gate, Gate)] = Group.await(this)
   }
   object Group {
     def of(n: Int): IO[Group] =
-      STM.atomically[IO] {
+      stm.commit {
         for {
           g1 <- Gate.of(n)
           g2 <- Gate.of(n)
@@ -78,17 +82,17 @@ object SantaClausProblem extends IOApp {
       }
 
     def join(g: Group): IO[(Gate, Gate)] =
-      STM.atomically[IO] {
+      stm.commit {
         for {
           (nLeft, g1, g2) <- g.tv.get
-          _               <- STM.check(nLeft > 0)
+          _               <- stm.check(nLeft > 0)
           _               <- g.tv.set((nLeft - 1, g1, g2))
         } yield (g1, g2)
       }
-    def await(g: Group): STM[(Gate, Gate)] =
+    def await(g: Group): Txn[(Gate, Gate)] =
       for {
         (nLeft, g1, g2) <- g.tv.get
-        _               <- STM.check(nLeft === 0)
+        _               <- stm.check(nLeft === 0)
         newG1           <- Gate.of(g.n)
         newG2           <- Gate.of(g.n)
         _               <- g.tv.set((g.n, newG1, newG2))
@@ -109,16 +113,16 @@ object SantaClausProblem extends IOApp {
   def reindeer2(group: Group, id: Int): IO[Unit] =
     helper1(group, deliverToys(id))
 
-  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => Timer[IO].sleep(n.micros))
+  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => IO.sleep(n.micros))
 
-  def elf(g: Group, i: Int): IO[Fiber[IO, Nothing]] =
+  def elf(g: Group, i: Int) =
     (elf2(g, i) >> randomDelay).foreverM.start
 
-  def reindeer(g: Group, i: Int): IO[Fiber[IO, Nothing]] =
+  def reindeer(g: Group, i: Int) =
     (reindeer2(g, i) >> randomDelay).foreverM.start
 
-  def choose[A](choices: NonEmptyList[(STM[A], A => IO[Unit])]): IO[Unit] = {
-    def actions: NonEmptyList[STM[IO[Unit]]] =
+  def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
+    def actions: NonEmptyList[Txn[IO[Unit]]] =
       choices.map {
         case (guard, rhs) =>
           for {
@@ -126,7 +130,7 @@ object SantaClausProblem extends IOApp {
           } yield rhs(value)
       }
     for {
-      act <- STM.atomically[IO](actions.reduceLeft(_.orElse(_)))
+      act <- stm.commit(actions.reduceLeft(_.orElse(_)))
       _   <- act
     } yield ()
   }
