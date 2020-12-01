@@ -49,7 +49,7 @@ addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean;
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
 val CatsVersion = "2.3.0"
-val CatsEffectVersion = "3.0.0-M4"
+val CatsEffectVersion = "3.0-8096649"
 val DisciplineVersion = "0.3.0"
 val ScalaCheckVersion = "1.15.1"
 val MunitVersion = "0.7.19"
