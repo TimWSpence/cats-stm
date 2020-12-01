@@ -46,7 +46,7 @@ state then it would rapidly become very difficult indeed!
 ### A solution
 
 A solution to this is to abstract mutable state behind a `TVar` which exposes
-operations in an `STM` monad. These operations can be composed in the `STM`
+operations in a `Txn` monad. These operations can be composed in the `Txn`
 monad and then atomically evaluated as an `IO` action.
 
 Why does this solve the problem?

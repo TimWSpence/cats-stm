@@ -16,15 +16,20 @@
 
 package io.github.timwspence.cats.stm
 
+import cats.effect.IO
 import cats.implicits._
 import cats.kernel.laws.discipline._
 import cats.laws.discipline._
 import munit.DisciplineSuite
 
-class CatsLawsSpec extends DisciplineSuite with Instances {
-  checkAll("STM[Int]", MonoidTests[STM[Int]].monoid)
+class CatsLawsSpec extends Instances with DisciplineSuite {
 
-  checkAll("STM[Int]", MonadTests[STM].monad[Int, Int, Int])
+  override val stm: STM[IO] = STM[IO].unsafeRunSync()
+  import stm._
 
-  checkAll("STM[Int]", MonoidKTests[STM].monoidK[Int])
+  checkAll("Txn[Int]", MonoidTests[Txn[Int]].monoid)
+
+  checkAll("Txn[Int]", MonadTests[Txn].monad[Int, Int, Int])
+
+  checkAll("Txn[Int]", MonoidKTests[Txn].monoidK[Int])
 }

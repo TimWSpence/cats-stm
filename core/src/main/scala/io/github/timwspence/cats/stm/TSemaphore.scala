@@ -21,34 +21,37 @@ package io.github.timwspence.cats.stm
   *
   * Analogous to `cats.effect.concurrent.Semaphore`.
   */
-final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
+trait TSemaphoreLike[F[_]] extends STMLike[F] {
+  final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
 
-  /**
-    * Get the number of permits currently available.
-    */
-  def available: STM[Long] = tvar.get
+    /**
+      * Get the number of permits currently available.
+      */
+    def available: Txn[Long] = tvar.get
 
-  /**
-    * Acquire a permit. Retries if no permits are
-    * available.
-    */
-  def acquire: STM[Unit] =
-    tvar.get.flatMap {
-      case 0 => STM.retry
-      case _ => tvar.modify(_ - 1)
-    }
+    /**
+      * Acquire a permit. Retries if no permits are
+      * available.
+      */
+    def acquire: Txn[Unit] =
+      tvar.get.flatMap {
+        case 0 => retry
+        case _ => tvar.modify(_ - 1)
+      }
 
-  /**
-    * Release a currently held permit.
-    */
-  def release: STM[Unit] = tvar.modify(_ + 1)
-}
+    /**
+      * Release a currently held permit.
+      */
+    def release: Txn[Unit] = tvar.modify(_ + 1)
+  }
 
-object TSemaphore {
+  object TSemaphore {
 
-  /**
-    * Create a new `TSem` with `permits` available permits.
-    */
-  def make(permits: Long): STM[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
+    /**
+      * Create a new `TSem` with `permits` available permits.
+      */
+    def make(permits: Long): Txn[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
+
+  }
 
 }

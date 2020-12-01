@@ -48,12 +48,12 @@ addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean;
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
-val CatsVersion = "2.2.0"
-val CatsEffectVersion = "2.3.0"
+val CatsVersion = "2.3.0"
+val CatsEffectVersion = "3.0.0-M4"
 val DisciplineVersion = "0.3.0"
 val ScalaCheckVersion = "1.15.1"
 val MunitVersion = "0.7.19"
-val MunitCatsEffectVersion = "0.3.0"
+val MunitCatsEffectVersion = "0.11.0"
 val ScalacheckEffectVersion = "0.3.0"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
@@ -86,8 +86,7 @@ lazy val core = project.in(file("core"))
     import cats.implicits._
     import cats.effect._
     import cats.effect.implicits._
-    implicit val CS: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
-    implicit val T: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+    import cats.effect.unsafe.implicits.global
     """
   )
 
@@ -126,7 +125,7 @@ lazy val commonSettings = Seq(
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
     "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
-    "org.typelevel"              %% "munit-cats-effect"         % MunitCatsEffectVersion % Test
+    "org.typelevel"              %% "munit-cats-effect-3"         % MunitCatsEffectVersion % Test
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.1" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),

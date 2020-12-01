@@ -10,17 +10,17 @@ A `TVar` (transactional variable) is a mutable memory location that can be be
 read and modified via `STM` actions.
 
 ```scala mdoc
-import cats.effect.{ContextShift, IO}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.timwspence.cats.stm.STM
 
-import io.github.timwspence.cats.stm._
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
-import scala.concurrent.ExecutionContext.global
+val to   = stm.commit(TVar.of(1)).unsafeRunSync()
+val from = stm.commit(TVar.of(0)).unsafeRunSync()
 
-implicit val CS: ContextShift[IO] = IO.contextShift(global)
-
-val to   = TVar.of(0).atomically[IO].unsafeRunSync()
-val from = TVar.of(100).atomically[IO].unsafeRunSync()
-val txn: STM[(Int, Int)] = for {
+val txn: Txn[(Int, Int)] = for {
   balance <- from.get
   _       <- from.modify(_ - balance)
   _       <- to.modify(_ + balance)
@@ -28,7 +28,7 @@ val txn: STM[(Int, Int)] = for {
   res2    <- to.get
 } yield res1 -> res2
 
-val result = txn.atomically[IO].unsafeRunSync()
+val result = stm.commit(txn).unsafeRunSync()
 ```
 
 Note that this does not modify either `from` or `to`!! It merely describes a
