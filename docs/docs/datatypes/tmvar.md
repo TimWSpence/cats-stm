@@ -6,7 +6,7 @@ number: 6
 
 # TMVar
 
-A convenience implementation built on top of [`TVar`](tmvar.html), which provides
+A convenience implementation built on top of [`TVar`](tvar.html), which provides
 similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/concurrency/mvar.html).
 
 You can think of this as a mutable memory location that may contain a value.
