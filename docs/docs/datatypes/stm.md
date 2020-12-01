@@ -8,30 +8,30 @@ number: 3
 
 ### Overview
 
-`STM` is a monad which describes transactions involving `TVar`s. It is executed via
-`STM.atomically`:
+`Txn` is a monad which describes transactions involving `TVar`s. It is executed via
+`STM#atomically`:
 
 ```scala mdoc:reset
-import cats.effect.{ContextShift, IO}
-import io.github.timwspence.cats.stm.{STM, TVar}
+import cats.implicits._
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.timwspence.cats.stm.STM
 
-import scala.concurrent.ExecutionContext.global
-
-implicit val CS: ContextShift[IO] = IO.contextShift(global)
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
 val prog: IO[(Int, Int)] = for {
-  to   <- TVar.of(0).atomically[IO]
-  from <- TVar.of(100).atomically[IO]
-  _  <- STM.atomically[IO] {
+  to   <- stm.commit(TVar.of(0))
+  from <- stm.commit(TVar.of(100))
+  _  <- stm.commit {
     for {
       balance <- from.get
       _       <- from.modify(_ - balance)
       _       <- to.modify(_ + balance)
     } yield ()
   }
-  t   <- to.get.atomically[IO]
-  f   <- from.get.atomically[IO]
-} yield f -> t
+  v   <- stm.commit((to.get, from.get).tupled)
+} yield v
 
 val result = prog.unsafeRunSync()
 ```
@@ -42,20 +42,20 @@ val result = prog.unsafeRunSync()
 `STM.check`:
 
 ```scala mdoc:reset
-import cats.effect.{ContextShift, IO}
-import io.github.timwspence.cats.stm.{STM, TVar}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.timwspence.cats.stm.STM
 
-import scala.concurrent.ExecutionContext.global
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
-implicit val CS: ContextShift[IO] = IO.contextShift(global)
+val to   = stm.commit(TVar.of(1)).unsafeRunSync()
+val from = stm.commit(TVar.of(0)).unsafeRunSync()
 
-val to   = TVar.of(1).atomically[IO].unsafeRunSync()
-val from = TVar.of(0).atomically[IO].unsafeRunSync()
-
-val txn: IO[Unit]  = STM.atomically[IO] {
+val txn: IO[Unit]  = stm.commit {
   for {
     balance <- from.get
-    _       <- STM.check(balance > 100)
+    _       <- stm.check(balance > 100)
     _       <- from.modify(_ - 100)
     _       <- to.modify(_ + 100)
   } yield ()
@@ -73,24 +73,24 @@ is committed.
 alternative action if the first retries:
 
 ```scala mdoc:reset
-import cats.effect.{ContextShift, IO}
-import io.github.timwspence.cats.stm.{STM, TVar}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.timwspence.cats.stm.STM
 
-import scala.concurrent.ExecutionContext.global
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
-implicit val CS: ContextShift[IO] = IO.contextShift(global)
+val to   = stm.commit(TVar.of(1)).unsafeRunSync()
+val from = stm.commit(TVar.of(0)).unsafeRunSync()
 
-val to   = TVar.of(1).atomically[IO].unsafeRunSync()
-val from = TVar.of(0).atomically[IO].unsafeRunSync()
-
-val transferHundred: STM[Unit] = for {
+val transferHundred: Txn[Unit] = for {
   b <- from.get
-  _ <- STM.check(b > 100)
+  _ <- stm.check(b > 100)
   _ <- from.modify(_ - 100)
   _ <- to.modify(_ + 100)
 } yield ()
 
-val transferRemaining: STM[Unit] = for {
+val transferRemaining: Txn[Unit] = for {
   balance <- from.get
   _       <- from.modify(_ - balance)
   _       <- to.modify(_ + balance)
@@ -102,7 +102,7 @@ val txn  = for {
   t    <- to.get
 } yield f -> t
 
-val result = txn.atomically[IO].unsafeRunSync()
+val result = stm.commit(txn).unsafeRunSync()
 ```
 
 ### Aborting
@@ -110,27 +110,27 @@ val result = txn.atomically[IO].unsafeRunSync()
 Transactions can be aborted via `STM.abort`:
 
 ```scala mdoc:reset
-import cats.effect.{ContextShift, IO}
-import io.github.timwspence.cats.stm.{STM, TVar}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.timwspence.cats.stm.STM
 
-import scala.concurrent.ExecutionContext.global
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
-implicit val CS: ContextShift[IO] = IO.contextShift(global)
-
-val to   = TVar.of(1).atomically[IO].unsafeRunSync()
-val from = TVar.of(0).atomically[IO].unsafeRunSync()
+val to   = stm.commit(TVar.of(1)).unsafeRunSync()
+val from = stm.commit(TVar.of(0)).unsafeRunSync()
 
 val txn  = for {
   balance <- from.get
   _       <- if (balance < 100)
-               STM.abort(new RuntimeException("Balance must be at least 100"))
+               stm.abort(new RuntimeException("Balance must be at least 100"))
              else
-               STM.unit
+               stm.unit
   _ <- from.modify(_ - 100)
   _ <- to.modify(_ + 100)
 } yield ()
 
-val result = txn.atomically[IO].attempt.unsafeRunSync()
+val result = stm.commit(txn).attempt.unsafeRunSync()
 ```
 
 Note that aborting a transaction will not modify any of the `TVar`s involved.

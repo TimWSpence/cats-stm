@@ -24,68 +24,61 @@ import org.typelevel.discipline._
 
 import Prop.forAll
 
-trait STMLaws {
+trait STMLaws extends HasSTM {
+  import stm._
 
   def getThenGet[A](tvar: TVar[A]) =
     (tvar.get, tvar.get).tupled <-> tvar.get.map(a => a -> a)
 
   def setThenGet[A](a: A, tvar: TVar[A]) =
-    (tvar.set(a) >> tvar.get) <-> (tvar.set(a) >> STM.pure(a))
+    (tvar.set(a) >> tvar.get) <-> (tvar.set(a) >> stm.pure(a))
 
   def setThenSet[A](a: A, b: A, tvar: TVar[A]) =
     (tvar.set(a) >> tvar.set(b)) <-> tvar.set(b)
 
   def setThenRetry[A](a: A, tvar: TVar[A]) =
-    (tvar.set(a) >> STM.retry[A]) <-> STM.retry[A]
+    (tvar.set(a) >> stm.retry[A]) <-> stm.retry[A]
 
   def setThenAbort[A](a: A, error: Throwable, tvar: TVar[A]) =
-    (tvar.set(a) >> STM.abort[A](error)) <-> STM.abort[A](error)
+    (tvar.set(a) >> stm.abort[A](error)) <-> stm.abort[A](error)
 
-  def retryOrElse[A](stm: STM[A]) =
-    (STM.retry[A] orElse stm) <-> stm
+  def retryOrElse[A](txn: Txn[A]) =
+    (stm.retry[A] orElse txn) <-> txn
 
-  def orElseRetry[A](stm: STM[A]) =
-    (stm orElse STM.retry[A]) <-> stm
+  def orElseRetry[A](txn: Txn[A]) =
+    (txn orElse stm.retry[A]) <-> txn
 
-  def abortOrElse[A](error: Throwable, stm: STM[A]) =
-    (STM.abort[A](error) orElse stm) <-> STM.abort[A](error)
+  def abortOrElse[A](error: Throwable, txn: Txn[A]) =
+    (stm.abort[A](error) orElse txn) <-> stm.abort[A](error)
 
-  def bindDistributesOverOrElse[A](lhs: STM[A], rhs: STM[A], f: A => STM[A]) =
+  def bindDistributesOverOrElse[A](lhs: Txn[A], rhs: Txn[A], f: A => Txn[A]) =
     ((lhs orElse rhs) >>= f) <-> ((lhs >>= f) orElse (rhs >>= f))
 
 }
 
-trait STMTests extends Laws {
+trait STMTests extends Laws with STMLaws {
+  import stm._
 
-  val laws: STMLaws
-
-  def stm[A: Arbitrary: Cogen: Eq](implicit
-    ArbSTM: Arbitrary[STM[A]],
+  def stmLaws[A: Arbitrary: Cogen: Eq](implicit
+    ArbTxn: Arbitrary[Txn[A]],
     ArbTVar: Arbitrary[TVar[A]],
     ArbThrowable: Arbitrary[Throwable],
-    STMToProp: IsEq[STM[A]] => Prop,
-    STMPairToProp: IsEq[STM[(A, A)]] => Prop,
-    STMUnitToPro: IsEq[STM[Unit]] => Prop
+    TxnToProp: IsEq[Txn[A]] => Prop,
+    TxnPairToProp: IsEq[Txn[(A, A)]] => Prop,
+    TxnUnitToProp: IsEq[Txn[Unit]] => Prop
   ): RuleSet =
     new DefaultRuleSet(
       name = "stm",
       parent = None,
-      "get then get is get"           -> forAll(laws.getThenGet[A] _),
-      "set then get is set then pure" -> forAll(laws.setThenGet[A] _),
-      "set then set is set"           -> forAll(laws.setThenSet[A] _),
-      "set then retry is retry"       -> forAll(laws.setThenRetry[A] _),
-      "set then abort is abort"       -> forAll(laws.setThenAbort[A] _),
-      "retry orElse stm is stm"       -> forAll(laws.retryOrElse[A] _),
-      "stm orElse retry is stm"       -> forAll(laws.orElseRetry[A] _),
-      "abort orElse stm is abort"     -> forAll(laws.abortOrElse[A] _),
-      "bind distributes over orElse"  -> forAll(laws.bindDistributesOverOrElse[A] _)
+      "get then get is get"           -> forAll(getThenGet[A] _),
+      "set then get is set then pure" -> forAll(setThenGet[A] _),
+      "set then set is set"           -> forAll(setThenSet[A] _),
+      "set then retry is retry"       -> forAll(setThenRetry[A] _),
+      "set then abort is abort"       -> forAll(setThenAbort[A] _),
+      "retry orElse stm is stm"       -> forAll(retryOrElse[A] _),
+      "stm orElse retry is stm"       -> forAll(orElseRetry[A] _),
+      "abort orElse stm is abort"     -> forAll(abortOrElse[A] _),
+      "bind distributes over orElse"  -> forAll(bindDistributesOverOrElse[A] _)
     )
 
-}
-
-object STMTests {
-  def apply: STMTests =
-    new STMTests {
-      override val laws: STMLaws = new STMLaws {}
-    }
 }

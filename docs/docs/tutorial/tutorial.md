@@ -14,9 +14,12 @@ position: 10
 import io.github.timwspence.cats.stm._
 import cats.data._
 import cats.effect._
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.global
+
+val stm = STM[IO].unsafeRunSync()
+import stm._
 
 def meetInStudy(id: Int): IO[Unit] = IO(println(show"Elf $id meeting in the study"))
 
@@ -31,21 +34,21 @@ object Gate{
     TVar.of(0).map(new Gate(capacity, _){})
 
   def pass(g: Gate): IO[Unit] =
-    STM.atomically[IO]{
+    stm.commit {
       for {
         nLeft <- g.tv.get
-        _ <- STM.check(nLeft > 0)
+        _ <- stm.check(nLeft > 0)
         _ <- g.tv.modify(_ - 1)
       } yield ()
     }
 
   def operate(g: Gate): IO[Unit] =
     for {
-      _ <- STM.atomically[IO](g.tv.set(g.capacity))
-      _ <- STM.atomically[IO]{
+      _ <- stm.commit(g.tv.set(g.capacity))
+      _ <- stm.commit {
         for {
           nLeft <- g.tv.get
-          _ <- STM.check(nLeft === 0)
+          _ <- stm.check(nLeft === 0)
         } yield ()
       }
     } yield ()
@@ -56,10 +59,10 @@ sealed abstract case class Group(
   tv: TVar[(Int, Gate, Gate)]
 ){
   def join: IO[(Gate, Gate)] = Group.join(this)
-  def await: STM[(Gate, Gate)] = Group.await(this)
+  def await: Txn[(Gate, Gate)] = Group.await(this)
 }
 object Group {
-  def of(n: Int): IO[Group] = STM.atomically[IO]{
+  def of(n: Int): IO[Group] = stm.commit {
     for {
       g1 <- Gate.of(n)
       g2 <- Gate.of(n)
@@ -67,16 +70,16 @@ object Group {
     } yield new Group(n, tv){}
   }
 
-  def join(g: Group): IO[(Gate, Gate)] = STM.atomically[IO]{
+  def join(g: Group): IO[(Gate, Gate)] = stm.commit {
     for {
       (nLeft, g1, g2) <- g.tv.get
-      _ <- STM.check(nLeft > 0)
+      _ <- stm.check(nLeft > 0)
       _ <- g.tv.set((nLeft - 1, g1, g2))
     } yield (g1, g2)
   }
-  def await(g: Group): STM[(Gate, Gate)] = for {
+  def await(g: Group): Txn[(Gate, Gate)] = for {
     (nLeft, g1, g2) <- g.tv.get
-    _ <- STM.check(nLeft === 0)
+    _ <- stm.check(nLeft === 0)
     newG1 <- Gate.of(g.n)
     newG2 <- Gate.of(g.n)
     _ <- g.tv.set((g.n, newG1, newG2))
@@ -98,31 +101,27 @@ def reindeer2(group: Group, id: Int): IO[Unit] =
   helper1(group, deliverToys(id))
 
 
-
-implicit val T: Timer[IO] = IO.timer(global)
-implicit val CS : ContextShift[IO] = IO.contextShift(global)
-
 def randomDelay: IO[Unit] = {
   IO(scala.util.Random.nextInt(10000))
-    .flatMap{n => Timer[IO].sleep(n.micros)}
+    .flatMap{n => IO.sleep(n.micros)}
 }
 
-def elf(g: Group, i: Int): IO[Fiber[IO, Nothing]] = {
+def elf(g: Group, i: Int): IO[FiberIO[Nothing]] = {
   (elf2(g, i) >> randomDelay).foreverM.start
 }
 
-def reindeer(g: Group, i: Int): IO[Fiber[IO, Nothing]] = {
+def reindeer(g: Group, i: Int): IO[FiberIO[Nothing]] = {
   (reindeer2(g, i) >> randomDelay).foreverM.start
 }
 
-def choose[A](choices: NonEmptyList[(STM[A], A => IO[Unit])]): IO[Unit] = {
-  def actions : NonEmptyList[STM[IO[Unit]]] =  choices.map{
+def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
+  def actions : NonEmptyList[Txn[IO[Unit]]] =  choices.map{
     case (guard, rhs) =>  for {
       value <- guard
     } yield rhs(value)
   }
   for {
-    act <- STM.atomically[IO]{actions.reduceLeft(_.orElse(_))}
+    act <- stm.commit{actions.reduceLeft(_.orElse(_))}
     _ <- act
   } yield ()
 }
