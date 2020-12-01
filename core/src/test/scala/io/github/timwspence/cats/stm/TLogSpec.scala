@@ -21,7 +21,7 @@ import munit.CatsEffectSuite
 
 class TLogTest extends CatsEffectSuite {
 
-  val stm = STM[IO]().unsafeRunSync()
+  val stm = STM[IO].unsafeRunSync()
   import stm._
   import stm.Internals._
 

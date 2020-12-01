@@ -23,7 +23,7 @@ import munit.CatsEffectSuite
 
 class TVarTest extends CatsEffectSuite {
 
-  val stm = STM[IO]().unsafeRunSync()
+  val stm = STM[IO].unsafeRunSync()
   import stm._
 
   test("Get returns current value") {

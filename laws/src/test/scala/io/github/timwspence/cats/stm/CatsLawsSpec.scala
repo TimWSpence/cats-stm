@@ -24,7 +24,7 @@ import munit.DisciplineSuite
 
 class CatsLawsSpec extends Instances with DisciplineSuite {
 
-  override val stm: STM[IO] = STM[IO]().unsafeRunSync()
+  override val stm: STM[IO] = STM[IO].unsafeRunSync()
   import stm._
 
   checkAll("Txn[Int]", MonoidTests[Txn[Int]].monoid)

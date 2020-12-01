@@ -29,7 +29,7 @@ import scala.util.Random
   */
 class SequentialTests extends CatsEffectSuite {
 
-  val stm = STM[IO]().unsafeRunSync()
+  val stm = STM[IO].unsafeRunSync()
   import stm._
 
   test("Basic transaction is executed") {

@@ -21,7 +21,7 @@ import munit.CatsEffectSuite
 
 class TSemaphoreTest extends CatsEffectSuite {
 
-  val stm = STM[IO]().unsafeRunSync()
+  val stm = STM[IO].unsafeRunSync()
   import stm._
 
   test("Acquire decrements the number of permits") {

@@ -26,7 +26,7 @@ import cats.implicits._
 trait STM[F[_]] extends STMLike[F] with TMVarLike[F] with TQueueLike[F] with TSemaphoreLike[F] {}
 
 object STM {
-  def apply[F[_]]()(implicit F: Async[F]): F[STM[F]] =
+  def apply[F[_]](implicit F: Async[F]): F[STM[F]] =
     for {
       idGen  <- Ref.of[F, Long](0)
       global <- Semaphore[F](1) //TODO remove this and just lock each tvar
@@ -40,7 +40,7 @@ object STM {
           p <- global.permit.use(_ => eval(idGen, txn))
           (res, log) = p
           r <- res match {
-            //Double-checked dirtyness for performance
+            //Double-checked dirtiness for performance
             case TSuccess(a) =>
               if (log.isDirty) commit(txn)
               else
