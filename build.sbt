@@ -127,7 +127,7 @@ lazy val commonSettings = Seq(
     "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
     "org.typelevel"              %% "munit-cats-effect-3"         % MunitCatsEffectVersion % Test
   ),
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.1" cross CrossVersion.full),
+  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
 )
 
