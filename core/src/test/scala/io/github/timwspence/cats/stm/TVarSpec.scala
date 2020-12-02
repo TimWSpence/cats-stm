@@ -18,6 +18,7 @@ package io.github.timwspence.cats.stm
 
 import scala.concurrent.duration._
 
+import cats.implicits._
 import cats.effect.IO
 import munit.CatsEffectSuite
 
@@ -27,38 +28,42 @@ class TVarTest extends CatsEffectSuite {
   import stm._
 
   test("Get returns current value") {
-    val prog: Txn[String] = for {
-      tvar  <- TVar.of("hello")
-      value <- tvar.get
-    } yield value
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, "hello")
+    for {
+      v <- stm.commit(for {
+        tvar  <- TVar.of("hello")
+        value <- tvar.get
+      } yield value)
+      res <- IO(assertEquals(v, "hello"))
+    } yield res
   }
 
   test("Set changes current value") {
-    val prog: Txn[String] = for {
-      tvar  <- TVar.of("hello")
-      _     <- tvar.set("world")
-      value <- tvar.get
-    } yield value
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, "world")
+    for {
+      v <- stm.commit(
+        for {
+          tvar  <- TVar.of("hello")
+          _     <- tvar.set("world")
+          value <- tvar.get
+        } yield value
+      )
+      res <- IO(assertEquals(v, "world"))
+    } yield res
   }
 
   test("Modify changes current value") {
-    val prog: Txn[String] = for {
-      tvar  <- TVar.of("hello")
-      _     <- tvar.modify(_.toUpperCase)
-      value <- tvar.get
-    } yield value
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, "HELLO")
+    for {
+      v <- stm.commit(for {
+        tvar  <- TVar.of("hello")
+        _     <- tvar.modify(_.toUpperCase)
+        value <- tvar.get
+      } yield value)
+      res <- IO(assertEquals(v, "HELLO"))
+    } yield res
   }
 
   test("Transaction is registered for retry") {
-    val tvar = stm.commit(TVar.of(0)).unsafeRunSync()
-
-    val prog: IO[Int] = for {
+    for {
+      tvar <- stm.commit(TVar.of(0))
       fiber <-
         stm
           .commit((for {
@@ -68,32 +73,26 @@ class TVarTest extends CatsEffectSuite {
           .start
       _   <- IO.sleep(1 second)
       _   <- stm.commit(tvar.set(2))
-      res <- fiber.joinAndEmbedNever
+      v   <- fiber.joinAndEmbedNever
+      res <- IO(assertEquals(v, 2))
     } yield res
-
-    prog.map { res =>
-      assertEquals(res, 2)
-    }
-
   }
 
   test("TVar.of is referentially transparent") {
     val t: Txn[TVar[Int]] = TVar.of(0)
 
-    val prog = for {
+    for {
       t1 <- stm.commit(t)
       t2 <- stm.commit(t)
       _ <- stm.commit((for {
         _ <- t1.modify(_ + 1)
         _ <- t2.modify(_ + 2)
       } yield ()))
-      v1 <- stm.commit(t1.get)
-      v2 <- stm.commit(t2.get)
-    } yield (v1 -> v2)
-
-    prog.map { res =>
-      assertEquals(res._1, 1)
-      assertEquals(res._2, 2)
-    }
+      vs <- stm.commit((t1.get, t2.get).tupled)
+      res <- IO {
+        assertEquals(vs._1, 1)
+        assertEquals(vs._2, 2)
+      }
+    } yield res
   }
 }

@@ -33,10 +33,9 @@ class SequentialTests extends CatsEffectSuite {
   import stm._
 
   test("Basic transaction is executed") {
-    val from = stm.commit(TVar.of(100)).unsafeRunSync()
-    val to   = stm.commit(TVar.of(0)).unsafeRunSync()
-
-    val prog = for {
+    for {
+      from <- stm.commit(TVar.of(100))
+      to   <- stm.commit(TVar.of(0))
       _ <- stm.commit {
         for {
           balance <- from.get
@@ -44,40 +43,39 @@ class SequentialTests extends CatsEffectSuite {
           _       <- to.modify(_ + balance)
         } yield ()
       }
-    } yield ()
-
-    for (_ <- prog) yield {
-      assertEquals(from.value, 0)
-      assertEquals(to.value, 100)
-    }
+      vs <- stm.commit((from.get, to.get).tupled)
+      res <- IO {
+        assertEquals(vs._1, 0)
+        assertEquals(vs._2, 100)
+      }
+    } yield res
   }
 
   test("Abort primitive aborts whole transaction") {
-    val from = stm.commit(TVar.of(100)).unsafeRunSync()
-    val to   = stm.commit(TVar.of(0)).unsafeRunSync()
-
-    val prog = for {
+    for {
+      from <- stm.commit(TVar.of(100))
+      to   <- stm.commit(TVar.of(0))
       _ <- stm.commit {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
           _       <- stm.abort[Unit](new RuntimeException("Boom"))
         } yield ()
+      }.attempt
+      vs <- stm.commit((from.get, to.get).tupled)
+      res <- IO {
+        assertEquals(vs._1, 100)
+        assertEquals(vs._2, 0)
       }
-    } yield ()
-
-    for (_ <- prog.attempt) yield {
-      assertEquals(from.value, 100)
-      assertEquals(to.value, 0)
-    }
+    } yield res
   }
 
   test("Check retries until transaction succeeds") {
-    val from         = stm.commit(TVar.of(100)).unsafeRunSync()
-    val to           = stm.commit(TVar.of(0)).unsafeRunSync()
     var checkCounter = 0
 
-    val prog = for {
+    for {
+      from <- stm.commit(TVar.of(100))
+      to   <- stm.commit(TVar.of(0))
       _ <- (for {
           _ <- IO.sleep(2 seconds)
           _ <- stm.commit(from.modify(_ + 1))
@@ -90,164 +88,161 @@ class SequentialTests extends CatsEffectSuite {
           _       <- to.modify(_ + 100)
         } yield ()
       }
-    } yield ()
-
-    for (_ <- prog.attempt) yield {
-      assertEquals(from.value, 1)
-      assertEquals(to.value, 100)
-      assert(checkCounter > 1)
-    }
+      vs <- stm.commit((from.get, to.get).tupled)
+      res <- IO {
+        assertEquals(vs._1, 1)
+        assertEquals(vs._2, 100)
+        assert(checkCounter > 1)
+      }
+    } yield res
   }
 
   test("Check retries repeatedly") {
-    val tvar = stm.commit(TVar.of(0)).unsafeRunSync()
+    for {
+      tvar <- stm.commit(TVar.of(0))
 
-    val retry: Txn[Int] = for {
-      current <- tvar.get
-      _       <- stm.check(current > 10)
-    } yield current
+      retry = for {
+        current <- tvar.get
+        _       <- stm.check(current > 10)
+      } yield current
 
-    val background: IO[Unit] = 1
-      .to(11)
-      .toList
-      .traverse_(_ => stm.commit(tvar.modify(_ + 1)) >> IO.sleep(100.millis))
+      background =
+        1
+          .to(11)
+          .toList
+          .traverse_(_ => stm.commit(tvar.modify(_ + 1)) >> IO.sleep(100.millis))
 
-    val prog = for {
       fiber <- background.start
-      res   <- stm.commit(retry)
+      v     <- stm.commit(retry)
       _     <- fiber.join
+      res <- IO {
+        assertEquals(v, 11)
+      }
     } yield res
-
-    prog.map { res =>
-      assertEquals(res, 11)
-    }
 
   }
 
   test("OrElse runs second transaction if first retries") {
-    val account = stm.commit(TVar.of(100)).unsafeRunSync()
+    for {
+      account <- stm.commit(TVar.of(100))
 
-    val first = for {
-      balance <- account.get
-      _       <- stm.check(balance > 100)
-      _       <- account.modify(_ - 100)
-    } yield ()
+      first = for {
+        balance <- account.get
+        _       <- stm.check(balance > 100)
+        _       <- account.modify(_ - 100)
+      } yield ()
 
-    val second = for {
-      balance <- account.get
-      _       <- stm.check(balance > 50)
-      _       <- account.modify(_ - 50)
-    } yield ()
+      second = for {
+        balance <- account.get
+        _       <- stm.check(balance > 50)
+        _       <- account.modify(_ - 50)
+      } yield ()
 
-    val prog = for {
-      _ <- stm.commit(first.orElse(second))
-    } yield ()
-
-    for (_ <- prog) yield assertEquals(account.value, 50)
+      _   <- stm.commit(first.orElse(second))
+      v   <- stm.commit(account.get)
+      res <- IO(assertEquals(v, 50))
+    } yield res
   }
 
   test("OrElse reverts changes if retrying") {
-    val account = stm.commit(TVar.of(100)).unsafeRunSync()
+    for {
+      account <- stm.commit(TVar.of(100))
 
-    val first = for {
-      _ <- account.modify(_ - 100)
-      _ <- stm.retry[Unit]
-    } yield ()
+      first = for {
+        _ <- account.modify(_ - 100)
+        _ <- stm.retry[Unit]
+      } yield ()
 
-    val second = for {
-      balance <- account.get
-      _       <- stm.check(balance > 50)
-      _       <- account.modify(_ - 50)
-    } yield ()
+      second = for {
+        balance <- account.get
+        _       <- stm.check(balance > 50)
+        _       <- account.modify(_ - 50)
+      } yield ()
 
-    val prog = for {
-      _ <- stm.commit(first.orElse(second))
-    } yield ()
-
-    for (_ <- prog) yield assertEquals(account.value, 50)
+      _   <- stm.commit(first.orElse(second))
+      v   <- stm.commit(account.get)
+      res <- IO(assertEquals(v, 50))
+    } yield res
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
-    val account = stm.commit(TVar.of(100)).unsafeRunSync()
-    val other   = stm.commit(TVar.of(100)).unsafeRunSync()
+    for {
+      account <- stm.commit(TVar.of(100))
+      other   <- stm.commit(TVar.of(100))
 
-    val first = for {
-      _ <- other.modify(_ - 100)
-      _ <- stm.retry[Unit]
-    } yield ()
+      first = for {
+        _ <- other.modify(_ - 100)
+        _ <- stm.retry[Unit]
+      } yield ()
 
-    val second = for {
-      balance <- account.get
-      _       <- stm.check(balance > 50)
-      _       <- account.modify(_ - 50)
-    } yield ()
+      second = for {
+        balance <- account.get
+        _       <- stm.check(balance > 50)
+        _       <- account.modify(_ - 50)
+      } yield ()
 
-    val prog = for {
       _ <- stm.commit {
         for {
           _ <- first.orElse(second)
         } yield ()
       }
-    } yield ()
-
-    for (_ <- prog) yield {
-      assertEquals(account.value, 50)
-      assertEquals(other.value, 100)
-    }
+      vs <- stm.commit((account.get, other.get).tupled)
+      res <- IO {
+        assertEquals(vs._1, 50)
+        assertEquals(vs._2, 100)
+      }
+    } yield res
   }
 
   test("nested orElse") {
-    val tvar = stm.commit(TVar.of(100)).unsafeRunSync()
+    for {
+      tvar <- stm.commit(TVar.of(100))
+      first = for {
+        _ <- tvar.modify(_ - 100)
+        _ <- stm.retry[Unit]
+      } yield ()
 
-    val first = for {
-      _ <- tvar.modify(_ - 100)
-      _ <- stm.retry[Unit]
-    } yield ()
+      second = for {
+        _       <- tvar.modify(_ - 10)
+        balance <- tvar.get
+        _       <- stm.check(balance == 50)
+        _       <- tvar.modify(_ - 50)
+      } yield ()
 
-    val second = for {
-      _       <- tvar.modify(_ - 10)
-      balance <- tvar.get
-      _       <- stm.check(balance == 50)
-      _       <- tvar.modify(_ - 50)
-    } yield ()
+      third = for {
+        balance <- tvar.get
+        _       <- stm.check(balance == 100)
+        _       <- tvar.modify(_ - 50)
+      } yield ()
 
-    val third = for {
-      balance <- tvar.get
-      _       <- stm.check(balance == 100)
-      _       <- tvar.modify(_ - 50)
-    } yield ()
+      v   <- stm.commit((first.orElse(second).orElse(third) >> tvar.get))
+      res <- IO(assertEquals(v, 50))
 
-    val prog = stm.commit((first.orElse(second).orElse(third) >> tvar.get))
-
-    prog.map { res =>
-      assertEquals(res, 50)
-    }
+    } yield res
   }
 
   test("Transaction is retried if TVar in if branch is subsequently modified") {
-    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
+    for {
+      tvar <- stm.commit(TVar.of(0L))
 
-    val retry: Txn[Unit] = for {
-      current <- tvar.get
-      _       <- stm.check(current > 0)
-      _       <- tvar.modify(_ + 1)
-    } yield ()
+      retry = for {
+        current <- tvar.get
+        _       <- stm.check(current > 0)
+        _       <- tvar.modify(_ + 1)
+      } yield ()
 
-    val background: IO[Unit] =
-      for {
+      background = for {
         _ <- IO.sleep(2 seconds)
         _ <- stm.commit(tvar.modify(_ + 1))
       } yield ()
 
-    val prog = for {
       fiber <- background.start
       _     <- stm.commit(retry.orElse(stm.retry))
       _     <- fiber.join
-    } yield ()
+      v     <- stm.commit(tvar.get)
+      res   <- IO(assertEquals(v, 2L))
 
-    for (_ <- prog) yield assertEquals(tvar.value, 2L)
-
-    // assert(tvar.pending.get.isEmpty)
+    } yield res
   }
 
   /**
@@ -259,86 +254,80 @@ class SequentialTests extends CatsEffectSuite {
     *  atomically invocation both needed to retry - they would have the same
     *  id and hence we would only register one to retry
     */
-  test("Atomically is referentially transparent") {
-    val flag = stm.commit(TVar.of(false)).unsafeRunSync()
-    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
+  test("Commit is referentially transparent") {
+    for {
+      flag <- stm.commit(TVar.of(false))
+      tvar <- stm.commit(TVar.of(0L))
 
-    val retry: IO[Unit] = stm.commit {
-      for {
-        current <- flag.get
-        _       <- stm.check(current)
-        _       <- tvar.modify(_ + 1)
-      } yield ()
-    }
+      retry = stm.commit {
+        for {
+          current <- flag.get
+          _       <- stm.check(current)
+          _       <- tvar.modify(_ + 1)
+        } yield ()
+      }
 
-    val background: IO[Unit] =
-      for {
+      background = for {
         _ <- IO.sleep(2 seconds)
         _ <- stm.commit(flag.set(true))
       } yield ()
 
-    val prog = for {
       fiber <- background.start
       ret1  <- retry.start
       ret2  <- retry.start
       _     <- fiber.join
       _     <- ret1.join
       _     <- ret2.join
-    } yield ()
-
-    for (_ <- prog) yield assertEquals(tvar.value, 2L)
+      v     <- stm.commit(tvar.get)
+      res   <- IO(assertEquals(v, 2L))
+    } yield res
   }
 
   test("Atomically is referentially transparent 2") {
-    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
-
-    val inc: IO[Unit] = stm.commit(tvar.modify(_ + 1))
-
-    val prog = inc >> inc >> inc >> inc >> inc >> stm.commit(tvar.get)
-
-    prog.map { res =>
-      assertEquals(res, 5L)
-    }
+    for {
+      tvar <- stm.commit(TVar.of(0L))
+      inc = stm.commit(tvar.modify(_ + 1))
+      v   <- inc >> inc >> inc >> inc >> inc >> stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 5L))
+    } yield res
   }
 
   test("Modify is referentially transparent 2") {
-    val tvar = stm.commit(TVar.of(0L)).unsafeRunSync()
+    for {
+      tvar <- stm.commit(TVar.of(0L))
+      inc = tvar.modify(_ + 1)
 
-    val inc: Txn[Unit] = tvar.modify(_ + 1)
-
-    val prog = stm.commit(inc >> inc >> inc >> inc >> inc >> tvar.get)
-
-    prog.map { res =>
-      assertEquals(res, 5L)
-    }
+      v   <- stm.commit(inc >> inc >> inc >> inc >> inc >> tvar.get)
+      res <- IO(assertEquals(v, 5L))
+    } yield res
   }
 
   test("stack-safe construction") {
-    val tvar       = stm.commit(TVar.of(0L)).unsafeRunSync()
     val iterations = 100000
-
-    IO.pure(
-      1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
-        prog >> tvar.modify(_ + 1)
-      }
-    )
-
+    stm.commit(TVar.of(0L)).flatMap { tvar =>
+      IO.pure(
+        1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
+          prog >> tvar.modify(_ + 1)
+        }
+      )
+    }
   }
 
   test("stack-safe evaluation") {
-    val tvar       = stm.commit(TVar.of(0)).unsafeRunSync()
     val iterations = 100000
 
-    stm
-      .commit(
-        1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
-          prog >> tvar.modify(_ + 1)
-        } >> tvar.get
-      )
-      .map { res =>
-        assertEquals(res, iterations)
-      }
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      v <-
+        stm
+          .commit(
+            1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
+              prog >> tvar.modify(_ + 1)
+            } >> tvar.get
+          )
+      res <- IO(assertEquals(v, iterations))
 
+    } yield res
   }
 
   test("race retrying fiber and fiber which unblocks it") {
