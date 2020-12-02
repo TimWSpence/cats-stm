@@ -28,18 +28,24 @@ class TLogTest extends CatsEffectSuite {
   val inc: Int => Int = _ + 1
 
   test("get when not present") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      assertEquals(TLog.empty.get(tvar), 1)
-    }
+    for {
+      tvar <- stm.commit(TVar.of[Any](1))
+      res <- IO {
+        assertEquals(TLog.empty.get(tvar), 1)
+      }
+    } yield res
   }
 
   test("get when present") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      val tlog = TLog.empty
-      tlog.get(tvar.asInstanceOf[TVar[Any]])
-      tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-      assertEquals(tlog.get(tvar), 2)
-    }
+    for {
+      tvar <- stm.commit(TVar.of[Any](1))
+      res <- IO {
+        val tlog = TLog.empty
+        tlog.get(tvar.asInstanceOf[TVar[Any]])
+        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
+        assertEquals(tlog.get(tvar), 2)
+      }
+    } yield res
   }
 
   test("isDirty when empty") {
@@ -48,48 +54,64 @@ class TLogTest extends CatsEffectSuite {
   }
 
   test("isDirty when non-empty") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      val tlog = TLog.empty
-      tlog.get(tvar)
-      assertEquals(tlog.isDirty, false)
-    }
+    for {
+      tvar <- stm.commit(TVar.of[Any](1))
+      res <- IO {
+        val tlog = TLog.empty
+        tlog.get(tvar)
+        assertEquals(tlog.isDirty, false)
+      }
+    } yield res
   }
 
   test("isDirty when non-empty and dirty") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      val tlog = TLog.empty
-      tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-      tvar.value = 2
-      assertEquals(tlog.isDirty, true)
-    }
+    for {
+      tvar <- stm.commit(TVar.of[Any](1))
+      res <- IO {
+        val tlog = TLog.empty
+        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
+        tvar.value = 2
+        assertEquals(tlog.isDirty, true)
+      }
+    } yield res
   }
 
   test("commit") {
-    stm.commit(TVar.of[Any](1)).flatMap { tvar =>
-      val tlog = TLog.empty
-      tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-      tlog.commit.flatMap { _ =>
-        IO(assertEquals(tvar.value, 2))
+    for {
+      tvar <- stm.commit(TVar.of[Any](1))
+      tlog <- IO {
+        val tlog = TLog.empty
+        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
+        tlog
       }
-    }
+      _ <- tlog.commit
+      res <- IO {
+        assertEquals(tvar.value, 2)
+      }
+    } yield res
   }
 
   test("snapshot") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      stm.commit(TVar.of[Any](2)).map { tvar2 =>
+    for {
+      tvar  <- stm.commit(TVar.of[Any](1))
+      tvar2 <- stm.commit(TVar.of[Any](2))
+      res <- IO {
         val tlog = TLog.empty
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         val tlog2 = tlog.snapshot()
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         assertEquals(tlog2.get(tvar), 2)
         assertEquals(tlog2.get(tvar2), 2)
+
       }
-    }
+    } yield res
   }
 
   test("delta") {
-    stm.commit(TVar.of[Any](1)).map { tvar =>
-      stm.commit(TVar.of[Any](2)).map { tvar2 =>
+    for {
+      tvar  <- stm.commit(TVar.of[Any](1))
+      tvar2 <- stm.commit(TVar.of[Any](2))
+      res <- IO {
         val tlog = TLog.empty
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         tlog.modify(tvar2, inc.asInstanceOf[Any => Any])
@@ -99,7 +121,7 @@ class TLogTest extends CatsEffectSuite {
         assertEquals(d.get(tvar), 2)
         assertEquals(d.get(tvar2), 3)
       }
-    }
+    } yield res
   }
 
 }

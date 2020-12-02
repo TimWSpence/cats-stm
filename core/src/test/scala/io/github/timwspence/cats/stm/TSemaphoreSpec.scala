@@ -25,23 +25,29 @@ class TSemaphoreTest extends CatsEffectSuite {
   import stm._
 
   test("Acquire decrements the number of permits") {
-    val prog: Txn[Long] = for {
-      tsem  <- TSemaphore.make(1)
-      _     <- tsem.acquire
-      value <- tsem.available
-    } yield value
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, 0L)
+    for {
+      v <- stm.commit(
+        for {
+          tsem  <- TSemaphore.make(1)
+          _     <- tsem.acquire
+          value <- tsem.available
+        } yield value
+      )
+      res <- IO(assertEquals(v, 0L))
+    } yield res
   }
 
   test("Release increments the number of permits") {
-    val prog: Txn[Long] = for {
-      tsem  <- TSemaphore.make(0)
-      _     <- tsem.release
-      value <- tsem.available
-    } yield value
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, 1L)
+    for {
+      v <- stm.commit(
+        for {
+          tsem  <- TSemaphore.make(0)
+          _     <- tsem.release
+          value <- tsem.available
+        } yield value
+      )
+      res <- IO(assertEquals(v, 1L))
+    } yield res
   }
 
 }

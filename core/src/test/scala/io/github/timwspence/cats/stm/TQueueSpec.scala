@@ -26,43 +26,53 @@ class TQueueTest extends CatsEffectSuite {
   import stm._
 
   test("Read removes the first element") {
-    val prog: Txn[(String, Boolean)] = for {
-      tqueue <- TQueue.empty[String]
-      _      <- tqueue.put("hello")
-      value  <- tqueue.read
-      empty  <- tqueue.isEmpty
-    } yield value -> empty
-
-    for (value <- stm.commit(prog)) yield {
-      assertEquals(value._1, "hello")
-      assert(value._2)
-    }
+    for {
+      v <- stm.commit(for {
+        tqueue <- TQueue.empty[String]
+        _      <- tqueue.put("hello")
+        value  <- tqueue.read
+        empty  <- tqueue.isEmpty
+      } yield value -> empty)
+      res <- IO {
+        assertEquals(v._1, "hello")
+        assert(v._2)
+      }
+    } yield res
   }
 
   test("Peek does not remove the first element") {
-    val prog: Txn[(String, Boolean)] = for {
-      tqueue <- TQueue.empty[String]
-      _      <- tqueue.put("hello")
-      value  <- tqueue.peek
-      empty  <- tqueue.isEmpty
-    } yield value -> empty
+    for {
+      v <- stm.commit(
+        for {
+          tqueue <- TQueue.empty[String]
+          _      <- tqueue.put("hello")
+          value  <- tqueue.peek
+          empty  <- tqueue.isEmpty
+        } yield value -> empty
+      )
+      res <- IO {
+        assertEquals(v._1, "hello")
+        assert(!v._2)
+      }
+    } yield res
 
-    for (value <- stm.commit(prog)) yield {
-      assertEquals(value._1, "hello")
-      assert(!value._2)
-    }
   }
 
   test("TQueue is FIFO") {
-    val prog: Txn[String] = for {
-      tqueue <- TQueue.empty[String]
-      _      <- tqueue.put("hello")
-      _      <- tqueue.put("world")
-      hello  <- tqueue.read
-      world  <- tqueue.peek
-    } yield hello |+| world
-
-    for (value <- stm.commit(prog)) yield assertEquals(value, "helloworld")
+    for {
+      v <- stm.commit(
+        for {
+          tqueue <- TQueue.empty[String]
+          _      <- tqueue.put("hello")
+          _      <- tqueue.put("world")
+          hello  <- tqueue.read
+          world  <- tqueue.peek
+        } yield hello |+| world
+      )
+      res <- IO {
+        assertEquals(v, "helloworld")
+      }
+    } yield res
   }
 
 }
