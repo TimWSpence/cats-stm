@@ -172,13 +172,13 @@ trait STMLike[F[_]] {
         )
 
       def withLock[A](fa: F[A])(implicit F: Async[F]): F[A] =
-        F.delay(println(s"Acquiring locks for ${values.map(_.tvar.id)}")) >>
+        // F.delay(println(s"Acquiring locks for ${values.map(_.tvar.id)}")) >>
         values.toList
           .sortBy(_.tvar.id)
-          .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
-            locks >> Resource.make(F.delay(println(s"acquiring ${e.tvar.id}")))(_ => F.delay(println(s"Releasing ${e.tvar.id}"))) >> e.tvar.lock.permit
           // .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
-          //   locks >> e.tvar.lock.permit
+          //   locks >> Resource.make(F.delay(println(s"acquiring ${e.tvar.id}")))(_ => F.delay(println(s"Releasing ${e.tvar.id}"))) >> e.tvar.lock.permit
+          .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+            locks >> e.tvar.lock.permit
           }
           .use(_ => fa)
 
@@ -221,7 +221,10 @@ trait STMLike[F[_]] {
       // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map {v =>
       //   initial != v.asInstanceOf[Repr]
       // }
-      def isDirty: Boolean = initial != tvar.value.asInstanceOf[Repr]
+      def isDirty: Boolean = {
+        // println(s"initial: $initial tvar: ${tvar.value}")
+        initial != tvar.value.asInstanceOf[Repr]
+      }
 
       def snapshot(): TLogEntry =
         new TLogEntry {

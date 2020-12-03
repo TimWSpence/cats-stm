@@ -38,16 +38,16 @@ object STM {
           r <- res match {
             //Double-checked dirtiness for performance
             case TSuccess(a) =>
-              F.ifM(F.pure(log.isDirty))(
+              F.ifM(F.delay(log.isDirty))(
                 commit(txn),
                 for {
                   committed <- log.withLock(
-                    F.ifM(F.pure(log.isDirty))(
+                    F.ifM(F.delay(log.isDirty))(
                       F.pure(false),
-                      F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
-                        true
-                      )
-                      // log.commit.as(true)
+                      // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
+                      //   true
+                      // )
+                      log.commit.as(true)
                     )
                   )
                   r <-
@@ -55,19 +55,19 @@ object STM {
                     else commit(txn)
                 } yield r
               )
-            case TFailure(e) => F.ifM(F.pure(log.isDirty))(commit(txn), F.raiseError(e))
+            case TFailure(e) => F.ifM(F.delay(log.isDirty))(commit(txn), F.raiseError(e))
             //TODO make retry blocking safely cancellable
             case TRetry =>
               //TODO we could probably split commit so we don't reallocate a signal every time
               log
                 .withLock(
-                  F.ifM(F.pure(log.isDirty))(
-                    F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
-                    // F.pure(true),
-                    F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
-                      println("registering retry")
-                    ) >> log.registerRetry(signal).as(false)
-                    // log.registerRetry(signal).as(false)
+                  F.ifM(F.delay(log.isDirty))(
+                    // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
+                    F.pure(true),
+                    // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
+                    //   println("registering retry")
+                    // ) >> log.registerRetry(signal).as(false)
+                    log.registerRetry(signal).as(false)
                   )
                 )
                 .flatMap { retryImmediately =>
