@@ -16,9 +16,6 @@
 
 package io.github.timwspence.cats.stm
 
-import scala.concurrent.duration._
-import scala.util.Random
-
 import cats.effect.std.Semaphore
 import cats.effect.{Async, Deferred, Ref}
 import cats.implicits._
@@ -28,53 +25,58 @@ trait STM[F[_]] extends STMLike[F] with TMVarLike[F] with TQueueLike[F] with TSe
 object STM {
   def apply[F[_]](implicit F: Async[F]): F[STM[F]] =
     for {
-      idGen  <- Ref.of[F, Long](0)
-      global <- Semaphore[F](1) //TODO remove this and just lock each tvar
+      idGen       <- Ref.of[F, Long](0)
+      rateLimiter <- Semaphore[F](1) //TODO increase concurrency here
     } yield new STM[F] {
       import Internals._
 
       def commit[A](txn: Txn[A]): F[A] =
         for {
           signal <- Deferred[F, Unit]
-          //TODO why does this need to be a critical section?
-          p <- global.permit.use(_ => eval(idGen, txn))
+          p      <- rateLimiter.permit.use(_ => eval(idGen, txn))
           (res, log) = p
           r <- res match {
             //Double-checked dirtiness for performance
             case TSuccess(a) =>
-              if (log.isDirty) commit(txn)
-              else
+              F.ifM(F.pure(log.isDirty))(
+                commit(txn),
                 for {
-                  committed <- global.permit.use(_ =>
-                    if (log.isDirty) F.pure(false)
-                    else
-                      log.commit.as(true)
+                  committed <- log.withLock(
+                    F.ifM(F.pure(log.isDirty))(
+                      F.pure(false),
+                      F.delay(println(s"committing ${log.values.map(e => e.initial -> e.current)}")) >> log.commit.as(
+                        true
+                      )
+                      // log.commit.as(true)
+                    )
                   )
                   r <-
                     if (committed) log.signal >> F.pure(a)
                     else commit(txn)
                 } yield r
-            case TFailure(e) => if (log.isDirty) commit(txn) else F.raiseError(e)
+              )
+            case TFailure(e) => F.ifM(F.pure(log.isDirty))(commit(txn), F.raiseError(e))
             //TODO make retry blocking safely cancellable
             case TRetry =>
               //TODO we could probably split commit so we don't reallocate a signal every time
-              global.permit
-                .use(_ =>
-                  if (log.isDirty) F.pure(true)
-                  else log.registerRetry(signal).as(false)
+              log
+                .withLock(
+                  F.ifM(F.pure(log.isDirty))(
+                    F.delay(println(s"${log.values.map(e => e.initial -> e.current)} is dirty")) >> F.pure(true),
+                    // F.pure(true),
+                    F.delay(println(s"${log.values.map(e => e.initial -> e.current)} is clean")) >> F.delay(
+                      println("registering retry")
+                    ) >> log.registerRetry(signal).as(false)
+                    // log.registerRetry(signal).as(false)
+                  )
                 )
                 .flatMap { retryImmediately =>
                   //TODO remove signal from tvars when we wake
-                  if (retryImmediately) commit(txn) else signal.get >> jitter >> commit(txn)
+                  if (retryImmediately) commit(txn) else signal.get >> commit(txn)
                 }
           }
         } yield r
 
-      //TODO do we need this to avoid thundering herds?
-      private def jitter: F[Unit] =
-        F.delay(Random.nextInt(10000)).flatMap { n =>
-          F.sleep(n.micros)
-        }
     }
 
 }

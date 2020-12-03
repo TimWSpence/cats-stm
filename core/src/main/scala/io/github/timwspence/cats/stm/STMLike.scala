@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import scala.annotation.tailrec
 
 import cats.effect.std.Semaphore
-import cats.effect.{Async, Deferred, Ref}
+import cats.effect.{Async, Deferred, Ref, Resource}
 import cats.implicits._
 import cats.{Monoid, MonoidK, StackSafeMonad}
 
@@ -40,11 +40,12 @@ trait STMLike[F[_]] {
 
   //TODO should we split this into public trait and private impl?
   class TVar[A] private[stm] (
-    val id: TVarId,
+    private[stm] val id: TVarId,
     //TODO should this just be a Ref as well?
-    @volatile var value: A,
-    val lock: Semaphore[F],
-    val retries: Ref[F, List[Deferred[F, Unit]]]
+    @volatile private[stm] var value: A,
+    // private[stm] val value: Ref[F, A],
+    private[stm] val lock: Semaphore[F],
+    private[stm] val retries: Ref[F, List[Deferred[F, Unit]]]
   ) {
     def get: Txn[A] = Get(this)
 
@@ -151,7 +152,14 @@ trait STMLike[F[_]] {
           map = map + (tvar.id -> TLogEntry(tvar, f(current)))
         }
 
-      def isDirty: Boolean = values.exists(_.isDirty)
+      // def isDirty(implicit F: Async[F]): F[Boolean] = values.toList.map(_.isDirty).foldLeft(F.pure(false)) { (acc, dirty) =>
+      //   acc.flatMap { a =>
+      //     dirty.map {  d =>
+      //       a || d
+      //     }
+      //   }
+      // }
+      def isDirty: Boolean = values.exists((_.isDirty))
 
       def snapshot(): TLog = TLog(map)
 
@@ -163,7 +171,18 @@ trait STMLike[F[_]] {
           }
         )
 
-      def commit(implicit F: Async[F]): F[Unit] = F.delay(values.foreach(_.commit()))
+      def withLock[A](fa: F[A])(implicit F: Async[F]): F[A] =
+        F.delay(println(s"Acquiring locks for ${values.map(_.tvar.id)}")) >>
+        values.toList
+          .sortBy(_.tvar.id)
+          .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+            locks >> Resource.make(F.delay(println(s"acquiring ${e.tvar.id}")))(_ => F.delay(println(s"Releasing ${e.tvar.id}"))) >> e.tvar.lock.permit
+          // .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+          //   locks >> e.tvar.lock.permit
+          }
+          .use(_ => fa)
+
+      def commit(implicit F: Async[F]): F[Unit] = values.toList.traverse_(_.commit)
 
       def signal(implicit F: Async[F]): F[Unit] =
         values.toList.traverse_(e =>
@@ -191,8 +210,17 @@ trait STMLike[F[_]] {
 
       def unsafeSet[A](a: A): TLogEntry = TLogEntry[Repr](tvar, a.asInstanceOf[Repr])
 
-      def commit(): Unit = tvar.value = current
+      // def commit(implicit F: Async[F]): F[Unit] = {
+      //   F.delay(tvar.cached = current) >> tvar.value.set(current)
+      // }
 
+      def commit(implicit F: Async[F]): F[Unit] = {
+        F.delay(tvar.value = current)
+      }
+
+      // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map {v =>
+      //   initial != v.asInstanceOf[Repr]
+      // }
       def isDirty: Boolean = initial != tvar.value.asInstanceOf[Repr]
 
       def snapshot(): TLogEntry =
@@ -240,6 +268,7 @@ trait STMLike[F[_]] {
               conts = conts.tail
               go(nextId, lock, ref, f(a))
             }
+          // case Alloc(a) => Left(Pure((new TVar(nextId, a, Ref.unsafe[F, Any](a), lock, ref))))
           case Alloc(a) => Left(Pure((new TVar(nextId, a, lock, ref))))
           case Bind(stm, f) =>
             conts = f :: conts
