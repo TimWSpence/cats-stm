@@ -44,7 +44,7 @@ object STM {
                   committed <- log.withLock(
                     F.ifM(F.pure(log.isDirty))(
                       F.pure(false),
-                      F.delay(println(s"committing ${log.values.map(e => e.initial -> e.current)}")) >> log.commit.as(
+                      F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
                         true
                       )
                       // log.commit.as(true)
@@ -62,9 +62,9 @@ object STM {
               log
                 .withLock(
                   F.ifM(F.pure(log.isDirty))(
-                    F.delay(println(s"${log.values.map(e => e.initial -> e.current)} is dirty")) >> F.pure(true),
+                    F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
                     // F.pure(true),
-                    F.delay(println(s"${log.values.map(e => e.initial -> e.current)} is clean")) >> F.delay(
+                    F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
                       println("registering retry")
                     ) >> log.registerRetry(signal).as(false)
                     // log.registerRetry(signal).as(false)
