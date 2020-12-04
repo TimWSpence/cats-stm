@@ -147,8 +147,9 @@ object SantaClausProblem extends IOApp {
       _ <- IO(println("----------"))
       _ <- choose[(Gate, Gate)](
         NonEmptyList.of(
-          (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) }),
-          (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g) })
+          // (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) }),
+          (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g) }),
+          (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) })
         )
       )
     } yield ()
@@ -157,9 +158,10 @@ object SantaClausProblem extends IOApp {
   def mainProblem: IO[Unit] =
     for {
       elfGroup  <- Group.of(3)
-      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
-      reinGroup <- Group.of(9)
-      _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9).traverse_(n => reindeer(reinGroup, n))
+      // _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
+      _         <- List(1, 2, 3, 4, 5).traverse_(n => elf(elfGroup, n))
+      reinGroup <- Group.of(3)
+      _         <- List(1, 2, 3).traverse_(n => reindeer(reinGroup, n))
       _         <- santa(elfGroup, reinGroup).foreverM.void
     } yield ()
 

@@ -50,29 +50,34 @@ class TLogTest extends CatsEffectSuite {
 
   test("isDirty when empty") {
     val tlog = TLog.empty
-    assertEquals(tlog.isDirty, false)
+    for {
+      v   <- tlog.isDirty
+      res <- IO(assert(!v))
+    } yield res
   }
 
   test("isDirty when non-empty") {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
-      res <- IO {
-        val tlog = TLog.empty
+      tlog = TLog.empty
+      _ <- IO {
         tlog.get(tvar)
-        assertEquals(tlog.isDirty, false)
       }
+      v   <- tlog.isDirty
+      res <- IO(assert(!v))
     } yield res
   }
 
   test("isDirty when non-empty and dirty") {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
-      res <- IO {
-        val tlog = TLog.empty
+      tlog = TLog.empty
+      _ <- IO {
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         tvar.value = 2
-        assertEquals(tlog.isDirty, true)
       }
+      v   <- tlog.isDirty
+      res <- IO(assert(v))
     } yield res
   }
 

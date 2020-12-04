@@ -53,8 +53,8 @@ trait STMLike[F[_]] {
 
     def set(a: A): Txn[Unit] = modify(_ => a)
 
-    private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] =
-      retries.update(signal :: _)
+    private[stm] def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
+      retries.update(signal :: _) >> F.delay(println("registered retry"))
 
   }
 
@@ -134,7 +134,7 @@ trait STMLike[F[_]] {
 
       def get(tvar: TVar[Any]): Any =
         if (map.contains(tvar.id))
-          map(tvar.id).unsafeGet[Any]
+          map(tvar.id).unsafeGet
         else {
           val current = tvar.value
           map = map + (tvar.id -> TLogEntry(tvar, current))
@@ -144,8 +144,8 @@ trait STMLike[F[_]] {
       def modify(tvar: TVar[Any], f: Any => Any): Unit =
         if (map.contains(tvar.id)) {
           val e       = map(tvar.id)
-          val current = e.unsafeGet[Any]
-          val entry   = e.unsafeSet[Any](f(current))
+          val current = e.unsafeGet
+          val entry   = e.unsafeSet(f(current))
           map = map + (tvar.id -> entry)
         } else {
           val current = tvar.value
@@ -159,7 +159,7 @@ trait STMLike[F[_]] {
       //     }
       //   }
       // }
-      def isDirty: Boolean = values.exists((_.isDirty))
+      def isDirty(implicit F: Async[F]): F[Boolean] = F.delay(values.exists((_.isDirty)))
 
       def snapshot(): TLog = TLog(map)
 
@@ -182,10 +182,10 @@ trait STMLike[F[_]] {
           }
           .use(_ => fa)
 
-      def commit(implicit F: Async[F]): F[Unit] = values.toList.traverse_(_.commit)
+      def commit(implicit F: Async[F]): F[Unit] = F.delay(values.foreach(_.commit()))
 
       def signal(implicit F: Async[F]): F[Unit] =
-        values.toList.traverse_(e =>
+        values.toList.reverse.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
             _       <- signals.traverse_(s => s.complete(()))
@@ -200,51 +200,35 @@ trait STMLike[F[_]] {
       def empty: TLog = TLog(Map.empty)
     }
 
-    abstract class TLogEntry { self =>
-      type Repr
-      var current: Repr
-      val initial: Repr
-      val tvar: TVar[Repr]
+    case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
 
-      def unsafeGet[A]: A = current.asInstanceOf[A]
+      def unsafeGet: Any = current
 
-      def unsafeSet[A](a: A): TLogEntry = TLogEntry[Repr](tvar, a.asInstanceOf[Repr])
+      def unsafeSet(a: Any): TLogEntry = TLogEntry[Any](tvar, a)
 
       // def commit(implicit F: Async[F]): F[Unit] = {
       //   F.delay(tvar.cached = current) >> tvar.value.set(current)
       // }
 
-      def commit(implicit F: Async[F]): F[Unit] = {
-        F.delay(tvar.value = current)
-      }
+      def commit(): Unit = tvar.value = current
+
 
       // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map {v =>
       //   initial != v.asInstanceOf[Repr]
       // }
       def isDirty: Boolean = {
         // println(s"initial: $initial tvar: ${tvar.value}")
-        initial != tvar.value.asInstanceOf[Repr]
+        initial != tvar.value
       }
 
-      def snapshot(): TLogEntry =
-        new TLogEntry {
-          override type Repr = self.Repr
-          override var current: Repr    = self.current
-          override val initial: Repr    = self.initial
-          override val tvar: TVar[Repr] = self.tvar
-        }
+      def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 
     }
 
     object TLogEntry {
 
       def apply[A](tvar0: TVar[A], current0: A): TLogEntry =
-        new TLogEntry {
-          override type Repr = A
-          override var current: A    = current0
-          override val initial: A    = tvar0.value.asInstanceOf[A]
-          override val tvar: TVar[A] = tvar0
-        }
+        TLogEntry(tvar0.value, current0, tvar0.asInstanceOf[TVar[Any]])
 
     }
 

@@ -34,34 +34,33 @@ object STM {
         for {
           signal <- Deferred[F, Unit]
           p      <- rateLimiter.permit.use(_ => eval(idGen, txn))
+          // p      <- eval(idGen, txn)
           (res, log) = p
           r <- res match {
-            //Double-checked dirtiness for performance
             case TSuccess(a) =>
-              F.ifM(F.delay(log.isDirty))(
-                commit(txn),
-                for {
-                  committed <- log.withLock(
-                    F.ifM(F.delay(log.isDirty))(
-                      F.pure(false),
-                      // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
-                      //   true
-                      // )
-                      log.commit.as(true)
-                    )
+              for {
+                committed <- log.withLock(
+                  F.ifM(log.isDirty)(
+                    F.pure(false),
+                    // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
+                    //   true
+                    // )
+                    // log.commit >> log.signal.as(true)
+                    log.commit.as(true)
                   )
-                  r <-
-                    if (committed) log.signal >> F.pure(a)
-                    else commit(txn)
-                } yield r
-              )
-            case TFailure(e) => F.ifM(F.delay(log.isDirty))(commit(txn), F.raiseError(e))
+                )
+                r <-
+                  if (committed) log.signal >> F.pure(a)
+                  // if (committed) F.pure(a)
+                  else commit(txn)
+              } yield r
+            case TFailure(e) => F.ifM(log.isDirty)(commit(txn), F.raiseError(e))
             //TODO make retry blocking safely cancellable
             case TRetry =>
               //TODO we could probably split commit so we don't reallocate a signal every time
               log
                 .withLock(
-                  F.ifM(F.delay(log.isDirty))(
+                  F.ifM(log.isDirty)(
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
                     F.pure(true),
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
