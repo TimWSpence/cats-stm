@@ -23,13 +23,13 @@ import cats.effect._
 import cats.effect.unsafe.implicits.global
 import cats.implicits._
 
-object SantaClausProblem extends IOApp {
+object SantaClausProblem extends IOApp.Simple {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._
 
-  override def run(args: List[String]): IO[ExitCode] =
-    mainProblem.timeout(5.seconds).as(ExitCode.Success)
+  override def run: IO[Unit] =
+    mainProblem.timeout(5.seconds)
 
   def meetInStudy(id: Int): IO[Unit] = IO(println(show"Elf $id meeting in the study"))
 

@@ -152,14 +152,7 @@ trait STMLike[F[_]] {
           map = map + (tvar.id -> TLogEntry(tvar, f(current)))
         }
 
-      // def isDirty(implicit F: Async[F]): F[Boolean] = values.toList.map(_.isDirty).foldLeft(F.pure(false)) { (acc, dirty) =>
-      //   acc.flatMap { a =>
-      //     dirty.map {  d =>
-      //       a || d
-      //     }
-      //   }
-      // }
-      def isDirty(implicit F: Async[F]): F[Boolean] = F.delay(values.exists((_.isDirty)))
+      def isDirty(implicit F: Async[F]): F[Boolean] = F.delay(values.exists((_.isDirty())))
 
       def snapshot(): TLog = TLog(map)
 
@@ -188,6 +181,7 @@ trait STMLike[F[_]] {
         values.toList.reverse.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
+            _ <- F.delay(println(s"Signalling ${signals.length} signals"))
             _       <- signals.traverse_(s => s.complete(()))
           } yield ()
         )
@@ -216,10 +210,7 @@ trait STMLike[F[_]] {
       // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map {v =>
       //   initial != v.asInstanceOf[Repr]
       // }
-      def isDirty: Boolean = {
-        // println(s"initial: $initial tvar: ${tvar.value}")
-        initial != tvar.value
-      }
+      def isDirty(): Boolean = initial != tvar.value
 
       def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 
