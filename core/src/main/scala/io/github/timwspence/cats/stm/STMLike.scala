@@ -134,7 +134,7 @@ trait STMLike[F[_]] {
 
       def get(tvar: TVar[Any]): Any =
         if (map.contains(tvar.id))
-          map(tvar.id).unsafeGet
+          map(tvar.id).get
         else {
           val current = tvar.value
           map = map + (tvar.id -> TLogEntry(tvar, current))
@@ -144,8 +144,8 @@ trait STMLike[F[_]] {
       def modify(tvar: TVar[Any], f: Any => Any): Unit =
         if (map.contains(tvar.id)) {
           val e       = map(tvar.id)
-          val current = e.unsafeGet
-          val entry   = e.unsafeSet(f(current))
+          val current = e.get
+          val entry   = e.set(f(current))
           map = map + (tvar.id -> entry)
         } else {
           val current = tvar.value
@@ -196,9 +196,9 @@ trait STMLike[F[_]] {
 
     case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
 
-      def unsafeGet: Any = current
+      def get: Any = current
 
-      def unsafeSet(a: Any): TLogEntry = TLogEntry[Any](tvar, a)
+      def set(a: Any): TLogEntry = TLogEntry[Any](tvar, a)
 
       // def commit(implicit F: Async[F]): F[Unit] = {
       //   F.delay(tvar.cached = current) >> tvar.value.set(current)

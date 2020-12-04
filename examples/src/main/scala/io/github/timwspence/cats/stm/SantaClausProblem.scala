@@ -18,7 +18,6 @@ package io.github.timwspence.cats.stm
 // import io.github.timwspence.cats.stm._
 import scala.concurrent.duration._
 
-import cats.data._
 import cats.effect._
 import cats.effect.unsafe.implicits.global
 import cats.implicits._
@@ -31,9 +30,7 @@ object SantaClausProblem extends IOApp.Simple {
   override def run: IO[Unit] =
     mainProblem.timeout(5.seconds)
 
-  def meetInStudy(id: Int): IO[Unit] = IO(println(show"Elf $id meeting in the study"))
-
-  def deliverToys(id: Int): IO[Unit] = IO(println(show"Reindeer $id delivering toys"))
+  def meetInStudy(id: Int): IO[Unit] = IO.println(show"Elf $id meeting in the study")
 
   sealed abstract case class Gate(capacity: Int, tv: TVar[Int]) {
     def pass: IO[Unit]    = Gate.pass(this)
@@ -100,69 +97,52 @@ object SantaClausProblem extends IOApp.Simple {
   }
 
   def helper1(group: Group, doTask: IO[Unit]): IO[Unit] =
-    for {
+    (for {
+      _ <- IO.println("Joining gate")
       (inGate, outGate) <- group.join
       _                 <- inGate.pass
       _                 <- doTask
       _                 <- outGate.pass
-    } yield ()
+     } yield ()).handleErrorWith {
+      case e => IO(e.printStackTrace())
+    }
 
   def elf2(group: Group, id: Int): IO[Unit] =
     helper1(group, meetInStudy(id))
 
-  def reindeer2(group: Group, id: Int): IO[Unit] =
-    helper1(group, deliverToys(id))
-
-  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => IO.sleep(n.micros))
+  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => IO.sleep(n.micros)).handleErrorWith {
+    case e => IO(e.printStackTrace())
+  }
 
   def elf(g: Group, i: Int) =
     (elf2(g, i) >> randomDelay).foreverM.start
 
-  def reindeer(g: Group, i: Int) =
-    (reindeer2(g, i) >> randomDelay).foreverM.start
-
-  def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
-    def actions: NonEmptyList[Txn[IO[Unit]]] =
-      choices.map {
-        case (guard, rhs) =>
-          for {
-            value <- guard
-          } yield rhs(value)
-      }
-    for {
-      act <- stm.commit(actions.reduceLeft(_.orElse(_)))
-      _   <- act
-    } yield ()
-  }
-
-  def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
+  def santa(elfGroup: Group): IO[Unit] = {
+  // def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
     def run(task: String, gates: (Gate, Gate)): IO[Unit] =
       for {
-        _ <- IO(println(show"Ho! Ho! Ho! let’s $task"))
+        _ <- IO.println(show"Ho! Ho! Ho! let’s $task")
         _ <- gates._1.operate
+        _ <- IO.println("operated gate 1") //Seems santa doesn't get this far?
         _ <- gates._2.operate
+        _ <- IO.println("operated gates") //Seems santa doesn't get this far?
       } yield ()
 
-    for {
-      _ <- IO(println("----------"))
-      _ <- choose[(Gate, Gate)](
-        NonEmptyList.of(
-          // (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) }),
-          (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g) }),
-          (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) })
-        )
-      )
-    } yield ()
+    (for {
+      _ <- IO.println("----------")
+      _ <- stm.commit(elfGroup.await).flatMap {
+        g: (Gate, Gate) => run("meet in study", g)
+      }
+     } yield ()).handleErrorWith {
+      case e => IO(e.printStackTrace())
+    }
   }
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup  <- Group.of(3)
-      // _         <- List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).traverse_(n => elf(elfGroup, n))
-      _         <- List(1, 2, 3, 4, 5).traverse_(n => elf(elfGroup, n))
-      reinGroup <- Group.of(3)
-      _         <- List(1, 2, 3).traverse_(n => reindeer(reinGroup, n))
-      _         <- santa(elfGroup, reinGroup).foreverM.void
+      elfGroup <- Group.of(3)
+      _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
+      _         <- santa(elfGroup).foreverM.void
     } yield ()
 
 }

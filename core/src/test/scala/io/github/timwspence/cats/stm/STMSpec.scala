@@ -406,4 +406,30 @@ class STMSpec extends CatsEffectSuite {
     } yield res
   }
 
+  test("loop retry and completion") {
+    val iterations = 10
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      first = stm.commit(
+        for {
+          current <- tvar.get
+          _ <- stm.check(current == 0)
+          _ <- tvar.set(1)
+        } yield ()
+      )
+      second = stm.commit(
+        for {
+          current <- tvar.get
+          _ <- stm.check(current == 1)
+          _ <- tvar.set(0)
+        } yield ()
+      )
+      f1 <- List(1, iterations).foldLeft(IO.unit){ (acc, _) => acc >> first}.start
+      f2 <- List(1, iterations).foldLeft(IO.unit){ (acc, _) => acc >> second}.start
+      _ <- (f1.joinAndEmbedNever,f2.joinAndEmbedNever).tupled
+      v <- stm.commit(tvar.get)
+      res <- IO { assertEquals(v, 0) }
+    } yield res
+  }
+
 }
