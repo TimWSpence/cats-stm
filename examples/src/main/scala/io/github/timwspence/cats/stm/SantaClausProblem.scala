@@ -107,15 +107,8 @@ object SantaClausProblem extends IOApp.Simple {
       case e => IO(e.printStackTrace())
     }
 
-  def elf2(group: Group, id: Int): IO[Unit] =
-    helper1(group, meetInStudy(id))
-
-  def randomDelay: IO[Unit] = IO(scala.util.Random.nextInt(10000)).flatMap(n => IO.sleep(n.micros)).handleErrorWith {
-    case e => IO(e.printStackTrace())
-  }
-
   def elf(g: Group, i: Int) =
-    (elf2(g, i) >> randomDelay).foreverM.start
+    helper1(g, meetInStudy(i)).foreverM.start
 
   def santa(elfGroup: Group): IO[Unit] = {
   // def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
@@ -140,7 +133,7 @@ object SantaClausProblem extends IOApp.Simple {
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup <- Group.of(3)
+      elfGroup <- Group.of(2)
       _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
       _         <- santa(elfGroup).foreverM.void
     } yield ()
