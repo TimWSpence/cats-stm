@@ -44,7 +44,7 @@ object SantaClausProblem extends IOApp.Simple {
       stm.commit {
         for {
           nLeft <- g.tv.get
-          _     <- stm.check(nLeft > 0)
+          _     <- stm.check({println(s"nLeft in pass is $nLeft"); nLeft > 0})
           _     <- g.tv.modify(_ - 1)
         } yield ()
       }
@@ -89,7 +89,7 @@ object SantaClausProblem extends IOApp.Simple {
     def await(g: Group): Txn[(Gate, Gate)] =
       for {
         (nLeft, g1, g2) <- g.tv.get
-        _               <- stm.check(nLeft === 0)
+        _               <- {println(s"nLeft is $nLeft"); stm.check(nLeft === 0)}
         newG1           <- Gate.of(g.n)
         newG2           <- Gate.of(g.n)
         _               <- g.tv.set((g.n, newG1, newG2))
@@ -111,7 +111,6 @@ object SantaClausProblem extends IOApp.Simple {
     helper1(g, meetInStudy(i)).foreverM.start
 
   def santa(elfGroup: Group): IO[Unit] = {
-  // def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
     def run(task: String, gates: (Gate, Gate)): IO[Unit] =
       for {
         _ <- IO.println(show"Ho! Ho! Ho! let’s $task")
@@ -133,8 +132,8 @@ object SantaClausProblem extends IOApp.Simple {
 
   def mainProblem: IO[Unit] =
     for {
-      elfGroup <- Group.of(2)
-      _         <- List(1, 2, 3).traverse_(n => elf(elfGroup, n))
+      elfGroup <- Group.of(1)
+      _         <- List(1).traverse_(n => elf(elfGroup, n))
       _         <- santa(elfGroup).foreverM.void
     } yield ()
 

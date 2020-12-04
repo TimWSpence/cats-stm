@@ -30,7 +30,7 @@ trait STMLike[F[_]] {
 
   def commit[A](txn: Txn[A]): F[A]
 
-  def check(cond: Boolean): Txn[Unit] = if (cond) unit else retry
+  def check(cond: => Boolean): Txn[Unit] = if (cond) unit else retry
 
   def retry[A]: Txn[A] = Retry
 

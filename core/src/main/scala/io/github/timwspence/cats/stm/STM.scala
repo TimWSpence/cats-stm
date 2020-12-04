@@ -45,13 +45,11 @@ object STM {
                     // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
                     //   true
                     // )
-                    // log.commit >> log.signal.as(true)
                     log.commit.as(true)
                   )
                 )
                 r <-
                   if (committed) log.signal >> F.pure(a)
-                  // if (committed) F.pure(a)
                   else commit(txn)
               } yield r
             case TFailure(e) => F.ifM(log.isDirty)(commit(txn), F.raiseError(e))
@@ -66,7 +64,7 @@ object STM {
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
                     //   println("registering retry")
                     // ) >> log.registerRetry(signal).as(false)
-                    log.registerRetry(signal).as(false)
+                    F.delay(println("log is clean in retry")) >> log.registerRetry(signal).as(false)
                   )
                 )
                 .flatMap { retryImmediately =>
