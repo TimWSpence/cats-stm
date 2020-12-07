@@ -129,6 +129,12 @@ trait STMLike[F[_]] {
 
     case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
+      def debug(implicit F: Async[F]): F[Unit] = values.toList.traverse_ { e =>
+        e.tvar.value.get.flatMap { v =>
+          F.delay(println(s"${e.tvar.id}: initial: ${e.initial} current: ${e.current} actual: $v"))
+        }
+      }
+
       def values: Iterable[TLogEntry] = map.values
 
       def contains(tvar: TVar[Any]): Boolean = map.contains(tvar.id)
@@ -211,6 +217,7 @@ trait STMLike[F[_]] {
       def commit(implicit F: Async[F]): F[Unit] = values.toList.traverse_(_.commit)
 
       def signal(implicit F: Async[F]): F[Unit] =
+        //TODO use chain to avoid reverse?
         values.toList.reverse.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
@@ -220,6 +227,7 @@ trait STMLike[F[_]] {
         )
 
       def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
+        F.delay(println(s"Registering retry with ${values.toList.length} tvars")) >>
         values.toList.traverse_(e => e.tvar.registerRetry(signal))
     }
 
@@ -288,7 +296,7 @@ trait STMLike[F[_]] {
               Eff(log.getF(tvar).map(Pure(_)))
           case Modify(tvar, f) =>
             if (log.contains(tvar))
-              go(nextId, lock, ref, Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f)))
+              go(nextId, lock, ref, Pure(log.modify(tvar, f)))
             else
               Eff(log.modifyF(tvar, f).map(Pure(_)))
           case OrElse(attempt, fallback) =>

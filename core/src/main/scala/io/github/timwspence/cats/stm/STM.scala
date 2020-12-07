@@ -39,20 +39,26 @@ object STM {
           r <- res match {
             case TSuccess(a) =>
               for {
+                _ <- log.debug //
                 committed <- log.withLock(
                   F.ifM(log.isDirty)(
                     F.pure(false),
                     // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
                     //   true
                     // )
-                    log.commit.as(true)
+                    F.delay(println("committing")) >> log.debug >> log.commit.as(true)
                   )
                 )
                 r <-
                   if (committed) log.signal >> F.pure(a)
                   else commit(txn)
               } yield r
-            case TFailure(e) => F.ifM(log.isDirty)(commit(txn), F.raiseError(e))
+            case TFailure(e) =>
+              log
+                .withLock(F.ifM(log.isDirty)(F.pure(true), F.pure(false)))
+                .flatMap { retryImmediately =>
+                  if (retryImmediately) commit(txn) else F.raiseError[A](e)
+                }
             //TODO make retry blocking safely cancellable
             case TRetry =>
               //TODO we could probably split commit so we don't reallocate a signal every time
@@ -60,11 +66,11 @@ object STM {
                 .withLock(
                   F.ifM(log.isDirty)(
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
-                    F.pure(true),
+                    F.delay(println("dirty retry log")) >> log.debug >> F.pure(true),
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
                     //   println("registering retry")
                     // ) >> log.registerRetry(signal).as(false)
-                    log.registerRetry(signal).as(false)
+                    F.delay(println("registering retry")) >> log.debug >> log.registerRetry(signal).as(false)
                   )
                 )
                 .flatMap { retryImmediately =>

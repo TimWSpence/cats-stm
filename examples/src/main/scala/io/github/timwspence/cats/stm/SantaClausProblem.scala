@@ -41,7 +41,7 @@ object SantaClausProblem extends IOApp.Simple {
               _   <- in.set(0)
             } yield ()
           )
-          _ <- IO.println("elf stuff")
+          // _ <- IO.println("elf stuff")
         } yield ()).foreverM
       santa = (for {
           _ <- stm.commit(
@@ -51,7 +51,7 @@ object SantaClausProblem extends IOApp.Simple {
               _   <- in.set(1)
             } yield ()
           )
-          _ <- IO.println("santa stuff")
+          // _ <- IO.println("santa stuff")
         } yield ()).foreverM
       e <- elf.start
       s <- santa.start
