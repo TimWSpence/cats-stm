@@ -62,7 +62,6 @@ trait Instances extends CatsEffectSuite with HasSTM {
         .sortBy(_.tvar.id)
         .traverse(e => e.isDirty.map(d => e.tvar.id -> d))
         .unsafeRunSync()
-        .sortBy(_._1)
         .filter(_._2)
 
     Eq.instance { (tlog1, tlog2) =>
