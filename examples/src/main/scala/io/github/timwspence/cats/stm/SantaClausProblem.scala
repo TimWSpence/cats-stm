@@ -37,21 +37,21 @@ object SantaClausProblem extends IOApp.Simple {
           _ <- stm.commit(
             for {
               cur <- in.get
-              _   <- stm.check(cur == 1)
+              _   <- stm.check({println(s"Curr is $cur, expected 1"); cur == 1})
               _   <- in.set(0)
             } yield ()
           )
-          // _ <- IO.println("elf stuff")
+          _ <- IO.println("elf stuff")
         } yield ()).foreverM
       santa = (for {
           _ <- stm.commit(
             for {
               cur <- in.get
-              _   <- stm.check(cur == 0)
+              _   <- stm.check({println(s"Curr is $cur, expected 0"); cur == 0})
               _   <- in.set(1)
             } yield ()
           )
-          // _ <- IO.println("santa stuff")
+          // _ <- IO.blocking(println("santa stuff"))
         } yield ()).foreverM
       e <- elf.start
       s <- santa.start
