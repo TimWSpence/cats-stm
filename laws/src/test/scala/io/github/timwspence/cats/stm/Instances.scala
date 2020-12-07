@@ -56,11 +56,19 @@ trait Instances extends CatsEffectSuite with HasSTM {
     }
 
   //A log is in the same state if all dirty entries are in the same state
-  implicit def eqTLog: Eq[TLog] =
+  implicit def eqTLog: Eq[TLog] = {
+    def run(tlog: TLog): List[(Long, Boolean)] =
+      tlog.values.toList
+        .sortBy(_.tvar.id)
+        .traverse(e => e.isDirty.map(d => e.tvar.id -> d))
+        .unsafeRunSync()
+        .sortBy(_._1)
+        .filter(_._2)
+
     Eq.instance { (tlog1, tlog2) =>
-      tlog1.values.filter(_.isDirty).toList.sortBy(_.tvar.id) ===
-        tlog2.values.filter(_.isDirty).toList.sortBy(_.tvar.id)
+      run(tlog1) === run(tlog2)
     }
+  }
 
   implicit def eqTxn[A](implicit A: Eq[A]): Eq[Txn[A]] =
     Eq.instance { (txn1, txn2) =>
@@ -94,7 +102,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
       arb[A].map(a =>
         new TVar(
           IdGen.incrementAndGet(),
-          a,
+          Ref.unsafe[IO, A](a),
           Semaphore[IO](1).unsafeRunSync(),
           Ref.of[IO, List[Deferred[IO, Unit]]](Nil).unsafeRunSync()
         )

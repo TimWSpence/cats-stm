@@ -32,46 +32,47 @@ object SantaClausProblem extends IOApp.Simple {
 
   def mainProblem: IO[Unit] =
     for {
-      in <- stm.commit(TVar.of(0))
+      in  <- stm.commit(TVar.of(0))
       out <- stm.commit(TVar.of(0))
       elf = (for {
-        _ <- stm.commit(
-          for {
-            cur <- in.get
-            _ <- stm.check(cur == 1)
-            _ <- in.set(0)
-          } yield ()
-        )
-        _ <- IO.println("elf stuff")
-        _ <- stm.commit(
-          for {
-            cur <- out.get
-            _ <- stm.check(cur == 1)
-            _ <- out.set(0)
-          } yield ()
-        )
-      } yield ()).foreverM
+          _ <- stm.commit(
+            for {
+              cur <- in.get
+              _   <- stm.check(cur == 1)
+              _   <- in.set(0)
+            } yield ()
+          )
+          _ <- IO.println("elf stuff")
+          _ <- stm.commit(
+            for {
+              cur <- out.get
+              _   <- stm.check(cur == 1)
+              _   <- out.set(0)
+            } yield ()
+          )
+        } yield ()).foreverM
       santa = (for {
-        _ <- stm.commit(
-          for {
-            cur <- in.get
-            _ <- stm.check(cur == 0)
-            _ <- in.set(1)
-          } yield ()
-        )
-        _ <- IO.println("santa stuff")
-        _ <- stm.commit(
-          for {
-            cur <- out.get
-            _ <- stm.check(cur == 0)
-            _ <- out.set(1)
-          } yield ()
-        )
-      } yield ()).foreverM
+          _ <- stm.commit(
+            for {
+              cur <- in.get
+              _   <- stm.check(cur == 0)
+              _   <- in.set(1)
+            } yield ()
+          )
+          _ <- IO.println("santa stuff")
+          _ <- stm.commit(
+            for {
+              cur <- out.get
+              _   <- stm.check(cur == 0)
+              _   <- out.set(1)
+            } yield ()
+          )
+        } yield ()).foreverM
       e <- elf.start
       s <- santa.start
       _ <- e.join
       _ <- s.join
+      //TODO why always signalling 0 signals?
     } yield ()
 
 }

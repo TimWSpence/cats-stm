@@ -64,7 +64,7 @@ object STM {
                     // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
                     //   println("registering retry")
                     // ) >> log.registerRetry(signal).as(false)
-                    F.delay(println("log is clean in retry")) >> log.registerRetry(signal).as(false)
+                    log.registerRetry(signal).as(false)
                   )
                 )
                 .flatMap { retryImmediately =>

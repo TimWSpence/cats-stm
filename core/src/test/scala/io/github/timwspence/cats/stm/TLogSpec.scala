@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import cats.effect.IO
 import munit.CatsEffectSuite
 
-class TLogTest extends CatsEffectSuite {
+class TLogSpec extends CatsEffectSuite {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._
@@ -27,11 +27,13 @@ class TLogTest extends CatsEffectSuite {
 
   val inc: Int => Int = _ + 1
 
-  test("get when not present") {
+  test("getF when not present") {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
+      tlog = TLog.empty
+      v <- tlog.getF(tvar)
       res <- IO {
-        assertEquals(TLog.empty.get(tvar), 1)
+        assertEquals(v, 1)
       }
     } yield res
   }
@@ -39,9 +41,9 @@ class TLogTest extends CatsEffectSuite {
   test("get when present") {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
+      tlog = TLog.empty
+      _ <- tlog.getF(tvar)
       res <- IO {
-        val tlog = TLog.empty
-        tlog.get(tvar.asInstanceOf[TVar[Any]])
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         assertEquals(tlog.get(tvar), 2)
       }
@@ -60,9 +62,7 @@ class TLogTest extends CatsEffectSuite {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
-      _ <- IO {
-        tlog.get(tvar)
-      }
+      _   <- tlog.getF(tvar)
       v   <- tlog.isDirty
       res <- IO(assert(!v))
     } yield res
@@ -72,10 +72,8 @@ class TLogTest extends CatsEffectSuite {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
-      _ <- IO {
-        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-        tvar.value = 2
-      }
+      _   <- tlog.getF(tvar)
+      _   <- stm.commit(tvar.set(2))
       v   <- tlog.isDirty
       res <- IO(assert(v))
     } yield res
@@ -84,14 +82,12 @@ class TLogTest extends CatsEffectSuite {
   test("commit") {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
-      tlog <- IO {
-        val tlog = TLog.empty
-        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-        tlog
-      }
+      tlog = TLog.empty
+      _ <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
       _ <- tlog.commit
+      v <- stm.commit(tvar.get)
       res <- IO {
-        assertEquals(tvar.value, 2)
+        assertEquals(v, 2)
       }
     } yield res
   }
@@ -100,13 +96,13 @@ class TLogTest extends CatsEffectSuite {
     for {
       tvar  <- stm.commit(TVar.of[Any](1))
       tvar2 <- stm.commit(TVar.of[Any](2))
+      tlog = TLog.empty
+      _ <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
+      tlog2 = tlog.snapshot()
+      v <- tlog2.getF(tvar2)
       res <- IO {
-        val tlog = TLog.empty
-        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-        val tlog2 = tlog.snapshot()
-        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         assertEquals(tlog2.get(tvar), 2)
-        assertEquals(tlog2.get(tvar2), 2)
+        assertEquals(v, 2)
 
       }
     } yield res
@@ -116,13 +112,13 @@ class TLogTest extends CatsEffectSuite {
     for {
       tvar  <- stm.commit(TVar.of[Any](1))
       tvar2 <- stm.commit(TVar.of[Any](2))
+      tlog = TLog.empty
+      _ <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
+      _ <- tlog.modifyF(tvar2, inc.asInstanceOf[Any => Any])
+      tlog2 = tlog.snapshot()
+      _ <- tlog2.modifyF(tvar2, inc.asInstanceOf[Any => Any])
+      d = tlog2.delta(tlog)
       res <- IO {
-        val tlog = TLog.empty
-        tlog.modify(tvar, inc.asInstanceOf[Any => Any])
-        tlog.modify(tvar2, inc.asInstanceOf[Any => Any])
-        val tlog2 = tlog.snapshot()
-        tlog2.modify(tvar2, inc.asInstanceOf[Any => Any])
-        val d = tlog2.delta(tlog)
         assertEquals(d.get(tvar), 2)
         assertEquals(d.get(tvar2), 3)
       }

@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import cats.effect.IO
 import munit.CatsEffectSuite
 
-class TMVarTest extends CatsEffectSuite {
+class TMVarSpec extends CatsEffectSuite {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._

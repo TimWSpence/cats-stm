@@ -57,7 +57,7 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
   val gen: Gen[(Long, List[TVar[Long]], IO[Unit], IO[(Int, Int)])] = for {
     tvars <- Gen.listOfN(50, tvarGen)
     count <- Gen.const(stm.commit(TVar.of(0)).unsafeRunSync())
-    total = tvars.foldLeft(0L)((acc, tvar) => acc + tvar.value)
+    total = tvars.foldM(0L)((acc, tvar) => stm.commit(tvar.get).map(acc + _)).unsafeRunSync()
     txns <- Gen.listOf(txnGen(count)(tvars))
     commit  = txns.traverse(t => stm.commit(t).start)
     run     = commit.flatMap(l => l.traverse(_.join)).void
@@ -74,11 +74,17 @@ class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
         val count = g._4
 
         txn.flatMap { _ =>
-          count.map { res =>
-            assertEquals(tvars.map(_.value).sum, total)
-            assertEquals(res._1, res._2)
+          count.flatMap { res =>
+            tvars.foldM(0L)((acc, tvar) => stm.commit(tvar.get).map(acc + _)).flatMap { newTotal =>
+              IO {
+                assertEquals(newTotal, total)
+                assertEquals(res._1, res._2)
+              }
+
+            }
           }
         }
+
       }
   }
 

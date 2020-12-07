@@ -16,6 +16,7 @@
 
 package io.github.timwspence.cats.stm
 
+import cats.effect.Async
 import cats.syntax.flatMap._
 
 /**
@@ -95,14 +96,15 @@ trait TMVarLike[F[_]] extends STMLike[F] {
     /**
       * Create a new `TMVar`, initialized with a value.
       */
-    def of[A](value: A): Txn[TMVar[A]] = make(Some(value))
+    def of[A](value: A)(implicit F: Async[F]): Txn[TMVar[A]] = make(Some(value))
 
     /**
       * Create a new empty `TMVar`.
       */
-    def empty[A]: Txn[TMVar[A]] = make(None)
+    def empty[A](implicit F: Async[F]): Txn[TMVar[A]] = make(None)
 
-    private def make[A](value: Option[A]): Txn[TMVar[A]] = TVar.of(value).map(tvar => new TMVar[A](tvar))
+    private def make[A](value: Option[A])(implicit F: Async[F]): Txn[TMVar[A]] =
+      TVar.of(value).map(tvar => new TMVar[A](tvar))
 
   }
 

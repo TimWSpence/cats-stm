@@ -35,6 +35,7 @@ class STMSpec extends CatsEffectSuite {
   test("Basic transaction is executed") {
     for {
       from <- stm.commit(TVar.of(100))
+      _    <- IO.println("committed tvar")
       to   <- stm.commit(TVar.of(0))
       _ <- stm.commit {
         for {
@@ -413,22 +414,22 @@ class STMSpec extends CatsEffectSuite {
       first = stm.commit(
         for {
           current <- tvar.get
-          _ <- stm.check(current == 0)
-          _ <- tvar.set(1)
+          _       <- stm.check(current == 0)
+          _       <- tvar.set(1)
         } yield ()
       )
       second = stm.commit(
         for {
           current <- tvar.get
-          _ <- stm.check(current == 1)
-          _ <- tvar.set(0)
+          _       <- stm.check(current == 1)
+          _       <- tvar.set(0)
         } yield ()
       )
-      f1 <- List(1, iterations).foldLeft(IO.unit){ (acc, _) => acc >> first}.start
-      f2 <- List(1, iterations).foldLeft(IO.unit){ (acc, _) => acc >> second}.start
-      _ <- (f1.joinAndEmbedNever,f2.joinAndEmbedNever).tupled
-      v <- stm.commit(tvar.get)
-      res <- IO { assertEquals(v, 0) }
+      f1  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> first).start
+      f2  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> second).start
+      _   <- (f1.joinAndEmbedNever, f2.joinAndEmbedNever).tupled
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 0))
     } yield res
   }
 
