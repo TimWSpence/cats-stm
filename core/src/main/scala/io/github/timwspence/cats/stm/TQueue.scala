@@ -24,7 +24,7 @@ import cats.syntax.flatMap._
 /**
   * Convenience definition of a queue in the `STM` monad.
   */
-trait TQueueLike[F[_]] extends STMLike[F] {
+private[stm] trait TQueueLike[F[_]] extends STMLike[F] {
   final class TQueue[A] private[stm] (private val tvar: TVar[Queue[A]]) {
 
     /**

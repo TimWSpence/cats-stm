@@ -23,7 +23,7 @@ import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
 import cats.{Monoid, MonoidK, StackSafeMonad}
 
-trait STMLike[F[_]] {
+private[stm] trait STMLike[F[_]] {
   import Internals._
 
   def pure[A](a: A): Txn[A] = Txn.pure(a)

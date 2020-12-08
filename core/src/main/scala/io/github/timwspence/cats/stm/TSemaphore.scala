@@ -23,7 +23,7 @@ import cats.effect.Async
   *
   * Analogous to `cats.effect.concurrent.Semaphore`.
   */
-trait TSemaphoreLike[F[_]] extends STMLike[F] {
+private[stm] trait TSemaphoreLike[F[_]] extends STMLike[F] {
   final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
 
     /**

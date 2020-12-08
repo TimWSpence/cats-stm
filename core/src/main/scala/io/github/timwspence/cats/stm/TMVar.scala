@@ -26,7 +26,7 @@ import cats.syntax.flatMap._
   *
   * Analogous to `cats.effect.concurrent.MVar`.
   */
-trait TMVarLike[F[_]] extends STMLike[F] {
+private[stm] trait TMVarLike[F[_]] extends STMLike[F] {
   final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) {
 
     /**
