@@ -36,7 +36,7 @@ object STM {
    * Constructs an STM runtime.
    *
    * @param n the number of transactions that we allow to evaluate concurrently.
-   * This is configurable as the optimal choice depends on the prfile of your
+   * This is configurable as the optimal choice depends on the profile of your
    * application. Transactions are evaluated optimistically, with retries in the
    * event that they depend on dirty reads.
    *
