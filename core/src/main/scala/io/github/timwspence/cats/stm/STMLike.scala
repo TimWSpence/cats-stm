@@ -129,11 +129,12 @@ trait STMLike[F[_]] {
 
     case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
-      def debug(implicit F: Async[F]): F[Unit] = values.toList.traverse_ { e =>
-        e.tvar.value.get.flatMap { v =>
-          F.delay(println(s"${e.tvar.id}: initial: ${e.initial} current: ${e.current} actual: $v"))
+      def debug(implicit F: Async[F]): F[Unit] =
+        values.toList.traverse_ { e =>
+          e.tvar.value.get.flatMap { v =>
+            F.delay(println(s"${e.tvar.id}: initial: ${e.initial} current: ${e.current} actual: $v"))
+          }
         }
-      }
 
       def values: Iterable[TLogEntry] = map.values
 
@@ -214,21 +215,23 @@ trait STMLike[F[_]] {
           }
           .use(_ => fa)
 
-      def commit(implicit F: Async[F]): F[Unit] = values.toList.traverse_(_.commit)
+      def commit(implicit F: Async[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
 
       def signal(implicit F: Async[F]): F[Unit] =
         //TODO use chain to avoid reverse?
-        values.toList.reverse.traverse_(e =>
-          for {
-            signals <- e.tvar.retries.getAndSet(Nil)
-            _       <- F.delay(println(s"Signalling ${signals.length} signals"))
-            _       <- signals.traverse_(s => s.complete(()))
-          } yield ()
+        F.uncancelable(_ =>
+          values.toList.reverse.traverse_(e =>
+            for {
+              signals <- e.tvar.retries.getAndSet(Nil)
+              _       <- F.delay(println(s"Signalling ${signals.length} signals"))
+              _       <- signals.traverse_(s => s.complete(()))
+            } yield ()
+          )
         )
 
       def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
         F.delay(println(s"Registering retry with ${values.toList.length} tvars")) >>
-        values.toList.traverse_(e => e.tvar.registerRetry(signal))
+          values.toList.traverse_(e => e.tvar.registerRetry(signal))
     }
 
     object TLog {
@@ -241,9 +244,20 @@ trait STMLike[F[_]] {
 
       def set(a: Any): TLogEntry = TLogEntry(initial, a, tvar)
 
-      def commit: F[Unit] = tvar.value.set(current)
+      def commit(implicit F: Async[F]): F[Unit] =
+        tvar.value.getAndSet(current).flatMap { previous =>
+          if (previous == initial) F.unit
+          else
+            F.delay(println(s"ERROR: expected $initial but got $previous")) >> F.raiseError(
+              new RuntimeException("BOOM")
+            )
+        }
 
-      def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
+      // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
+      def isDirty(implicit F: Async[F]): F[Boolean] =
+        tvar.value.get.flatMap { v =>
+          F.delay(println(s"initial is $initial, v is $v")) >> F.pure(v != initial)
+        }
 
       def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 

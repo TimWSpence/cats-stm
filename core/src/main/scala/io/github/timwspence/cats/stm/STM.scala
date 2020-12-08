@@ -39,6 +39,7 @@ object STM {
           r <- res match {
             case TSuccess(a) =>
               for {
+                _ <- F.delay(println("starting"))
                 _ <- log.debug //
                 committed <- log.withLock(
                   F.ifM(log.isDirty)(
