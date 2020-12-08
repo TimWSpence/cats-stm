@@ -41,9 +41,8 @@ trait Instances extends CatsEffectSuite with HasSTM {
         (x, y) match {
           case (TSuccess(a1), TSuccess(a2)) => a1 === a2
           case (TRetry, TRetry)             => true
-          case (TFailure(_), TFailure(_))   => true // This is a bit dubious but we don't have an
-          // Eq instance for Throwable so ¯\_(ツ)_/¯
-          case _ => false
+          case (TFailure(e1), TFailure(e2)) => e1 === e2
+          case _                            => false
         }
 
     }
@@ -109,23 +108,42 @@ trait Instances extends CatsEffectSuite with HasSTM {
     )
 
   def genTxn[A: Arbitrary: Cogen]: Gen[Txn[A]] =
-    Gen.oneOf(
-      genPure[A],
-      genBind[A],
-      genOrElse[A],
-      genGet[A],
-      genModify[A],
-      genAbort[A],
-      genRetry[A]
-    )
+    Gen.sized { n =>
+      if (n == 0)
+        Gen.oneOf(
+          genPure[A],
+          genAbort[A],
+          genRetry[A]
+        )
+      else
+        Gen.resize(
+          n / 2,
+          Gen.oneOf(
+            genPure[A],
+            genGet[A],
+            genModify[A],
+            genAbort[A],
+            genRetry[A],
+            genBind[A],
+            genOrElse[A],
+            genHandleError[A]
+          )
+        )
+    }
 
   def genPure[A: Arbitrary]: Gen[Txn[A]] = arb[A].map(Txn.pure(_))
 
   def genBind[A: Arbitrary: Cogen]: Gen[Txn[A]] =
     for {
-      stm <- arb[Txn[A]]
+      txn <- arb[Txn[A]]
       f   <- arb[A => Txn[A]]
-    } yield stm.flatMap(f)
+    } yield txn.flatMap(f)
+
+  def genHandleError[A: Arbitrary: Cogen]: Gen[Txn[A]] =
+    for {
+      txn <- arb[Txn[A]]
+      f   <- arb[Throwable => Txn[A]]
+    } yield txn.handleErrorWith(f)
 
   def genOrElse[A](implicit A: Arbitrary[Txn[A]]): Gen[Txn[A]] =
     for {
@@ -148,7 +166,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
       res <- tv.get
     } yield res
 
-  def genAbort[A]: Gen[Txn[A]] = arb[Throwable].map(stm.abort[A](_))
+  def genAbort[A]: Gen[Txn[A]] = genError.map(stm.abort[A](_))
 
   def genRetry[A]: Gen[Txn[A]] = Gen.const(stm.retry[A])
 
@@ -158,5 +176,16 @@ trait Instances extends CatsEffectSuite with HasSTM {
   implicit val genString: Gen[String] = Gen.alphaNumStr
 
   private val IdGen: AtomicLong = new AtomicLong()
+
+  case class TestException(i: Int) extends RuntimeException
+
+  val genError: Gen[Throwable] = arb[Int].map(TestException(_))
+
+  implicit val arbitraryForThrowable: Arbitrary[Throwable] =
+    Arbitrary(
+      genError
+    )
+
+  implicit val eqForThrowable: Eq[Throwable] = Eq.fromUniversalEquals[Throwable]
 
 }

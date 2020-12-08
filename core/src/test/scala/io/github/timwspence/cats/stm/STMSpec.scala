@@ -432,4 +432,20 @@ class STMSpec extends CatsEffectSuite {
     } yield res
   }
 
+  test("handle error") {
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      _ <- stm.commit(
+        for {
+          _ <- tvar.set(1)
+          _ <- (tvar.modify(_ + 1) >> stm.abort(new RuntimeException("BOOM"))).handleErrorWith {
+            case _ => tvar.modify(_ + 2)
+          }
+        } yield ()
+      )
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 3))
+    } yield res
+  }
+
 }
