@@ -20,7 +20,7 @@ import cats.effect.IO
 import cats.implicits._
 import munit.CatsEffectSuite
 
-class TQueueTest extends CatsEffectSuite {
+class TQueueSpec extends CatsEffectSuite {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._

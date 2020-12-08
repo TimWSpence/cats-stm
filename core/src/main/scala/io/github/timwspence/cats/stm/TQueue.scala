@@ -18,6 +18,7 @@ package io.github.timwspence.cats.stm
 
 import scala.collection.immutable.Queue
 
+import cats.effect.Async
 import cats.syntax.flatMap._
 
 /**
@@ -81,7 +82,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
     /**
       * Create a new empty `TQueue`.
       */
-    def empty[A]: Txn[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
+    def empty[A](implicit F: Async[F]): Txn[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
 
   }
 

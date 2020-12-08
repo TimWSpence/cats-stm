@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import cats.effect.IO
 import munit.CatsEffectSuite
 
-class TSemaphoreTest extends CatsEffectSuite {
+class TSemaphoreSpec extends CatsEffectSuite {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._

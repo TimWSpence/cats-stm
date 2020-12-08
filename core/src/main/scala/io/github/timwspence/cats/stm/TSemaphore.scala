@@ -16,6 +16,8 @@
 
 package io.github.timwspence.cats.stm
 
+import cats.effect.Async
+
 /**
   * Convenience definition of a semaphore in the `STM` monad.
   *
@@ -50,7 +52,7 @@ trait TSemaphoreLike[F[_]] extends STMLike[F] {
     /**
       * Create a new `TSem` with `permits` available permits.
       */
-    def make(permits: Long): Txn[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
+    def make(permits: Long)(implicit F: Async[F]): Txn[TSemaphore] = TVar.of(permits).map(tvar => new TSemaphore(tvar))
 
   }
 

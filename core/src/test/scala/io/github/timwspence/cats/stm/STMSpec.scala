@@ -27,7 +27,7 @@ import scala.util.Random
   * Basic tests for correctness in the absence of
   * (most) concurrency
   */
-class SequentialTests extends CatsEffectSuite {
+class STMSpec extends CatsEffectSuite {
 
   val stm = STM[IO].unsafeRunSync()
   import stm._
@@ -35,6 +35,7 @@ class SequentialTests extends CatsEffectSuite {
   test("Basic transaction is executed") {
     for {
       from <- stm.commit(TVar.of(100))
+      _    <- IO.println("committed tvar")
       to   <- stm.commit(TVar.of(0))
       _ <- stm.commit {
         for {
@@ -351,7 +352,7 @@ class SequentialTests extends CatsEffectSuite {
     }
   }
 
-  test("SO much contention and retrying") {
+  test("lots of contention and retrying") {
     for {
       tvar <- stm.commit(TVar.of(0))
       fs <- Random.shuffle(List.range(0, 100)).parTraverse { n =>
@@ -403,6 +404,32 @@ class SequentialTests extends CatsEffectSuite {
       res <- IO {
         assertEquals(v1 -> v2, 2 -> 2)
       }
+    } yield res
+  }
+
+  test("loop retry and completion") {
+    val iterations = 10
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      first = stm.commit(
+        for {
+          current <- tvar.get
+          _       <- stm.check(current == 0)
+          _       <- tvar.set(1)
+        } yield ()
+      )
+      second = stm.commit(
+        for {
+          current <- tvar.get
+          _       <- stm.check(current == 1)
+          _       <- tvar.set(0)
+        } yield ()
+      )
+      f1  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> first).start
+      f2  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> second).start
+      _   <- (f1.joinAndEmbedNever, f2.joinAndEmbedNever).tupled
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 0))
     } yield res
   }
 

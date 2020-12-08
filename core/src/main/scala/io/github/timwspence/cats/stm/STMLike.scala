@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import scala.annotation.tailrec
 
 import cats.effect.std.Semaphore
-import cats.effect.{Async, Deferred, Ref}
+import cats.effect.{Async, Deferred, Ref, Resource}
 import cats.implicits._
 import cats.{Monoid, MonoidK, StackSafeMonad}
 
@@ -30,7 +30,7 @@ trait STMLike[F[_]] {
 
   def commit[A](txn: Txn[A]): F[A]
 
-  def check(cond: Boolean): Txn[Unit] = if (cond) unit else retry
+  def check(cond: => Boolean): Txn[Unit] = if (cond) unit else retry
 
   def retry[A]: Txn[A] = Retry
 
@@ -38,13 +38,11 @@ trait STMLike[F[_]] {
 
   def abort[A](e: Throwable): Txn[A] = Abort(e)
 
-  //TODO should we split this into public trait and private impl?
   class TVar[A] private[stm] (
-    val id: TVarId,
-    //TODO should this just be a Ref as well?
-    @volatile var value: A,
-    val lock: Semaphore[F],
-    val retries: Ref[F, List[Deferred[F, Unit]]]
+    private[stm] val id: TVarId,
+    private[stm] val value: Ref[F, A],
+    private[stm] val lock: Semaphore[F],
+    private[stm] val retries: Ref[F, List[Deferred[F, Unit]]]
   ) {
     def get: Txn[A] = Get(this)
 
@@ -58,7 +56,7 @@ trait STMLike[F[_]] {
   }
 
   object TVar {
-    def of[A](a: A): Txn[TVar[A]] = Alloc(a)
+    def of[A](a: A)(implicit F: Async[F]): Txn[TVar[A]] = Alloc(F.ref(a))
   }
 
   sealed abstract class Txn[+A] {
@@ -110,7 +108,7 @@ trait STMLike[F[_]] {
   private[stm] object Internals {
 
     case class Pure[A](a: A)                                extends Txn[A]
-    case class Alloc[A](a: A)                               extends Txn[TVar[A]]
+    case class Alloc[A](v: F[Ref[F, A]])                    extends Txn[TVar[A]]
     case class Bind[A, B](stm: Txn[B], f: B => Txn[A])      extends Txn[A]
     case class Get[A](tvar: TVar[A])                        extends Txn[A]
     case class Modify[A](tvar: TVar[A], f: A => A)          extends Txn[Unit]
@@ -131,27 +129,59 @@ trait STMLike[F[_]] {
 
       def values: Iterable[TLogEntry] = map.values
 
-      def get(tvar: TVar[Any]): Any =
-        if (map.contains(tvar.id))
-          map(tvar.id).unsafeGet[Any]
-        else {
-          val current = tvar.value
-          map = map + (tvar.id -> TLogEntry(tvar, current))
-          current
+      def contains(tvar: TVar[Any]): Boolean = map.contains(tvar.id)
+
+      /*
+       * Get the current value of tvar in the txn. Throws if
+       * tvar is not present in the log already
+       */
+      def get(tvar: TVar[Any]): Any = map(tvar.id).get
+
+      /*
+       * Get the current value of tvar in the txn log
+       *
+       * Assumes the tvar is not already in the txn log so
+       * fetches the current value directly from the tvar
+       */
+      def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
+        tvar.value.get.map { v =>
+          val e = TLogEntry(v, v, tvar)
+          //This is a bit naughty but allows us to only require a Concurrent constraint
+          map = map + (tvar.id -> e)
+          v
         }
 
-      def modify(tvar: TVar[Any], f: Any => Any): Unit =
-        if (map.contains(tvar.id)) {
-          val e       = map(tvar.id)
-          val current = e.unsafeGet[Any]
-          val entry   = e.unsafeSet[Any](f(current))
-          map = map + (tvar.id -> entry)
-        } else {
-          val current = tvar.value
-          map = map + (tvar.id -> TLogEntry(tvar, f(current)))
+      /*
+       * Modify the current value of tvar in the txn log. Throws if
+       * tvar is not present in the log already
+       */
+      def modify(tvar: TVar[Any], f: Any => Any): Unit = {
+        val e       = map(tvar.id)
+        val current = e.get
+        val entry   = e.set(f(current))
+        map = map + (tvar.id -> entry)
+      }
+
+      /*
+       * Modify the current value of tvar in the txn log
+       *
+       * Assumes the tvar is not already in the txn log so
+       * fetches the current value directly from the tvar
+       */
+      def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
+        tvar.value.get.map { v =>
+          val e = TLogEntry(v, f(v), tvar)
+          //This is a bit naughty but allows us to only require a Concurrent constraint
+          map = map + (tvar.id -> e)
         }
 
-      def isDirty: Boolean = values.exists(_.isDirty)
+      def isDirty(implicit F: Async[F]): F[Boolean] =
+        values.foldLeft(F.pure(false))((acc, v) =>
+          for {
+            d  <- acc
+            d1 <- v.isDirty
+          } yield d || d1
+        )
 
       def snapshot(): TLog = TLog(map)
 
@@ -159,18 +189,29 @@ trait STMLike[F[_]] {
         TLog(
           map.foldLeft(tlog.map) { (acc, p) =>
             val (id, e) = p
-            if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.tvar, e.tvar.value))
+            if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.initial, e.initial, e.tvar))
           }
         )
 
-      def commit(implicit F: Async[F]): F[Unit] = F.delay(values.foreach(_.commit()))
+      def withLock[A](fa: F[A])(implicit F: Async[F]): F[A] =
+        values.toList
+          .sortBy(_.tvar.id)
+          .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+            locks >> e.tvar.lock.permit
+          }
+          .use(_ => fa)
+
+      def commit(implicit F: Async[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
 
       def signal(implicit F: Async[F]): F[Unit] =
-        values.toList.traverse_(e =>
-          for {
-            signals <- e.tvar.retries.getAndSet(Nil)
-            _       <- signals.traverse_(s => s.complete(()))
-          } yield ()
+        //TODO use chain to avoid reverse?
+        F.uncancelable(_ =>
+          values.toList.reverse.traverse_(e =>
+            for {
+              signals <- e.tvar.retries.getAndSet(Nil)
+              _       <- signals.traverse_(s => s.complete(()))
+            } yield ()
+          )
         )
 
       def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
@@ -181,38 +222,25 @@ trait STMLike[F[_]] {
       def empty: TLog = TLog(Map.empty)
     }
 
-    abstract class TLogEntry { self =>
-      type Repr
-      var current: Repr
-      val initial: Repr
-      val tvar: TVar[Repr]
+    case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
 
-      def unsafeGet[A]: A = current.asInstanceOf[A]
+      def get: Any = current
 
-      def unsafeSet[A](a: A): TLogEntry = TLogEntry[Repr](tvar, a.asInstanceOf[Repr])
+      def set(a: Any): TLogEntry = TLogEntry(initial, a, tvar)
 
-      def commit(): Unit = tvar.value = current
+      def commit: F[Unit] = tvar.value.set(current)
 
-      def isDirty: Boolean = initial != tvar.value.asInstanceOf[Repr]
+      def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
 
-      def snapshot(): TLogEntry =
-        new TLogEntry {
-          override type Repr = self.Repr
-          override var current: Repr    = self.current
-          override val initial: Repr    = self.initial
-          override val tvar: TVar[Repr] = self.tvar
-        }
+      def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 
     }
 
     object TLogEntry {
 
-      def apply[A](tvar0: TVar[A], current0: A): TLogEntry =
-        new TLogEntry {
-          override type Repr = A
-          override var current: A    = current0
-          override val initial: A    = tvar0.value.asInstanceOf[A]
-          override val tvar: TVar[A] = tvar0
+      def applyF[A](tvar0: TVar[A], current0: A)(implicit F: Async[F]): F[TLogEntry] =
+        tvar0.value.get.map { v =>
+          TLogEntry(v, current0, tvar0.asInstanceOf[TVar[Any]])
         }
 
     }
@@ -222,6 +250,10 @@ trait STMLike[F[_]] {
       var fallbacks: List[(Txn[Any], TLog, List[Cont])] = Nil
       var log: TLog                                     = TLog.empty
 
+      sealed trait Trampoline
+      case class Done(result: TResult[Any]) extends Trampoline
+      case class Eff(run: F[Txn[Any]])      extends Trampoline
+
       //Construction of a TVar requires allocating state but we want this to be tail-recursive
       //and non-effectful so we trampoline it with run
       @tailrec
@@ -230,29 +262,37 @@ trait STMLike[F[_]] {
         lock: Semaphore[F],
         ref: Ref[F, List[Deferred[F, Unit]]],
         txn: Txn[Any]
-      ): Either[Txn[Any], TResult[Any]] =
+      ): Trampoline =
         txn match {
           case Pure(a) =>
             if (conts.isEmpty)
-              Right(TSuccess(a))
+              Done(TSuccess(a))
             else {
               val f = conts.head
               conts = conts.tail
               go(nextId, lock, ref, f(a))
             }
-          case Alloc(a) => Left(Pure((new TVar(nextId, a, lock, ref))))
+          case Alloc(r) => Eff(r.map(v => Pure((new TVar(nextId, v, lock, ref)))))
           case Bind(stm, f) =>
             conts = f :: conts
             go(nextId, lock, ref, stm)
-          case Get(tvar)       => go(nextId, lock, ref, Pure(log.get(tvar)))
-          case Modify(tvar, f) => go(nextId, lock, ref, Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f)))
+          case Get(tvar) =>
+            if (log.contains(tvar))
+              go(nextId, lock, ref, Pure(log.get(tvar)))
+            else
+              Eff(log.getF(tvar).map(Pure(_)))
+          case Modify(tvar, f) =>
+            if (log.contains(tvar))
+              go(nextId, lock, ref, Pure(log.modify(tvar, f)))
+            else
+              Eff(log.modifyF(tvar, f).map(Pure(_)))
           case OrElse(attempt, fallback) =>
             fallbacks = (fallback, log.snapshot(), conts) :: fallbacks
             go(nextId, lock, ref, attempt)
           case Abort(error) =>
-            Right(TFailure(error))
+            Done(TFailure(error))
           case Retry =>
-            if (fallbacks.isEmpty) Right(TRetry)
+            if (fallbacks.isEmpty) Done(TRetry)
             else {
               val (fb, lg, cts) = fallbacks.head
               log = log.delta(lg)
@@ -270,8 +310,8 @@ trait STMLike[F[_]] {
           //Trampoline so we can generate a new id/lock/ref to supply
           //if we need to contruct a new tvar
           res <- go(id, lock, ref, txn) match {
-            case Left(t)  => run(t)
-            case Right(v) => F.pure(v)
+            case Done(v)   => F.pure(v)
+            case Eff(ftxn) => ftxn.flatMap(run(_))
           }
         } yield res
 
