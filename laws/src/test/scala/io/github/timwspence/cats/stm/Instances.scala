@@ -118,15 +118,16 @@ trait Instances extends CatsEffectSuite with HasSTM {
       else
         Gen.resize(
           n / 2,
-          Gen.oneOf(
-            genPure[A],
-            genGet[A],
-            genModify[A],
-            genAbort[A],
-            genRetry[A],
-            genBind[A],
-            genOrElse[A],
-            genHandleError[A]
+          //Encourage it to generate non-trivial transactions
+          Gen.frequency(
+            1 -> genPure[A],
+            1 -> genAbort[A],
+            1 -> genRetry[A],
+            3 -> genGet[A],
+            3 -> genModify[A],
+            5 -> genBind[A],
+            2 -> genOrElse[A],
+            1 -> genHandleError[A]
           )
         )
     }
