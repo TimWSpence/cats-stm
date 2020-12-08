@@ -38,6 +38,8 @@ trait STMLike[F[_]] {
 
   def abort[A](e: Throwable): Txn[A] = Txn.abort(e)
 
+  def raiseError[A](e: Throwable): Txn[A] = abort(e)
+
   class TVar[A] private[stm] (
     private[stm] val id: TVarId,
     private[stm] val value: Ref[F, A],
