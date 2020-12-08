@@ -26,10 +26,31 @@ object STM {
 
   def apply[F[_]](implicit S: STM[F]): S.type = S
 
-  def runtime[F[_]](implicit F: Async[F]): F[STM[F]] =
+  /*
+   * Construct an STM runtime with a fairly arbitrarily chosen bound on the
+   * number of concurrent transactions
+   */
+  def runtime[F[_]](implicit F: Async[F]): F[STM[F]] = runtime(4)
+
+  /*
+   * Constructs an STM runtime.
+   *
+   * @param n the number of transactions that we allow to evaluate concurrently.
+   * This is configurable as the optimal choice depends on the prfile of your
+   * application. Transactions are evaluated optimistically, with retries in the
+   * event that they depend on dirty reads.
+   *
+   * This means that if you have a relatively small number of TVars with a high
+   * level of contention then you may waste a lot of CPU spinning retries.
+   *
+   * Conversely, if you have a large number of TVars and low contention then you
+   * should be able to set the limit much higher and make use of all available
+   * resources.
+   */
+  def runtime[F[_]](n: Long)(implicit F: Async[F]): F[STM[F]] =
     for {
       idGen       <- Ref.of[F, Long](0)
-      rateLimiter <- Semaphore[F](4) //TODO increase concurrency here
+      rateLimiter <- Semaphore[F](n)
     } yield new STM[F] {
       import Internals._
 
