@@ -361,7 +361,6 @@ trait STMLike[F[_]] {
         } yield res
 
       //Safe by construction
-      // F.delay(println(s"eval'ing $txn")) >> run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
       run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
     }
 
