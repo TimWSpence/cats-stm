@@ -79,7 +79,7 @@ can generate it via `sbt docs/makeMicrosite`. You can view it locally via `cd do
 
 ### Credits
 
-This software was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and informed by ZIO which has a common origin in that paper via the [stm package](http://hackage.haskell.org/package/stm).
+This software was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and the [stm package](http://hackage.haskell.org/package/stm).
 
 Many thanks to [@impurepics](https://twitter.com/impurepics) for the awesome logo!
 
