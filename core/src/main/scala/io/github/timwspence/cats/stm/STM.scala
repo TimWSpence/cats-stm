@@ -32,6 +32,7 @@ object STM {
 
       def commit[A](txn: Txn[A]): F[A] =
         for {
+          _      <- F.delay(println("starting"))
           signal <- Deferred[F, Unit]
           p      <- rateLimiter.permit.use(_ => eval(idGen, txn))
           // p      <- eval(idGen, txn)
@@ -39,20 +40,22 @@ object STM {
           r <- res match {
             case TSuccess(a) =>
               for {
-                _ <- F.delay(println("starting"))
                 _ <- log.debug //
-                committed <- log.withLock(
+                retryImmediately <- log.withLock(
                   F.ifM(log.isDirty)(
-                    F.pure(false),
+                    F.pure(true),
                     // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
                     //   true
                     // )
-                    F.delay(println("committing")) >> log.debug >> log.commit.as(true)
+                    F.delay(println("committing")) >> log.debug >> log.commit
+                      .as(false) >> F.delay(println("committed")).as(false)
                   )
                 )
                 r <-
-                  if (committed) log.signal >> F.pure(a)
-                  else commit(txn)
+                  //TODO we arguably want an uncancelable joining signal to commit so we don't
+                  //lose an opportunity to signal if a fiber is cancelled while committing
+                  if (retryImmediately) commit(txn)
+                  else log.signal >> F.pure(a)
               } yield r
             case TFailure(e) =>
               log

@@ -153,12 +153,12 @@ trait STMLike[F[_]] {
        * fetches the current value directly from the tvar
        */
       def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
-        tvar.value.get.flatMap { v =>
-          TLogEntry.applyF(tvar, v).map { e =>
-            //This is a bit naughty but allows us to only require a Concurrent constraint
-            map = map + (tvar.id -> e)
-            v
-          }
+        tvar.value.get.map { v =>
+          val e = TLogEntry(v, v, tvar)
+          println(s"Created tlog entry $e") //
+          //This is a bit naughty but allows us to only require a Concurrent constraint
+          map = map + (tvar.id -> e)
+          v
         }
 
       /*
@@ -179,11 +179,11 @@ trait STMLike[F[_]] {
        * fetches the current value directly from the tvar
        */
       def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
-        tvar.value.get.flatMap { v =>
-          TLogEntry.applyF(tvar, f(v)).map { e =>
-            //This is a bit naughty but allows us to only require a Concurrent constraint
-            map = map + (tvar.id -> e)
-          }
+        tvar.value.get.map { v =>
+          val e = TLogEntry(v, f(v), tvar)
+          println(s"Created tlog entry $e")
+          //This is a bit naughty but allows us to only require a Concurrent constraint
+          map = map + (tvar.id -> e)
         }
 
       def isDirty(implicit F: Async[F]): F[Boolean] =

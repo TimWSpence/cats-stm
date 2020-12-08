@@ -32,12 +32,12 @@ object SantaClausProblem extends IOApp.Simple {
 
   def mainProblem: IO[Unit] =
     for {
-      in  <- stm.commit(TVar.of(0))
+      in <- stm.commit(TVar.of(0))
       elf = (for {
           _ <- stm.commit(
             for {
               cur <- in.get
-              _   <- stm.check({println(s"Curr is $cur, expected 1"); cur == 1})
+              _   <- stm.check { println(s"Curr is $cur, expected 1"); cur == 1 }
               _   <- in.set(0)
             } yield ()
           )
@@ -47,14 +47,16 @@ object SantaClausProblem extends IOApp.Simple {
           _ <- stm.commit(
             for {
               cur <- in.get
-              _   <- stm.check({println(s"Curr is $cur, expected 0"); cur == 0})
+              _   <- stm.check { println(s"Curr is $cur, expected 0"); cur == 0 }
               _   <- in.set(1)
             } yield ()
           )
-          // _ <- IO.blocking(println("santa stuff"))
+          _ <- IO.blocking(println("santa stuff"))
         } yield ()).foreverM
       e <- elf.start
       s <- santa.start
+      _ <- IO.sleep(3.seconds)
+      _ <- in.retries.get.flatMap(l => IO.println(l.length))
       _ <- e.join
       _ <- s.join
       //TODO why always signalling 0 signals?
