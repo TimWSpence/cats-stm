@@ -51,8 +51,6 @@ trait STMLike[F[_]] {
     def set(a: A): Txn[Unit] = modify(_ => a)
 
     private[stm] def registerRetry(signal: Deferred[F, Unit]): F[Unit] =
-      // private[stm] def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
-      // retries.update(signal :: _) >> F.delay(println("registered retry"))
       retries.update(signal :: _)
 
   }
@@ -129,13 +127,6 @@ trait STMLike[F[_]] {
 
     case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
-      def debug(implicit F: Async[F]): F[Unit] =
-        values.toList.traverse_ { e =>
-          e.tvar.value.get.flatMap { v =>
-            F.delay(println(s"${e.tvar.id}: initial: ${e.initial} current: ${e.current} actual: $v"))
-          }
-        }
-
       def values: Iterable[TLogEntry] = map.values
 
       def contains(tvar: TVar[Any]): Boolean = map.contains(tvar.id)
@@ -155,7 +146,6 @@ trait STMLike[F[_]] {
       def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
         tvar.value.get.map { v =>
           val e = TLogEntry(v, v, tvar)
-          println(s"Created tlog entry $e") //
           //This is a bit naughty but allows us to only require a Concurrent constraint
           map = map + (tvar.id -> e)
           v
@@ -181,7 +171,6 @@ trait STMLike[F[_]] {
       def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
         tvar.value.get.map { v =>
           val e = TLogEntry(v, f(v), tvar)
-          println(s"Created tlog entry $e")
           //This is a bit naughty but allows us to only require a Concurrent constraint
           map = map + (tvar.id -> e)
         }
@@ -205,11 +194,8 @@ trait STMLike[F[_]] {
         )
 
       def withLock[A](fa: F[A])(implicit F: Async[F]): F[A] =
-        // F.delay(println(s"Acquiring locks for ${values.map(_.tvar.id)}")) >>
         values.toList
           .sortBy(_.tvar.id)
-          // .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
-          //   locks >> Resource.make(F.delay(println(s"acquiring ${e.tvar.id}")))(_ => F.delay(println(s"Releasing ${e.tvar.id}"))) >> e.tvar.lock.permit
           .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
             locks >> e.tvar.lock.permit
           }
@@ -223,15 +209,13 @@ trait STMLike[F[_]] {
           values.toList.reverse.traverse_(e =>
             for {
               signals <- e.tvar.retries.getAndSet(Nil)
-              _       <- F.delay(println(s"Signalling ${signals.length} signals"))
               _       <- signals.traverse_(s => s.complete(()))
             } yield ()
           )
         )
 
       def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
-        F.delay(println(s"Registering retry with ${values.toList.length} tvars")) >>
-          values.toList.traverse_(e => e.tvar.registerRetry(signal))
+        values.toList.traverse_(e => e.tvar.registerRetry(signal))
     }
 
     object TLog {
@@ -244,20 +228,9 @@ trait STMLike[F[_]] {
 
       def set(a: Any): TLogEntry = TLogEntry(initial, a, tvar)
 
-      def commit(implicit F: Async[F]): F[Unit] =
-        tvar.value.getAndSet(current).flatMap { previous =>
-          if (previous == initial) F.unit
-          else
-            F.delay(println(s"ERROR: expected $initial but got $previous")) >> F.raiseError(
-              new RuntimeException("BOOM")
-            )
-        }
+      def commit: F[Unit] = tvar.value.set(current)
 
-      // def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
-      def isDirty(implicit F: Async[F]): F[Boolean] =
-        tvar.value.get.flatMap { v =>
-          F.delay(println(s"initial is $initial, v is $v")) >> F.pure(v != initial)
-        }
+      def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
 
       def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 

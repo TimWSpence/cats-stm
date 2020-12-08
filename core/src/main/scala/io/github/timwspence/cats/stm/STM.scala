@@ -26,29 +26,22 @@ object STM {
   def apply[F[_]](implicit F: Async[F]): F[STM[F]] =
     for {
       idGen       <- Ref.of[F, Long](0)
-      rateLimiter <- Semaphore[F](1) //TODO increase concurrency here
+      rateLimiter <- Semaphore[F](4) //TODO increase concurrency here
     } yield new STM[F] {
       import Internals._
 
       def commit[A](txn: Txn[A]): F[A] =
         for {
-          _      <- F.delay(println("starting"))
           signal <- Deferred[F, Unit]
           p      <- rateLimiter.permit.use(_ => eval(idGen, txn))
-          // p      <- eval(idGen, txn)
           (res, log) = p
           r <- res match {
             case TSuccess(a) =>
               for {
-                _ <- log.debug //
                 retryImmediately <- log.withLock(
                   F.ifM(log.isDirty)(
                     F.pure(true),
-                    // F.delay(println(s"committing ${log.values.map(e => e.tvar.value -> e.initial -> e.current)}")) >> log.commit.as(
-                    //   true
-                    // )
-                    F.delay(println("committing")) >> log.debug >> log.commit
-                      .as(false) >> F.delay(println("committed")).as(false)
+                    log.commit.as(false)
                   )
                 )
                 r <-
@@ -69,12 +62,8 @@ object STM {
               log
                 .withLock(
                   F.ifM(log.isDirty)(
-                    // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is dirty")) >> F.pure(true),
-                    F.delay(println("dirty retry log")) >> log.debug >> F.pure(true),
-                    // F.delay(println(s"${log.values.map(e => e.tvar.value -> e.initial -> e.current)} is clean")) >> F.delay(
-                    //   println("registering retry")
-                    // ) >> log.registerRetry(signal).as(false)
-                    F.delay(println("registering retry")) >> log.debug >> log.registerRetry(signal).as(false)
+                    F.pure(true),
+                    log.registerRetry(signal).as(false)
                   )
                 )
                 .flatMap { retryImmediately =>
