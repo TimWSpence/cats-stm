@@ -15,7 +15,7 @@ For more information, see the [documentation](https://timwspence.github.io/cats-
 `libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.8.0"`
 
 The core abstraction is the `TVar` (transactional var), which exposes operations in the
-`STM` monad. Once constructed, `STM` actions can be atomically evaluated in the `IO`
+`Txn` monad. Once constructed, `Txn` actions can be atomically evaluated in the `IO`
 monad.
 
 Here is a contrived example of what this looks like in practice. We use the

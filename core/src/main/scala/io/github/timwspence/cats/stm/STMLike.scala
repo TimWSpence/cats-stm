@@ -21,7 +21,7 @@ import scala.annotation.tailrec
 import cats.effect.std.Semaphore
 import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
-import cats.{Monoid, MonoidK, StackSafeMonad}
+import cats.{MonadError, Monoid, MonoidK, StackSafeMonad}
 
 trait STMLike[F[_]] {
   import Internals._
@@ -36,7 +36,9 @@ trait STMLike[F[_]] {
 
   val unit: Txn[Unit] = pure(())
 
-  def abort[A](e: Throwable): Txn[A] = Abort(e)
+  def abort[A](e: Throwable): Txn[A] = Txn.abort(e)
+
+  def raiseError[A](e: Throwable): Txn[A] = abort(e)
 
   class TVar[A] private[stm] (
     private[stm] val id: TVarId,
@@ -75,6 +77,8 @@ trait STMLike[F[_]] {
       * Try an alternative `STM` action if this one retries.
       */
     final def orElse[B >: A](other: Txn[B]): Txn[B] = OrElse(this, other)
+
+    final def handleErrorWith[B >: A](f: Throwable => Txn[B]): Txn[B] = HandleError(this, f)
   }
 
   object Txn {
@@ -82,8 +86,10 @@ trait STMLike[F[_]] {
 
     def retry[A]: Txn[A] = Retry
 
-    implicit val txnMonad: StackSafeMonad[Txn] with MonoidK[Txn] =
-      new StackSafeMonad[Txn] with MonoidK[Txn] {
+    def abort[A](e: Throwable): Txn[A] = Abort(e)
+
+    implicit val txnMonad: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
+      new StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] {
         override def flatMap[A, B](fa: Txn[A])(f: A => Txn[B]): Txn[B] = fa.flatMap(f)
 
         override def pure[A](x: A): Txn[A] = Txn.pure(x)
@@ -91,6 +97,10 @@ trait STMLike[F[_]] {
         override def empty[A]: Txn[A] = Txn.retry
 
         override def combineK[A](x: Txn[A], y: Txn[A]): Txn[A] = x.orElse(y)
+
+        override def raiseError[A](e: Throwable): Txn[A] = Txn.abort(e)
+
+        override def handleErrorWith[A](fa: Txn[A])(f: Throwable => Txn[A]): Txn[A] = fa.handleErrorWith(f)
       }
 
     implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[Txn[A]] =
@@ -107,14 +117,15 @@ trait STMLike[F[_]] {
 
   private[stm] object Internals {
 
-    case class Pure[A](a: A)                                extends Txn[A]
-    case class Alloc[A](v: F[Ref[F, A]])                    extends Txn[TVar[A]]
-    case class Bind[A, B](stm: Txn[B], f: B => Txn[A])      extends Txn[A]
-    case class Get[A](tvar: TVar[A])                        extends Txn[A]
-    case class Modify[A](tvar: TVar[A], f: A => A)          extends Txn[Unit]
-    case class OrElse[A](attempt: Txn[A], fallback: Txn[A]) extends Txn[A]
-    case class Abort(error: Throwable)                      extends Txn[Nothing]
-    case object Retry                                       extends Txn[Nothing]
+    case class Pure[A](a: A)                                             extends Txn[A]
+    case class Alloc[A](v: F[Ref[F, A]])                                 extends Txn[TVar[A]]
+    case class Bind[A, B](txn: Txn[B], f: B => Txn[A])                   extends Txn[A]
+    case class HandleError[A](txn: Txn[A], recover: Throwable => Txn[A]) extends Txn[A]
+    case class Get[A](tvar: TVar[A])                                     extends Txn[A]
+    case class Modify[A](tvar: TVar[A], f: A => A)                       extends Txn[Unit]
+    case class OrElse[A](attempt: Txn[A], fallback: Txn[A])              extends Txn[A]
+    case class Abort(error: Throwable)                                   extends Txn[Nothing]
+    case object Retry                                                    extends Txn[Nothing]
 
     sealed trait TResult[+A]              extends Product with Serializable
     case class TSuccess[A](value: A)      extends TResult[A]
@@ -248,13 +259,20 @@ trait STMLike[F[_]] {
     }
 
     def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Async[F]): F[(TResult[A], TLog)] = {
-      var conts: List[Cont]                             = Nil
-      var fallbacks: List[(Txn[Any], TLog, List[Cont])] = Nil
-      var log: TLog                                     = TLog.empty
 
       sealed trait Trampoline
       case class Done(result: TResult[Any]) extends Trampoline
       case class Eff(run: F[Txn[Any]])      extends Trampoline
+
+      type Tag = Int
+      val cont: Tag   = 0
+      val handle: Tag = 1
+
+      var conts: List[Cont]                                                    = Nil
+      var tags: List[Tag]                                                      = Nil
+      var fallbacks: List[(Txn[Any], TLog, List[Cont], List[Tag], List[TLog])] = Nil
+      var errorFallbacks: List[TLog]                                           = Nil
+      var log: TLog                                                            = TLog.empty
 
       //Construction of a TVar requires allocating state but we want this to be tail-recursive
       //and non-effectful so we trampoline it with run
@@ -267,17 +285,28 @@ trait STMLike[F[_]] {
       ): Trampoline =
         txn match {
           case Pure(a) =>
-            if (conts.isEmpty)
+            while (!tags.isEmpty && !(tags.head == cont)) {
+              tags = tags.tail
+              conts = conts.tail
+            }
+            if (tags.isEmpty)
               Done(TSuccess(a))
             else {
               val f = conts.head
               conts = conts.tail
+              tags = tags.tail
               go(nextId, lock, ref, f(a))
             }
           case Alloc(r) => Eff(r.map(v => Pure((new TVar(nextId, v, lock, ref)))))
-          case Bind(stm, f) =>
+          case Bind(txn, f) =>
             conts = f :: conts
-            go(nextId, lock, ref, stm)
+            tags = cont :: tags
+            go(nextId, lock, ref, txn)
+          case HandleError(txn, f) =>
+            conts = f.asInstanceOf[Cont] :: conts
+            tags = handle :: tags
+            errorFallbacks = log.snapshot() :: errorFallbacks
+            go(nextId, lock, ref, txn)
           case Get(tvar) =>
             if (log.contains(tvar))
               go(nextId, lock, ref, Pure(log.get(tvar)))
@@ -289,17 +318,31 @@ trait STMLike[F[_]] {
             else
               Eff(log.modifyF(tvar, f).map(Pure(_)))
           case OrElse(attempt, fallback) =>
-            fallbacks = (fallback, log.snapshot(), conts) :: fallbacks
+            fallbacks = (fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
             go(nextId, lock, ref, attempt)
           case Abort(error) =>
-            Done(TFailure(error))
+            while (!tags.isEmpty && !(tags.head == handle)) {
+              tags = tags.tail
+              conts = conts.tail
+            }
+            if (tags.isEmpty) Done(TFailure(error))
+            else {
+              val f = conts.head
+              conts = conts.tail
+              tags = tags.tail
+              log = errorFallbacks.head
+              errorFallbacks = errorFallbacks.tail
+              go(nextId, lock, ref, f(error))
+            }
           case Retry =>
             if (fallbacks.isEmpty) Done(TRetry)
             else {
-              val (fb, lg, cts) = fallbacks.head
+              val (fb, lg, cts, tgs, efbs) = fallbacks.head
               log = log.delta(lg)
               conts = cts
+              tags = tgs
               fallbacks = fallbacks.tail
+              errorFallbacks = efbs
               go(nextId, lock, ref, fb)
             }
         }
