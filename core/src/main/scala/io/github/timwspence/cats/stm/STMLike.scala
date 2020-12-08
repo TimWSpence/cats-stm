@@ -19,7 +19,7 @@ package io.github.timwspence.cats.stm
 import scala.annotation.tailrec
 
 import cats.effect.std.Semaphore
-import cats.effect.{Async, Deferred, Ref, Resource}
+import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
 import cats.{Monoid, MonoidK, StackSafeMonad}
 
@@ -56,7 +56,7 @@ trait STMLike[F[_]] {
   }
 
   object TVar {
-    def of[A](a: A)(implicit F: Async[F]): Txn[TVar[A]] = Alloc(F.ref(a))
+    def of[A](a: A)(implicit F: Concurrent[F]): Txn[TVar[A]] = Alloc(F.ref(a))
   }
 
   sealed abstract class Txn[+A] {
@@ -144,11 +144,12 @@ trait STMLike[F[_]] {
        * fetches the current value directly from the tvar
        */
       def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
-        tvar.value.get.map { v =>
-          val e = TLogEntry(v, v, tvar)
-          //This is a bit naughty but allows us to only require a Concurrent constraint
-          map = map + (tvar.id -> e)
-          v
+        tvar.value.get.flatMap { v =>
+          F.delay {
+            val e = TLogEntry(v, v, tvar)
+            map = map + (tvar.id -> e)
+            v
+          }
         }
 
       /*
@@ -169,13 +170,14 @@ trait STMLike[F[_]] {
        * fetches the current value directly from the tvar
        */
       def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
-        tvar.value.get.map { v =>
-          val e = TLogEntry(v, f(v), tvar)
-          //This is a bit naughty but allows us to only require a Concurrent constraint
-          map = map + (tvar.id -> e)
+        tvar.value.get.flatMap { v =>
+          F.delay {
+            val e = TLogEntry(v, f(v), tvar)
+            map = map + (tvar.id -> e)
+          }
         }
 
-      def isDirty(implicit F: Async[F]): F[Boolean] =
+      def isDirty(implicit F: Concurrent[F]): F[Boolean] =
         values.foldLeft(F.pure(false))((acc, v) =>
           for {
             d  <- acc
@@ -193,7 +195,7 @@ trait STMLike[F[_]] {
           }
         )
 
-      def withLock[A](fa: F[A])(implicit F: Async[F]): F[A] =
+      def withLock[A](fa: F[A])(implicit F: Concurrent[F]): F[A] =
         values.toList
           .sortBy(_.tvar.id)
           .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
@@ -201,9 +203,9 @@ trait STMLike[F[_]] {
           }
           .use(_ => fa)
 
-      def commit(implicit F: Async[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
+      def commit(implicit F: Concurrent[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
 
-      def signal(implicit F: Async[F]): F[Unit] =
+      def signal(implicit F: Concurrent[F]): F[Unit] =
         //TODO use chain to avoid reverse?
         F.uncancelable(_ =>
           values.toList.reverse.traverse_(e =>
@@ -214,7 +216,7 @@ trait STMLike[F[_]] {
           )
         )
 
-      def registerRetry(signal: Deferred[F, Unit])(implicit F: Async[F]): F[Unit] =
+      def registerRetry(signal: Deferred[F, Unit])(implicit F: Concurrent[F]): F[Unit] =
         values.toList.traverse_(e => e.tvar.registerRetry(signal))
     }
 
@@ -230,7 +232,7 @@ trait STMLike[F[_]] {
 
       def commit: F[Unit] = tvar.value.set(current)
 
-      def isDirty(implicit F: Async[F]): F[Boolean] = tvar.value.get.map(_ != initial)
+      def isDirty(implicit F: Concurrent[F]): F[Boolean] = tvar.value.get.map(_ != initial)
 
       def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
 
