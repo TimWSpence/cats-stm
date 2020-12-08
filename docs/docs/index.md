@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 
 object Main extends IOApp.Simple {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   override def run: IO[Unit] =

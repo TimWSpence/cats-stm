@@ -22,7 +22,7 @@ import munit.CatsEffectSuite
 
 class TQueueSpec extends CatsEffectSuite {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   test("Read removes the first element") {

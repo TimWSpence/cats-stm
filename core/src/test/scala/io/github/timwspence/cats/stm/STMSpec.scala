@@ -29,13 +29,12 @@ import scala.util.Random
   */
 class STMSpec extends CatsEffectSuite {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   test("Basic transaction is executed") {
     for {
       from <- stm.commit(TVar.of(100))
-      _    <- IO.println("committed tvar")
       to   <- stm.commit(TVar.of(0))
       _ <- stm.commit {
         for {

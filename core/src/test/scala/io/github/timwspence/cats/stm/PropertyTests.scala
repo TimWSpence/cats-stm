@@ -33,7 +33,7 @@ import org.scalacheck.effect.PropF
   */
 class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   val tvarGen: Gen[TVar[Long]] = for {
