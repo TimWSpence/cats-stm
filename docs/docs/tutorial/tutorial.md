@@ -18,7 +18,7 @@ import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import scala.concurrent.duration._
 
-val stm = STM[IO].unsafeRunSync()
+val stm = STM.runtime[IO].unsafeRunSync()
 import stm._
 
 def meetInStudy(id: Int): IO[Unit] = IO(println(show"Elf $id meeting in the study"))

@@ -15,7 +15,7 @@ import cats.effect.unsafe.implicits.global
 
 import io.github.timwspence.cats.stm.STM
 
-val stm = STM[IO].unsafeRunSync()
+val stm = STM.runtime[IO].unsafeRunSync()
 import stm._
 
 val txn: Txn[Long] = for {

@@ -23,7 +23,7 @@ import cats.effect.{IO, IOApp}
 
 object Main extends IOApp.Simple {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   override def run: IO[Unit] =

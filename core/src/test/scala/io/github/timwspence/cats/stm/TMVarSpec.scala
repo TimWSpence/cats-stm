@@ -21,7 +21,7 @@ import munit.CatsEffectSuite
 
 class TMVarSpec extends CatsEffectSuite {
 
-  val stm = STM[IO].unsafeRunSync()
+  val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
   test("Read returns current value when not empty") {

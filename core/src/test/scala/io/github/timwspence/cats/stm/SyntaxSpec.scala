@@ -17,19 +17,15 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import cats.implicits._
-import cats.kernel.laws.discipline._
-import cats.laws.discipline._
-import munit.DisciplineSuite
+import munit.CatsEffectSuite
 
-class CatsLawsSpec extends Instances with DisciplineSuite {
+class SyntaxSpec extends CatsEffectSuite {
 
-  override val stm: STM[IO] = STM.runtime[IO].unsafeRunSync()
+  implicit val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
-  checkAll("Txn[Int]", MonoidTests[Txn[Int]].monoid)
+  test("summon stm instances") {
+    STM[IO].commit(TVar.of(1))
+  }
 
-  checkAll("Txn[Int]", MonadTests[Txn].monad[Int, Int, Int])
-
-  checkAll("Txn[Int]", MonoidKTests[Txn].monoidK[Int])
 }

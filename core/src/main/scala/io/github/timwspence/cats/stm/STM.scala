@@ -23,7 +23,10 @@ import cats.implicits._
 trait STM[F[_]] extends STMLike[F] with TMVarLike[F] with TQueueLike[F] with TSemaphoreLike[F] {}
 
 object STM {
-  def apply[F[_]](implicit F: Async[F]): F[STM[F]] =
+
+  def apply[F[_]](implicit S: STM[F]): S.type = S
+
+  def runtime[F[_]](implicit F: Async[F]): F[STM[F]] =
     for {
       idGen       <- Ref.of[F, Long](0)
       rateLimiter <- Semaphore[F](4) //TODO increase concurrency here

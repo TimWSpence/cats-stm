@@ -20,7 +20,7 @@ import cats.instances.string._
 
 import io.github.timwspence.cats.stm.STM
 
-val stm = STM[IO].unsafeRunSync()
+val stm = STM.runtime[IO].unsafeRunSync()
 import stm._
 
 val txn: Txn[String] = for {
