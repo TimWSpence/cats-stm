@@ -56,44 +56,47 @@ object STM {
 
       def commit[A](txn: Txn[A]): F[A] =
         for {
-          signal <- Deferred[F, Unit]
-          p      <- rateLimiter.permit.use(_ => eval(idGen, txn))
+          p <- rateLimiter.permit.use(_ => eval(idGen, txn))
           (res, log) = p
           r <- res match {
             case TSuccess(a) =>
-              for {
-                retryImmediately <- log.withLock(
-                  F.ifM(log.isDirty)(
-                    F.pure(true),
-                    log.commit.as(false)
+              //Uncancelable so that we don't lose opportunities for retries
+              //where a fiber commits and is immediately cancelled
+              F.uncancelable(poll =>
+                for {
+                  retryImmediately <- poll(
+                    log.withLock(
+                      F.ifM(log.isDirty)(
+                        F.pure(true),
+                        log.commit.as(false)
+                      )
+                    )
                   )
-                )
-                r <-
-                  //TODO we arguably want an uncancelable joining signal to commit so we don't
-                  //lose an opportunity to signal if a fiber is cancelled while committing
-                  if (retryImmediately) commit(txn)
-                  else log.signal >> F.pure(a)
-              } yield r
+                  r <-
+                    if (retryImmediately) poll(commit(txn))
+                    else log.signal >> F.pure(a)
+                } yield r
+              )
             case TFailure(e) =>
               log
                 .withLock(F.ifM(log.isDirty)(F.pure(true), F.pure(false)))
                 .flatMap { retryImmediately =>
                   if (retryImmediately) commit(txn) else F.raiseError[A](e)
                 }
-            //TODO make retry blocking safely cancellable
             case TRetry =>
-              //TODO we could probably split commit so we don't reallocate a signal every time
-              log
-                .withLock(
-                  F.ifM(log.isDirty)(
-                    F.pure(true),
-                    log.registerRetry(signal).as(false)
-                  )
-                )
-                .flatMap { retryImmediately =>
-                  //TODO remove signal from tvars when we wake
-                  if (retryImmediately) commit(txn) else signal.get >> commit(txn)
-                }
+              for {
+                signal <- Deferred[F, Unit]
+                retryImmediately <-
+                  log
+                    .withLock(
+                      F.ifM(log.isDirty)(
+                        F.pure(true),
+                        log.registerRetry(signal).as(false)
+                      )
+                    )
+                //TODO is it worth removing signals from tvars when we wake?
+                res <- if (retryImmediately) commit(txn) else signal.get >> commit(txn)
+              } yield res
           }
         } yield r
 
