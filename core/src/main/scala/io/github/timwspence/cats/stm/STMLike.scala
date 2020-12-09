@@ -302,7 +302,7 @@ trait STMLike[F[_]] {
         override def attemptNarrow[EE <: Throwable, A](
           fa: Txn[A]
         )(implicit tag: ClassTag[EE], ev: EE <:< Throwable): Txn[Either[EE, A]] =
-          fa.attemptNarrow
+          fa.attemptNarrow[EE]
 
         override def attemptT[A](fa: Txn[A]): EitherT[Txn, Throwable, A] =
           fa.attemptT
