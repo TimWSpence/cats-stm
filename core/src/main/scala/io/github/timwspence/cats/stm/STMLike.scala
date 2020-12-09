@@ -94,7 +94,7 @@ trait STMLike[F[_]] {
       map(_ => b)
 
     /**
-      * Handle errors by turning them into [[scala.util.Either]] values.
+      * Handle errors by turning them into Either values.
       *
       * If there is no error, then an `scala.util.Right` value will be returned instead.
       */
@@ -108,7 +108,7 @@ trait STMLike[F[_]] {
       map(Right[EE, A](_): Either[EE, A]).recover { case e: EE => Left[EE, A](e) }
 
     /**
-      * Similar to [[attempt]], but wraps the result in a [[cats.data.EitherT]] for
+      * Similar to [[attempt]], but wraps the result in a EitherT for
       * convenience.
       */
     final def attemptT[B >: A]: EitherT[Txn, Throwable, B] = EitherT(attempt)
