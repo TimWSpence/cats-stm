@@ -104,7 +104,7 @@ trait STMLike[F[_]] {
     /**
       * Similar to [[attempt]], but it only handles errors of type `EE`.
       */
-    def attemptNarrow[EE <: Throwable](implicit tag: ClassTag[EE], ev: EE <:< Throwable): Txn[Either[EE, A]] =
+    def attemptNarrow[EE <: Throwable](implicit tag: ClassTag[EE]): Txn[Either[EE, A]] =
       map(Right[EE, A](_): Either[EE, A]).recover { case e: EE => Left[EE, A](e) }
 
     /**
