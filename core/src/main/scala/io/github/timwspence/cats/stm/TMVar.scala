@@ -17,7 +17,6 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.Async
-import cats.syntax.flatMap._
 
 /**
   * Convenience definition providing `MVar`-like behaviour

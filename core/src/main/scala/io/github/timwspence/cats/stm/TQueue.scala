@@ -19,7 +19,6 @@ package io.github.timwspence.cats.stm
 import scala.collection.immutable.Queue
 
 import cats.effect.Async
-import cats.syntax.flatMap._
 
 /**
   * Convenience definition of a queue in the `STM` monad.
