@@ -76,7 +76,7 @@ object Main extends IOApp.Simple {
 
 The documentation is built using [docusaurus](https://docusaurus.io/). You can
 generate it via `nix-shell --run "sbt docs/docusaurusCreateSite"` . You can then
-view it via `nix-shell --run "cd website && npm start"`
+view it via `nix-shell --run "cd website && npm start"`.
 
 ### Credits
 
