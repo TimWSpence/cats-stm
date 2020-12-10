@@ -129,7 +129,6 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
     "org.typelevel"              %% "cats-core"                 % CatsVersion,
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
     "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
