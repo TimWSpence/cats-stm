@@ -1,9 +1,8 @@
 jobs:
   publish:
     env:
-      GITHUB_DEPLOY_KEY: "${{ secrets.GITHUB_DEPLOY_KEY }}"
+      GITHUB_DEPLOY_KEY: "${{ secrets.GH_DEPLOY_KEY }}"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GIT_USER: timothywspence@gmail.com
     runs-on: ubuntu-18.04
     steps:
       - uses: "actions/checkout@v2.1.0"
