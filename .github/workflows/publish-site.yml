@@ -7,7 +7,7 @@ jobs:
       - uses: "actions/checkout@v2.1.0"
       - uses: "cachix/install-nix-action@v12"
       - name: "Building microsite 🚧"
-        run: "nix-shell --run \"sbt docs/docusaurusPublishGhpages\""
+        run: "nix-shell --run \"sbt docs/docusaurusCreateSite\""
 name: Microsite
 on:
   push:
@@ -16,3 +16,4 @@ on:
     paths:
       - "docs/**"
       - "**/README.md"
+      - ".github/**"
