@@ -580,7 +580,7 @@ trait STMLike[F[_]] {
             }
           case Alloc(r) => Eff(r.map(v => Pure((new TVar(nextId, v, lock, ref)))))
           case Bind(txn, f) =>
-            conts = f :: conts
+            conts = f.asInstanceOf[Cont] :: conts
             tags = cont :: tags
             go(nextId, lock, ref, txn)
           case HandleError(txn, f) =>
@@ -589,15 +589,15 @@ trait STMLike[F[_]] {
             errorFallbacks = log.snapshot() :: errorFallbacks
             go(nextId, lock, ref, txn)
           case Get(tvar) =>
-            if (log.contains(tvar))
-              go(nextId, lock, ref, Pure(log.get(tvar)))
+            if (log.contains(tvar.asInstanceOf[TVar[Any]]))
+              go(nextId, lock, ref, Pure(log.get(tvar.asInstanceOf[TVar[Any]])))
             else
-              Eff(log.getF(tvar).map(Pure(_)))
+              Eff(log.getF(tvar.asInstanceOf[TVar[Any]]).map(Pure(_)))
           case Modify(tvar, f) =>
-            if (log.contains(tvar))
-              go(nextId, lock, ref, Pure(log.modify(tvar, f)))
+            if (log.contains(tvar.asInstanceOf[TVar[Any]]))
+              go(nextId, lock, ref, Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f.asInstanceOf[Cont])))
             else
-              Eff(log.modifyF(tvar, f).map(Pure(_)))
+              Eff(log.modifyF(tvar.asInstanceOf[TVar[Any]], f.asInstanceOf[Cont]).map(Pure(_)))
           case OrElse(attempt, fallback) =>
             fallbacks = (fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
             go(nextId, lock, ref, attempt)
