@@ -283,7 +283,7 @@ class STMSpec extends CatsEffectSuite {
     } yield res
   }
 
-  test("Atomically is referentially transparent 2") {
+  test("commit is referentially transparent 2") {
     for {
       tvar <- stm.commit(TVar.of(0L))
       inc = stm.commit(tvar.modify(_ + 1))

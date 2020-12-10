@@ -3,12 +3,10 @@ id: txn
 title:  "Txn"
 ---
 
-# STM
-
 ### Overview
 
 `Txn` is a monad which describes transactions involving `TVar`s. It is executed via
-`STM#atomically`:
+`STM#commit`:
 
 ```scala mdoc:reset
 import cats.implicits._
@@ -37,7 +35,7 @@ val result = prog.unsafeRunSync()
 
 ### Retries
 
-`STM.atomically` supports the concept of retries, which can be introduced via
+`STM#commit` supports the concept of retries, which can be introduced via
 `STM.check`:
 
 ```scala mdoc:reset
