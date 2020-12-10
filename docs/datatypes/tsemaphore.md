@@ -1,7 +1,6 @@
 ---
-layout: docs
+id: tsemaphore
 title:  "TSemaphore"
-number: 6
 ---
 
 # TSemaphore

@@ -1,7 +1,6 @@
 ---
-layout: docs
+id: tvar
 title:  "TVar"
-number: 4
 ---
 
 # TVar

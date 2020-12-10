@@ -1,7 +1,6 @@
 ---
-layout: docs
+id: tqueue
 title:  "TQueue"
-number: 5
 ---
 
 # TQueue

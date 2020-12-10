@@ -1,8 +1,6 @@
 ---
-layout: home
+id: index
 title:  "Home"
-section: "home"
-position: 0
 ---
 
 # Overview
@@ -16,7 +14,7 @@ and now implemented in [this package](http://hackage.haskell.org/package/stm).
 
 `libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.8.0"`
 
-You can find more details in the [docs](docs/) but usage looks something like the following.
+Usage looks something like the following.
 
 Here is a contrived example of what this looks like in practice. We use the
 `check` combinator to retry transferring money from Tim and Steve until we have

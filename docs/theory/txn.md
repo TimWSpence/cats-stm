@@ -1,7 +1,6 @@
 ---
-layout: docs
-title:  "STM"
-number: 3
+id: txn
+title:  "Txn"
 ---
 
 # STM

@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+/* your custom css */
+
+/**/
+/* Thanks to https://raw.githubusercontent.com/fd4s/fs2-kafka/master/website/static/css/custom.css
+ */
+.nav-footer {
+  background: unset;
+}
+
+.nav-footer .copyright {
+  color: #7c7c7c;
+}
+
+.nav-footer .separator {
+  width: 350px;
+  margin: 0 auto;
+  margin-bottom: 10px;
+  border-top: 0;
+}
+
+.mainContainer {
+  padding-bottom: 0;
+}
+
+.mainContainer .index {
+  margin: 0 auto;
+  max-width: 650px;
+  padding: 0 10px;
+}
+
+.homeSplashFade .wrapper.homeWrapper {
+  padding-bottom: 0;
+  padding-top: 25px;
+}
+
+.projectTitleLogo {
+  width: 45px;
+  vertical-align: top;
+}
+
+.fixedHeaderContainer header img {
+  margin-right: 0;
+}
+
+.buttonWrapper {
+  margin-bottom: 5px;
+}
+
+a {
+  color: #19647e;
+}
+
+.onPageNav a:hover {
+  color: #122932;
+}

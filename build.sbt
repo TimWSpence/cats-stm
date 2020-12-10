@@ -1,6 +1,4 @@
-enablePlugins(MicrositesPlugin)
-
-ThisBuild / baseVersion := "3.0"
+ThisBuild / baseVersion := "0.10.0"
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
@@ -13,7 +11,7 @@ ThisBuild / developers := List(
 
 val PrimaryOS = "ubuntu-latest"
 
-val Scala213 = "2.13.3"
+val Scala213 = "2.13.4"
 
 ThisBuild / crossScalaVersions := Seq("2.12.12", Scala213)
 
@@ -106,10 +104,19 @@ lazy val laws = project.in(file("laws"))
   .dependsOn(core)
 
 
-lazy val docs = project.in(file("docs"))
-  .settings(commonSettings, skipOnPublishSettings, micrositeSettings)
+lazy val docs = project.in(file("cats-stm-docs"))
+  .settings(
+    moduleName := "cats-stm-docs",
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
+    target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
+    cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
+    docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value,
+  )
+  .settings(commonSettings, skipOnPublishSettings)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
   .dependsOn(core)
-  .enablePlugins(MicrositesPlugin)
+
 
 lazy val examples = project.in(file("examples"))
   .settings(commonSettings, skipOnPublishSettings)
@@ -130,30 +137,6 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
 )
-
-lazy val micrositeSettings = {
-  import microsites._
-  Seq(
-    micrositeName := "Cats STM",
-    micrositeDescription := "Software Transactional Memory for Cats Effect",
-    micrositeAuthor := "Tim Spence",
-    micrositeGithubOwner := "TimWSpence",
-    micrositeGithubRepo := "cats-stm",
-    micrositeBaseUrl := "/cats-stm",
-    micrositeFooterText := None,
-    micrositeDocumentationUrl := "https://www.javadoc.io/doc/io.github.timwspence/cats-stm_2.12",
-    micrositeHighlightTheme := "atom-one-light",
-    micrositeCompilingDocsTool := WithMdoc,
-    micrositePushSiteWith := GitHub4s,
-    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
-    micrositeGitterChannelUrl := "cats-stm/community",
-    micrositeExtraMdFiles := Map(
-      file("CHANGELOG.md")        -> ExtraMdFileConfig("changelog.md", "page", Map("title" -> "changelog", "section" -> "changelog", "position" -> "100")),
-      file("CODE_OF_CONDUCT.md")  -> ExtraMdFileConfig("code-of-conduct.md",   "page", Map("title" -> "code of conduct",   "section" -> "code of conduct",   "position" -> "101")),
-      file("LICENSE.txt")             -> ExtraMdFileConfig("license.md",   "page", Map("title" -> "license",   "section" -> "license",   "position" -> "102"))
-    )
-  )
-}
 
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,

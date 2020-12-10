@@ -1,7 +1,6 @@
 ---
-layout: docs
-title:  "Data Types"
-position: 2
+id: intro
+title:  "Introduction"
 ---
 ## Introduction
 
