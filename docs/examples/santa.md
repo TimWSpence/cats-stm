@@ -1,7 +1,6 @@
 ---
-layout: docs
-title:  "Tutorial"
-position: 10
+id: santa
+title:  "The Santa Claus Problem"
 ---
 
 <nav role="navigation" id="toc"></nav>

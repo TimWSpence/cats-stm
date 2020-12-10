@@ -1,7 +1,6 @@
 ---
-layout: docs
+id: tmvar
 title:  "TMVar"
-number: 6
 ---
 
 # TMVar

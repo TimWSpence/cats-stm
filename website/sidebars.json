@@ -1,0 +1,17 @@
+{
+  "docs": {
+    "Theory": [
+      "theory/intro",
+      "theory/txn",
+      "theory/tvar"
+    ],
+    "Data Types": [
+      "datatypes/tmvar",
+      "datatypes/tqueue",
+      "datatypes/tsemaphore"
+    ],
+    "Worked Examples": [
+      "examples/santa"
+    ]
+  }
+}
