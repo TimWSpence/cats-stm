@@ -105,11 +105,17 @@ lazy val laws = project.in(file("laws"))
 
 
 lazy val docs = project.in(file("cats-stm-docs"))
-// lazy val docs = project
-  .settings(moduleName := "cats-stm-docs")
+  .settings(
+    moduleName := "cats-stm-docs",
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
+    target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
+    cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
+    docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value,
+  )
   .settings(commonSettings, skipOnPublishSettings)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
   .dependsOn(core)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin)
 
 
 lazy val examples = project.in(file("examples"))

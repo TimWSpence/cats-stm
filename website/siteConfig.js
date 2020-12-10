@@ -4,12 +4,14 @@
 const repoUrl = "https://github.com/TimWSpence/cats-stm";
 const gitterUrl = "https://gitter.im/cats-stm/community";
 const baseUrl = "/cats-stm/";
+const apiUrl = `${baseUrl}api/index.html`;
 
 const siteConfig = {
   title: "Cats STM",
   tagline: "Software transactional memory for Cats Effect",
   url: "https://timwspence.github.io/cats-stm/",
   baseUrl: baseUrl,
+  apiUrl: apiUrl,
 
   // Used for publishing and more
   projectName: "cats-stm",
@@ -18,6 +20,7 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     { doc: "theory/intro", label: "Docs" },
+    { href: apiUrl, label: 'API'},
     { href: repoUrl, label: "GitHub", external: true }
   ],
 
@@ -44,6 +47,8 @@ const siteConfig = {
 
   /* On page navigation for the current documentation page */
   // onPageNav: "separate",
+
+  separateCss: ["api"],
 
   editUrl: `${repoUrl}/edit/master/docs/`,
 
