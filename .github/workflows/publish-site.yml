@@ -1,7 +1,6 @@
 jobs:
   publish:
     env:
-      working-drectory: ./website
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     runs-on: ubuntu-18.04
     steps:
