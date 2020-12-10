@@ -13,7 +13,7 @@ val PrimaryOS = "ubuntu-latest"
 
 val Scala213 = "2.13.4"
 
-ThisBuild / crossScalaVersions := Seq("2.12.12", Scala213)
+ThisBuild / crossScalaVersions := Seq("3.0.0-M2", "2.12.12", Scala213)
 
 val LTSJava = "adopt@1.11"
 val LatestJava = "adopt@1.15"
@@ -32,8 +32,10 @@ ThisBuild / githubWorkflowBuild := Seq(
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "ci" -> List("ciJVM")
 
-// ThisBuild / githubWorkflowBuildMatrixExclusions +=
-//   MatrixExclude(Map("java" -> LatestJava, "scala" -> "3.0.0-M1"))
+ThisBuild / githubWorkflowBuildMatrixExclusions +=
+MatrixExclude(
+  Map("java" -> LatestJava, "scala" -> "3.0.0-M2")
+)
 
 ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
 
@@ -133,9 +135,7 @@ lazy val commonSettings = Seq(
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
     "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
     "org.typelevel"              %% "munit-cats-effect-3"         % MunitCatsEffectVersion % Test
-  ),
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.2" cross CrossVersion.full),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+  )
 )
 
 lazy val skipOnPublishSettings = Seq(
