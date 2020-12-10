@@ -1,7 +1,7 @@
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.8.1")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
+// addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.24")
 addSbtPlugin("com.codecommit" % "sbt-spiewak-sonatype" % "0.19.2")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.13")
