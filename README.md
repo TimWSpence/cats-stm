@@ -1,4 +1,4 @@
-<img align="right" src="docs/src/main/resources/microsite/img/impure-logo.png" height="200px" style="padding-left: 20px"/>
+<img align="right" src="website/static/img/logo.png" height="200px" style="padding-left: 20px"/>
 
 # Cats STM
 [![Build Status](https://github.com/TimWSpence/cats-stm/workflows/Continuous%20Integration/badge.svg)](https://github.com/TimWSpence/cats-stm/actions?query=workflow%3A%22Continuous+Integration%22)
