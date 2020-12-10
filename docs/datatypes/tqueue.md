@@ -3,10 +3,8 @@ id: tqueue
 title:  "TQueue"
 ---
 
-# TQueue
-
 A convenience implementation of a queue in the `STM` monad, built on top of
-[`TVar`](tvar.html).
+[`TVar`](theory/tvar.md).
 
 ```scala mdoc
 import cats.effect.IO

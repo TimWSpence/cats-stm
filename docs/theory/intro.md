@@ -2,7 +2,6 @@
 id: intro
 title:  "Introduction"
 ---
-## Introduction
 
 ### The problem
 

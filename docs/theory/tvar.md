@@ -3,8 +3,6 @@ id: tvar
 title:  "TVar"
 ---
 
-# TVar
-
 A `TVar` (transactional variable) is a mutable memory location that can be be
 read and modified via `STM` actions.
 
@@ -31,4 +29,4 @@ val result = stm.commit(txn).unsafeRunSync()
 ```
 
 Note that this does not modify either `from` or `to`!! It merely describes a
-transaction which must be executed via `STM.atomically`
+transaction which must be executed via `STM#commit`
