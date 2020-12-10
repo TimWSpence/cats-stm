@@ -2,6 +2,7 @@ jobs:
   publish:
     env:
       GITHUB_DEPLOY_KEY: "${{ secrets.GITHUB_DEPLOY_KEY }}"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-18.04
     steps:
       - uses: "actions/checkout@v2.1.0"
