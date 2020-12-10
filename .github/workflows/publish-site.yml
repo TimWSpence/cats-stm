@@ -1,13 +1,13 @@
 jobs:
   publish:
     env:
-      GITHUB_DEPLOY_KEY: "${{ secrets.GITHUB_TOKEN }}"
+      GITHUB_DEPLOY_KEY: "${{ secrets.GITHUB_DEPLOY_KEY }}"
     runs-on: ubuntu-18.04
     steps:
       - uses: "actions/checkout@v2.1.0"
       - uses: "cachix/install-nix-action@v12"
       - name: "Building microsite 🚧"
-        run: "nix-shell --run \"sbt docs/docusaurusCreateSite\""
+        run: "nix-shell --run \"sbt docs/docusaurusPublishGhpages\""
 name: Microsite
 on:
   push:
