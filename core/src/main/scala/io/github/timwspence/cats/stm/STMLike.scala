@@ -65,6 +65,8 @@ trait STMLike[F[_]] {
 
   sealed abstract class Txn[+A] {
 
+    private[stm] val tag: T
+
     /*
      * ALias for [[productL]]
      */
@@ -399,15 +401,44 @@ trait STMLike[F[_]] {
 
   private[stm] object Internals {
 
-    case class Pure[A](a: A)                                             extends Txn[A]
-    case class Alloc[A](v: F[Ref[F, A]])                                 extends Txn[TVar[A]]
-    case class Bind[A, B](txn: Txn[B], f: B => Txn[A])                   extends Txn[A]
-    case class HandleError[A](txn: Txn[A], recover: Throwable => Txn[A]) extends Txn[A]
-    case class Get[A](tvar: TVar[A])                                     extends Txn[A]
-    case class Modify[A](tvar: TVar[A], f: A => A)                       extends Txn[Unit]
-    case class OrElse[A](txn: Txn[A], fallback: Txn[A])                  extends Txn[A]
-    case class Abort(error: Throwable)                                   extends Txn[Nothing]
-    case object Retry                                                    extends Txn[Nothing]
+    type T = Byte
+    val PureT: T        = 0
+    val AllocT: T       = 1
+    val BindT: T        = 2
+    val HandleErrorT: T = 3
+    val GetT: T         = 4
+    val ModifyT: T      = 5
+    val OrElseT: T      = 6
+    val AbortT: T       = 7
+    val RetryT: T       = 8
+
+    case class Pure[A](a: A) extends Txn[A] {
+      private[stm] val tag: T = PureT
+    }
+    case class Alloc[A](v: F[Ref[F, A]]) extends Txn[TVar[A]] {
+      private[stm] val tag: T = AllocT
+    }
+    case class Bind[A, B](txn: Txn[B], f: B => Txn[A]) extends Txn[A] {
+      private[stm] val tag: T = BindT
+    }
+    case class HandleError[A](txn: Txn[A], recover: Throwable => Txn[A]) extends Txn[A] {
+      private[stm] val tag: T = HandleErrorT
+    }
+    case class Get[A](tvar: TVar[A]) extends Txn[A] {
+      private[stm] val tag: T = GetT
+    }
+    case class Modify[A](tvar: TVar[A], f: A => A) extends Txn[Unit] {
+      private[stm] val tag: T = ModifyT
+    }
+    case class OrElse[A](txn: Txn[A], fallback: Txn[A]) extends Txn[A] {
+      private[stm] val tag: T = OrElseT
+    }
+    case class Abort(error: Throwable) extends Txn[Nothing] {
+      private[stm] val tag: T = AbortT
+    }
+    case object Retry extends Txn[Nothing] {
+      private[stm] val tag: T = RetryT
+    }
 
     sealed trait TResult[+A]              extends Product with Serializable
     case class TSuccess[A](value: A)      extends TResult[A]
@@ -564,58 +595,67 @@ trait STMLike[F[_]] {
         ref: Ref[F, List[Deferred[F, Unit]]],
         txn: Txn[Any]
       ): Trampoline =
-        txn match {
-          case Pure(a) =>
+        txn.tag match {
+          case PureT =>
+            val t = txn.asInstanceOf[Pure[Any]]
             while (!tags.isEmpty && !(tags.head == cont)) {
               tags = tags.tail
               conts = conts.tail
             }
             if (tags.isEmpty)
-              Done(TSuccess(a))
+              Done(TSuccess(t.a))
             else {
               val f = conts.head
               conts = conts.tail
               tags = tags.tail
-              go(nextId, lock, ref, f(a))
+              go(nextId, lock, ref, f(t.a))
             }
-          case Alloc(r) => Eff(r.map(v => Pure((new TVar(nextId, v, lock, ref)))))
-          case Bind(txn, f) =>
-            conts = f.asInstanceOf[Cont] :: conts
+          case AllocT =>
+            val t = txn.asInstanceOf[Alloc[Any]]
+            Eff(t.v.map(v => Pure((new TVar(nextId, v, lock, ref)))))
+          case BindT =>
+            val t = txn.asInstanceOf[Bind[Any, Any]]
+            conts = t.f :: conts
             tags = cont :: tags
-            go(nextId, lock, ref, txn)
-          case HandleError(txn, f) =>
-            conts = f.asInstanceOf[Cont] :: conts
+            go(nextId, lock, ref, t.txn)
+          case HandleErrorT =>
+            val t = txn.asInstanceOf[HandleError[Any]]
+            conts = t.recover.asInstanceOf[Any => Txn[Any]] :: conts
             tags = handle :: tags
             errorFallbacks = log.snapshot() :: errorFallbacks
-            go(nextId, lock, ref, txn)
-          case Get(tvar) =>
-            if (log.contains(tvar.asInstanceOf[TVar[Any]]))
-              go(nextId, lock, ref, Pure(log.get(tvar.asInstanceOf[TVar[Any]])))
+            go(nextId, lock, ref, t.txn)
+          case GetT =>
+            val t = txn.asInstanceOf[Get[Any]]
+            if (log.contains(t.tvar))
+              go(nextId, lock, ref, Pure(log.get(t.tvar)))
             else
-              Eff(log.getF(tvar.asInstanceOf[TVar[Any]]).map(Pure(_)))
-          case Modify(tvar, f) =>
-            if (log.contains(tvar.asInstanceOf[TVar[Any]]))
-              go(nextId, lock, ref, Pure(log.modify(tvar.asInstanceOf[TVar[Any]], f.asInstanceOf[Cont])))
+              Eff(log.getF(t.tvar).map(Pure(_)))
+          case ModifyT =>
+            val t = txn.asInstanceOf[Modify[Any]]
+            if (log.contains(t.tvar))
+              go(nextId, lock, ref, Pure(log.modify(t.tvar, t.f)))
             else
-              Eff(log.modifyF(tvar.asInstanceOf[TVar[Any]], f.asInstanceOf[Cont]).map(Pure(_)))
-          case OrElse(attempt, fallback) =>
-            fallbacks = (fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
-            go(nextId, lock, ref, attempt)
-          case Abort(error) =>
+              Eff(log.modifyF(t.tvar, t.f).map(Pure(_)))
+          case OrElseT =>
+            val t = txn.asInstanceOf[OrElse[Any]]
+            fallbacks = (t.fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
+            go(nextId, lock, ref, t.txn)
+          case AbortT =>
+            val t = txn.asInstanceOf[Abort]
             while (!tags.isEmpty && !(tags.head == handle)) {
               tags = tags.tail
               conts = conts.tail
             }
-            if (tags.isEmpty) Done(TFailure(error))
+            if (tags.isEmpty) Done(TFailure(t.error))
             else {
               val f = conts.head
               conts = conts.tail
               tags = tags.tail
               log = errorFallbacks.head
               errorFallbacks = errorFallbacks.tail
-              go(nextId, lock, ref, f(error))
+              go(nextId, lock, ref, f(t.error))
             }
-          case Retry =>
+          case RetryT =>
             if (fallbacks.isEmpty) Done(TRetry)
             else {
               val (fb, lg, cts, tgs, efbs) = fallbacks.head
