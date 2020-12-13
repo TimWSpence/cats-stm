@@ -17,16 +17,17 @@
 package io.github.timwspence.cats.stm
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
+import cats.data.EitherT
 import cats.effect.std.Semaphore
 import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
-import cats.data.EitherT
 import cats.{MonadError, Monoid, MonoidK, StackSafeMonad}
-import scala.reflect.ClassTag
+
+import STMConstants._
 
 trait STMLike[F[_]] {
-  import Internals._
 
   def pure[A](a: A): Txn[A] = Txn.pure(a)
 
@@ -399,292 +400,277 @@ trait STMLike[F[_]] {
       }
   }
 
-  private[stm] object Internals {
+  private[stm] case class Pure[A](a: A) extends Txn[A] {
+    private[stm] val tag: T = PureT
+  }
+  private[stm] case class Alloc[A](v: F[Ref[F, A]]) extends Txn[TVar[A]] {
+    private[stm] val tag: T = AllocT
+  }
+  private[stm] case class Bind[A, B](txn: Txn[B], f: B => Txn[A]) extends Txn[A] {
+    private[stm] val tag: T = BindT
+  }
+  private[stm] case class HandleError[A](txn: Txn[A], recover: Throwable => Txn[A]) extends Txn[A] {
+    private[stm] val tag: T = HandleErrorT
+  }
+  private[stm] case class Get[A](tvar: TVar[A]) extends Txn[A] {
+    private[stm] val tag: T = GetT
+  }
+  private[stm] case class Modify[A](tvar: TVar[A], f: A => A) extends Txn[Unit] {
+    private[stm] val tag: T = ModifyT
+  }
+  private[stm] case class OrElse[A](txn: Txn[A], fallback: Txn[A]) extends Txn[A] {
+    private[stm] val tag: T = OrElseT
+  }
+  private[stm] case class Abort(error: Throwable) extends Txn[Nothing] {
+    private[stm] val tag: T = AbortT
+  }
+  private[stm] case object Retry extends Txn[Nothing] {
+    private[stm] val tag: T = RetryT
+  }
 
-    type T = Byte
-    val PureT: T        = 0
-    val AllocT: T       = 1
-    val BindT: T        = 2
-    val HandleErrorT: T = 3
-    val GetT: T         = 4
-    val ModifyT: T      = 5
-    val OrElseT: T      = 6
-    val AbortT: T       = 7
-    val RetryT: T       = 8
+  sealed private[stm] trait TResult[+A]              extends Product with Serializable
+  private[stm] case class TSuccess[A](value: A)      extends TResult[A]
+  private[stm] case class TFailure(error: Throwable) extends TResult[Nothing]
+  private[stm] case object TRetry                    extends TResult[Nothing]
 
-    case class Pure[A](a: A) extends Txn[A] {
-      private[stm] val tag: T = PureT
-    }
-    case class Alloc[A](v: F[Ref[F, A]]) extends Txn[TVar[A]] {
-      private[stm] val tag: T = AllocT
-    }
-    case class Bind[A, B](txn: Txn[B], f: B => Txn[A]) extends Txn[A] {
-      private[stm] val tag: T = BindT
-    }
-    case class HandleError[A](txn: Txn[A], recover: Throwable => Txn[A]) extends Txn[A] {
-      private[stm] val tag: T = HandleErrorT
-    }
-    case class Get[A](tvar: TVar[A]) extends Txn[A] {
-      private[stm] val tag: T = GetT
-    }
-    case class Modify[A](tvar: TVar[A], f: A => A) extends Txn[Unit] {
-      private[stm] val tag: T = ModifyT
-    }
-    case class OrElse[A](txn: Txn[A], fallback: Txn[A]) extends Txn[A] {
-      private[stm] val tag: T = OrElseT
-    }
-    case class Abort(error: Throwable) extends Txn[Nothing] {
-      private[stm] val tag: T = AbortT
-    }
-    case object Retry extends Txn[Nothing] {
-      private[stm] val tag: T = RetryT
-    }
+  private[stm] type TVarId = Long
 
-    sealed trait TResult[+A]              extends Product with Serializable
-    case class TSuccess[A](value: A)      extends TResult[A]
-    case class TFailure(error: Throwable) extends TResult[Nothing]
-    case object TRetry                    extends TResult[Nothing]
+  private[stm] case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
-    type TVarId = Long
+    def values: Iterable[TLogEntry] = map.values
 
-    case class TLog(private var map: Map[TVarId, TLogEntry]) {
+    def contains(tvar: TVar[Any]): Boolean = map.contains(tvar.id)
 
-      def values: Iterable[TLogEntry] = map.values
+    /*
+     * Get the current value of tvar in the txn. Throws if
+     * tvar is not present in the log already
+     */
+    def get(tvar: TVar[Any]): Any = map(tvar.id).get
 
-      def contains(tvar: TVar[Any]): Boolean = map.contains(tvar.id)
-
-      /*
-       * Get the current value of tvar in the txn. Throws if
-       * tvar is not present in the log already
-       */
-      def get(tvar: TVar[Any]): Any = map(tvar.id).get
-
-      /*
-       * Get the current value of tvar in the txn log
-       *
-       * Assumes the tvar is not already in the txn log so
-       * fetches the current value directly from the tvar
-       */
-      def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
-        tvar.value.get.flatMap { v =>
-          F.delay {
-            val e = TLogEntry(v, v, tvar)
-            map = map + (tvar.id -> e)
-            v
-          }
+    /*
+     * Get the current value of tvar in the txn log
+     *
+     * Assumes the tvar is not already in the txn log so
+     * fetches the current value directly from the tvar
+     */
+    def getF(tvar: TVar[Any])(implicit F: Async[F]): F[Any] =
+      tvar.value.get.flatMap { v =>
+        F.delay {
+          val e = TLogEntry(v, v, tvar)
+          map = map + (tvar.id -> e)
+          v
         }
-
-      /*
-       * Modify the current value of tvar in the txn log. Throws if
-       * tvar is not present in the log already
-       */
-      def modify(tvar: TVar[Any], f: Any => Any): Unit = {
-        val e       = map(tvar.id)
-        val current = e.get
-        val entry   = e.set(f(current))
-        map = map + (tvar.id -> entry)
       }
 
-      /*
-       * Modify the current value of tvar in the txn log
-       *
-       * Assumes the tvar is not already in the txn log so
-       * fetches the current value directly from the tvar
-       */
-      def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
-        tvar.value.get.flatMap { v =>
-          F.delay {
-            val e = TLogEntry(v, f(v), tvar)
-            map = map + (tvar.id -> e)
-          }
+    /*
+     * Modify the current value of tvar in the txn log. Throws if
+     * tvar is not present in the log already
+     */
+    def modify(tvar: TVar[Any], f: Any => Any): Unit = {
+      val e       = map(tvar.id)
+      val current = e.get
+      val entry   = e.set(f(current))
+      map = map + (tvar.id -> entry)
+    }
+
+    /*
+     * Modify the current value of tvar in the txn log
+     *
+     * Assumes the tvar is not already in the txn log so
+     * fetches the current value directly from the tvar
+     */
+    def modifyF(tvar: TVar[Any], f: Any => Any)(implicit F: Async[F]): F[Unit] =
+      tvar.value.get.flatMap { v =>
+        F.delay {
+          val e = TLogEntry(v, f(v), tvar)
+          map = map + (tvar.id -> e)
         }
+      }
 
-      def isDirty(implicit F: Concurrent[F]): F[Boolean] =
-        values.foldLeft(F.pure(false))((acc, v) =>
-          for {
-            d  <- acc
-            d1 <- v.isDirty
-          } yield d || d1
-        )
-
-      def snapshot(): TLog = TLog(map)
-
-      def delta(tlog: TLog): TLog =
-        TLog(
-          map.foldLeft(tlog.map) { (acc, p) =>
-            val (id, e) = p
-            if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.initial, e.initial, e.tvar))
-          }
-        )
-
-      def withLock[A](fa: F[A])(implicit F: Concurrent[F]): F[A] =
-        values.toList
-          .sortBy(_.tvar.id)
-          .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
-            locks >> e.tvar.lock.permit
-          }
-          .use(_ => fa)
-
-      def commit(implicit F: Concurrent[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
-
-      def signal(implicit F: Concurrent[F]): F[Unit] =
-        //TODO use chain to avoid reverse?
-        F.uncancelable(_ =>
-          values.toList.reverse.traverse_(e =>
-            for {
-              signals <- e.tvar.retries.getAndSet(Nil)
-              _       <- signals.traverse_(s => s.complete(()))
-            } yield ()
-          )
-        )
-
-      def registerRetry(signal: Deferred[F, Unit])(implicit F: Concurrent[F]): F[Unit] =
-        values.toList.traverse_(e => e.tvar.registerRetry(signal))
-    }
-
-    object TLog {
-      def empty: TLog = TLog(Map.empty)
-    }
-
-    case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
-
-      def get: Any = current
-
-      def set(a: Any): TLogEntry = TLogEntry(initial, a, tvar)
-
-      def commit: F[Unit] = tvar.value.set(current)
-
-      def isDirty(implicit F: Concurrent[F]): F[Boolean] = tvar.value.get.map(_ != initial)
-
-      def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
-
-    }
-
-    object TLogEntry {
-
-      def applyF[A](tvar0: TVar[A], current0: A)(implicit F: Async[F]): F[TLogEntry] =
-        tvar0.value.get.map { v =>
-          TLogEntry(v, current0, tvar0.asInstanceOf[TVar[Any]])
-        }
-
-    }
-
-    def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Async[F]): F[(TResult[A], TLog)] = {
-
-      sealed trait Trampoline
-      case class Done(result: TResult[Any]) extends Trampoline
-      case class Eff(run: F[Txn[Any]])      extends Trampoline
-
-      type Cont = Any => Txn[Any]
-      type Tag  = Int
-      val cont: Tag   = 0
-      val handle: Tag = 1
-
-      var conts: List[Cont]                                                    = Nil
-      var tags: List[Tag]                                                      = Nil
-      var fallbacks: List[(Txn[Any], TLog, List[Cont], List[Tag], List[TLog])] = Nil
-      var errorFallbacks: List[TLog]                                           = Nil
-      var log: TLog                                                            = TLog.empty
-
-      //Construction of a TVar requires allocating state but we want this to be tail-recursive
-      //and non-effectful so we trampoline it with run
-      @tailrec
-      def go(
-        nextId: TVarId,
-        lock: Semaphore[F],
-        ref: Ref[F, List[Deferred[F, Unit]]],
-        txn: Txn[Any]
-      ): Trampoline =
-        txn.tag match {
-          case PureT =>
-            val t = txn.asInstanceOf[Pure[Any]]
-            while (!tags.isEmpty && !(tags.head == cont)) {
-              tags = tags.tail
-              conts = conts.tail
-            }
-            if (tags.isEmpty)
-              Done(TSuccess(t.a))
-            else {
-              val f = conts.head
-              conts = conts.tail
-              tags = tags.tail
-              go(nextId, lock, ref, f(t.a))
-            }
-          case AllocT =>
-            val t = txn.asInstanceOf[Alloc[Any]]
-            Eff(t.v.map(v => Pure((new TVar(nextId, v, lock, ref)))))
-          case BindT =>
-            val t = txn.asInstanceOf[Bind[Any, Any]]
-            conts = t.f :: conts
-            tags = cont :: tags
-            go(nextId, lock, ref, t.txn)
-          case HandleErrorT =>
-            val t = txn.asInstanceOf[HandleError[Any]]
-            conts = t.recover.asInstanceOf[Any => Txn[Any]] :: conts
-            tags = handle :: tags
-            errorFallbacks = log.snapshot() :: errorFallbacks
-            go(nextId, lock, ref, t.txn)
-          case GetT =>
-            val t = txn.asInstanceOf[Get[Any]]
-            if (log.contains(t.tvar))
-              go(nextId, lock, ref, Pure(log.get(t.tvar)))
-            else
-              Eff(log.getF(t.tvar).map(Pure(_)))
-          case ModifyT =>
-            val t = txn.asInstanceOf[Modify[Any]]
-            if (log.contains(t.tvar))
-              go(nextId, lock, ref, Pure(log.modify(t.tvar, t.f)))
-            else
-              Eff(log.modifyF(t.tvar, t.f).map(Pure(_)))
-          case OrElseT =>
-            val t = txn.asInstanceOf[OrElse[Any]]
-            fallbacks = (t.fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
-            go(nextId, lock, ref, t.txn)
-          case AbortT =>
-            val t = txn.asInstanceOf[Abort]
-            while (!tags.isEmpty && !(tags.head == handle)) {
-              tags = tags.tail
-              conts = conts.tail
-            }
-            if (tags.isEmpty) Done(TFailure(t.error))
-            else {
-              val f = conts.head
-              conts = conts.tail
-              tags = tags.tail
-              log = errorFallbacks.head
-              errorFallbacks = errorFallbacks.tail
-              go(nextId, lock, ref, f(t.error))
-            }
-          case RetryT =>
-            if (fallbacks.isEmpty) Done(TRetry)
-            else {
-              val (fb, lg, cts, tgs, efbs) = fallbacks.head
-              log = log.delta(lg)
-              conts = cts
-              tags = tgs
-              fallbacks = fallbacks.tail
-              errorFallbacks = efbs
-              go(nextId, lock, ref, fb)
-            }
-        }
-
-      def run(txn: Txn[Any]): F[TResult[Any]] =
+    def isDirty(implicit F: Concurrent[F]): F[Boolean] =
+      values.foldLeft(F.pure(false))((acc, v) =>
         for {
-          id   <- idGen.updateAndGet(_ + 1)
-          lock <- Semaphore[F](1)
-          ref  <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
-          //Trampoline so we can generate a new id/lock/ref to supply
-          //if we need to contruct a new tvar
-          res <- go(id, lock, ref, txn) match {
-            case Done(v)   => F.pure(v)
-            case Eff(ftxn) => ftxn.flatMap(run(_))
+          d  <- acc
+          d1 <- v.isDirty
+        } yield d || d1
+      )
+
+    def snapshot(): TLog = TLog(map)
+
+    def delta(tlog: TLog): TLog =
+      TLog(
+        map.foldLeft(tlog.map) { (acc, p) =>
+          val (id, e) = p
+          if (acc.contains(id)) acc else acc + (id -> TLogEntry(e.initial, e.initial, e.tvar))
+        }
+      )
+
+    def withLock[A](fa: F[A])(implicit F: Concurrent[F]): F[A] =
+      values.toList
+        .sortBy(_.tvar.id)
+        .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+          locks >> e.tvar.lock.permit
+        }
+        .use(_ => fa)
+
+    def commit(implicit F: Concurrent[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
+
+    def signal(implicit F: Concurrent[F]): F[Unit] =
+      //TODO use chain to avoid reverse?
+      F.uncancelable(_ =>
+        values.toList.reverse.traverse_(e =>
+          for {
+            signals <- e.tvar.retries.getAndSet(Nil)
+            _       <- signals.traverse_(s => s.complete(()))
+          } yield ()
+        )
+      )
+
+    def registerRetry(signal: Deferred[F, Unit])(implicit F: Concurrent[F]): F[Unit] =
+      values.toList.traverse_(e => e.tvar.registerRetry(signal))
+  }
+
+  private[stm] object TLog {
+    def empty: TLog = TLog(Map.empty)
+  }
+
+  private[stm] case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
+
+    def get: Any = current
+
+    def set(a: Any): TLogEntry = TLogEntry(initial, a, tvar)
+
+    def commit: F[Unit] = tvar.value.set(current)
+
+    def isDirty(implicit F: Concurrent[F]): F[Boolean] = tvar.value.get.map(_ != initial)
+
+    def snapshot(): TLogEntry = TLogEntry(self.initial, self.current, self.tvar)
+
+  }
+
+  private[stm] object TLogEntry {
+
+    def applyF[A](tvar0: TVar[A], current0: A)(implicit F: Async[F]): F[TLogEntry] =
+      tvar0.value.get.map { v =>
+        TLogEntry(v, current0, tvar0.asInstanceOf[TVar[Any]])
+      }
+
+  }
+
+  private[stm] def eval[A](idGen: Ref[F, Long], txn: Txn[A])(implicit F: Async[F]): F[(TResult[A], TLog)] = {
+
+    sealed trait Trampoline
+    case class Done(result: TResult[Any]) extends Trampoline
+    case class Eff(run: F[Txn[Any]])      extends Trampoline
+
+    type Cont = Any => Txn[Any]
+    type Tag  = Int
+    val cont: Tag   = 0
+    val handle: Tag = 1
+
+    var conts: List[Cont]                                                    = Nil
+    var tags: List[Tag]                                                      = Nil
+    var fallbacks: List[(Txn[Any], TLog, List[Cont], List[Tag], List[TLog])] = Nil
+    var errorFallbacks: List[TLog]                                           = Nil
+    var log: TLog                                                            = TLog.empty
+
+    //Construction of a TVar requires allocating state but we want this to be tail-recursive
+    //and non-effectful so we trampoline it with run
+    @tailrec
+    def go(
+      nextId: TVarId,
+      lock: Semaphore[F],
+      ref: Ref[F, List[Deferred[F, Unit]]],
+      txn: Txn[Any]
+    ): Trampoline =
+      txn.tag match {
+        case PureT =>
+          val t = txn.asInstanceOf[Pure[Any]]
+          while (!tags.isEmpty && !(tags.head == cont)) {
+            tags = tags.tail
+            conts = conts.tail
           }
-        } yield res
+          if (tags.isEmpty)
+            Done(TSuccess(t.a))
+          else {
+            val f = conts.head
+            conts = conts.tail
+            tags = tags.tail
+            go(nextId, lock, ref, f(t.a))
+          }
+        case AllocT =>
+          val t = txn.asInstanceOf[Alloc[Any]]
+          Eff(t.v.map(v => Pure((new TVar(nextId, v, lock, ref)))))
+        case BindT =>
+          val t = txn.asInstanceOf[Bind[Any, Any]]
+          conts = t.f :: conts
+          tags = cont :: tags
+          go(nextId, lock, ref, t.txn)
+        case HandleErrorT =>
+          val t = txn.asInstanceOf[HandleError[Any]]
+          conts = t.recover.asInstanceOf[Any => Txn[Any]] :: conts
+          tags = handle :: tags
+          errorFallbacks = log.snapshot() :: errorFallbacks
+          go(nextId, lock, ref, t.txn)
+        case GetT =>
+          val t = txn.asInstanceOf[Get[Any]]
+          if (log.contains(t.tvar))
+            go(nextId, lock, ref, Pure(log.get(t.tvar)))
+          else
+            Eff(log.getF(t.tvar).map(Pure(_)))
+        case ModifyT =>
+          val t = txn.asInstanceOf[Modify[Any]]
+          if (log.contains(t.tvar))
+            go(nextId, lock, ref, Pure(log.modify(t.tvar, t.f)))
+          else
+            Eff(log.modifyF(t.tvar, t.f).map(Pure(_)))
+        case OrElseT =>
+          val t = txn.asInstanceOf[OrElse[Any]]
+          fallbacks = (t.fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
+          go(nextId, lock, ref, t.txn)
+        case AbortT =>
+          val t = txn.asInstanceOf[Abort]
+          while (!tags.isEmpty && !(tags.head == handle)) {
+            tags = tags.tail
+            conts = conts.tail
+          }
+          if (tags.isEmpty) Done(TFailure(t.error))
+          else {
+            val f = conts.head
+            conts = conts.tail
+            tags = tags.tail
+            log = errorFallbacks.head
+            errorFallbacks = errorFallbacks.tail
+            go(nextId, lock, ref, f(t.error))
+          }
+        case RetryT =>
+          if (fallbacks.isEmpty) Done(TRetry)
+          else {
+            val (fb, lg, cts, tgs, efbs) = fallbacks.head
+            log = log.delta(lg)
+            conts = cts
+            tags = tgs
+            fallbacks = fallbacks.tail
+            errorFallbacks = efbs
+            go(nextId, lock, ref, fb)
+          }
+      }
 
-      //Safe by construction
-      run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
-    }
+    def run(txn: Txn[Any]): F[TResult[Any]] =
+      for {
+        id   <- idGen.updateAndGet(_ + 1)
+        lock <- Semaphore[F](1)
+        ref  <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
+        //Trampoline so we can generate a new id/lock/ref to supply
+        //if we need to contruct a new tvar
+        res <- go(id, lock, ref, txn) match {
+          case Done(v)   => F.pure(v)
+          case Eff(ftxn) => ftxn.flatMap(run(_))
+        }
+      } yield res
 
+    //Safe by construction
+    run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
   }
 
 }

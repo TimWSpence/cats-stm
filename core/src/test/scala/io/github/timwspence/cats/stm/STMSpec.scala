@@ -77,7 +77,7 @@ class STMSpec extends CatsEffectSuite {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
       _ <- (for {
-          _ <- IO.sleep(2 seconds)
+          _ <- IO.sleep(2.seconds)
           _ <- stm.commit(from.modify(_ + 1))
         } yield ()).start
       _ <- stm.commit {
@@ -232,7 +232,7 @@ class STMSpec extends CatsEffectSuite {
       } yield ()
 
       background = for {
-        _ <- IO.sleep(2 seconds)
+        _ <- IO.sleep(2.seconds)
         _ <- stm.commit(tvar.modify(_ + 1))
       } yield ()
 
@@ -268,7 +268,7 @@ class STMSpec extends CatsEffectSuite {
       }
 
       background = for {
-        _ <- IO.sleep(2 seconds)
+        _ <- IO.sleep(2.seconds)
         _ <- stm.commit(flag.set(true))
       } yield ()
 

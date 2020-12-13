@@ -24,22 +24,20 @@ import cats.effect.IO
 import cats._
 import cats.implicits._
 import cats.kernel.laws.IsEq
-import org.scalacheck.{Arbitrary, Cogen, Gen, Prop}
+import org.scalacheck.{Arbitrary, Cogen, Gen, Prop}, Arbitrary.arbitrary
 
-import Arbitrary.{arbitrary => arb}
 import cats.effect.{Deferred, Ref}
 import cats.effect.std.Semaphore
 
 trait Instances extends CatsEffectSuite with HasSTM {
   import stm._
-  import stm.Internals._
 
   implicit def eqTResult[A: Eq]: Eq[TResult[A]] =
     new Eq[TResult[A]] {
 
       override def eqv(x: TResult[A], y: TResult[A]): Boolean =
         (x, y) match {
-          case (TSuccess(a1), TSuccess(a2)) => a1 === a2
+          case (TSuccess(a1), TSuccess(a2)) => Eq[A].eqv(a1, a2)
           case (TRetry, TRetry)             => true
           case (TFailure(e1), TFailure(e2)) => e1 === e2
           case _                            => false
@@ -85,7 +83,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
       res1 === res2 && log1 === log2
     }
 
-  implicit def arbTxn[A: Arbitrary: Cogen]: Arbitrary[Txn[A]] =
+  implicit def arbitraryTxn[A: Arbitrary: Cogen]: Arbitrary[Txn[A]] =
     Arbitrary(
       Gen.delay(genTxn[A])
     )
@@ -95,9 +93,9 @@ trait Instances extends CatsEffectSuite with HasSTM {
       isEq.lhs === isEq.rhs
     )
 
-  implicit def arbTVar[A: Arbitrary]: Arbitrary[TVar[A]] =
+  implicit def arbitraryTVar[A: Arbitrary]: Arbitrary[TVar[A]] =
     Arbitrary(
-      arb[A].map(a =>
+      arbitrary[A].map(a =>
         new TVar(
           IdGen.incrementAndGet(),
           Ref.unsafe[IO, A](a),
@@ -132,24 +130,24 @@ trait Instances extends CatsEffectSuite with HasSTM {
         )
     }
 
-  def genPure[A: Arbitrary]: Gen[Txn[A]] = arb[A].map(Txn.pure(_))
+  def genPure[A: Arbitrary]: Gen[Txn[A]] = arbitrary[A].map(Txn.pure(_))
 
   def genBind[A: Arbitrary: Cogen]: Gen[Txn[A]] =
     for {
-      txn <- arb[Txn[A]]
-      f   <- arb[A => Txn[A]]
+      txn <- arbitrary[Txn[A]]
+      f   <- arbitrary[A => Txn[A]]
     } yield txn.flatMap(f)
 
   def genHandleError[A: Arbitrary: Cogen]: Gen[Txn[A]] =
     for {
-      txn <- arb[Txn[A]]
-      f   <- arb[Throwable => Txn[A]]
+      txn <- arbitrary[Txn[A]]
+      f   <- arbitrary[Throwable => Txn[A]]
     } yield txn.handleErrorWith(f)
 
   def genOrElse[A](implicit A: Arbitrary[Txn[A]]): Gen[Txn[A]] =
     for {
-      attempt  <- arb[Txn[A]]
-      fallback <- arb[Txn[A]]
+      attempt  <- arbitrary[Txn[A]]
+      fallback <- arbitrary[Txn[A]]
     } yield attempt.orElse(fallback)
 
   def genGet[A: Arbitrary]: Gen[Txn[A]] =
@@ -160,7 +158,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
   def genModify[A: Arbitrary: Cogen]: Gen[Txn[A]] =
     for {
       tvar <- genTVar[A]
-      f    <- arb[A => A]
+      f    <- arbitrary[A => A]
     } yield for {
       tv  <- tvar
       _   <- tv.modify(f)
@@ -171,7 +169,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
 
   def genRetry[A]: Gen[Txn[A]] = Gen.const(stm.retry[A])
 
-  def genTVar[A: Arbitrary]: Gen[Txn[TVar[A]]] = arb[A].map(TVar.of(_))
+  def genTVar[A: Arbitrary]: Gen[Txn[TVar[A]]] = arbitrary[A].map(TVar.of(_))
 
   implicit val genInt: Gen[Int]       = Gen.posNum[Int]
   implicit val genString: Gen[String] = Gen.alphaNumStr
@@ -180,9 +178,9 @@ trait Instances extends CatsEffectSuite with HasSTM {
 
   case class TestException(i: Int) extends RuntimeException
 
-  val genError: Gen[Throwable] = arb[Int].map(TestException(_))
+  val genError: Gen[Throwable] = arbitrary[Int].map(TestException(_))
 
-  implicit val arbitraryForThrowable: Arbitrary[Throwable] =
+  implicit val arbitraryitraryForThrowable: Arbitrary[Throwable] =
     Arbitrary(
       genError
     )

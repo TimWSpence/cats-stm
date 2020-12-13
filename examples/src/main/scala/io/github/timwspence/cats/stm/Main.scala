@@ -54,10 +54,11 @@ object Main extends IOApp.Simple {
 
   private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
     for {
-      (amountForTim, amountForSteve) <- stm.commit(for {
+      t <- stm.commit(for {
         t <- accountForTim.get
         s <- accountForSteve.get
       } yield (t, s))
+      (amountForTim, amountForSteve) = t
       _ <- IO(println(s"Tim: $amountForTim"))
       _ <- IO(println(s"Steve: $amountForSteve"))
     } yield ()
