@@ -23,7 +23,6 @@ class TLogSpec extends CatsEffectSuite {
 
   val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
-  import stm.Internals._
 
   val inc: Int => Int = _ + 1
 

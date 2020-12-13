@@ -52,7 +52,6 @@ object STM {
       idGen       <- Ref.of[F, Long](0)
       rateLimiter <- Semaphore[F](n)
     } yield new STM[F] {
-      import Internals._
 
       def commit[A](txn: Txn[A]): F[A] =
         for {

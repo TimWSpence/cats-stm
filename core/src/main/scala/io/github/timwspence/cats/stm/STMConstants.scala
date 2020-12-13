@@ -16,16 +16,17 @@
 
 package io.github.timwspence.cats.stm
 
-import cats.effect.IO
-import munit.CatsEffectSuite
+private[stm] object STMConstants {
 
-class SyntaxSpec extends CatsEffectSuite {
-
-  implicit val stm: STM[IO] = STM.runtime[IO].unsafeRunSync()
-  import stm._
-
-  test("summon stm instances") {
-    STM[IO].commit(TVar.of(1))
-  }
+  type T = Byte
+  val PureT: T        = 0
+  val AllocT: T       = 1
+  val BindT: T        = 2
+  val HandleErrorT: T = 3
+  val GetT: T         = 4
+  val ModifyT: T      = 5
+  val OrElseT: T      = 6
+  val AbortT: T       = 7
+  val RetryT: T       = 8
 
 }

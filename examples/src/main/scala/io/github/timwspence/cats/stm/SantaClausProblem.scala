@@ -84,27 +84,30 @@ object SantaClausProblem extends IOApp.Simple {
     def join(g: Group): IO[(Gate, Gate)] =
       stm.commit {
         for {
-          (nLeft, g1, g2) <- g.tv.get
-          _               <- stm.check(nLeft > 0)
-          _               <- g.tv.set((nLeft - 1, g1, g2))
+          t <- g.tv.get
+          (nLeft, g1, g2) = t
+          _ <- stm.check(nLeft > 0)
+          _ <- g.tv.set((nLeft - 1, g1, g2))
         } yield (g1, g2)
       }
     def await(g: Group): Txn[(Gate, Gate)] =
       for {
-        (nLeft, g1, g2) <- g.tv.get
-        _               <- stm.check(nLeft === 0)
-        newG1           <- Gate.of(g.n)
-        newG2           <- Gate.of(g.n)
-        _               <- g.tv.set((g.n, newG1, newG2))
+        t <- g.tv.get
+        (nLeft, g1, g2) = t
+        _     <- stm.check(nLeft === 0)
+        newG1 <- Gate.of(g.n)
+        newG2 <- Gate.of(g.n)
+        _     <- g.tv.set((g.n, newG1, newG2))
       } yield (g1, g2)
   }
 
   def helper1(group: Group, doTask: IO[Unit]): IO[Unit] =
     for {
-      (inGate, outGate) <- group.join
-      _                 <- inGate.pass
-      _                 <- doTask
-      _                 <- outGate.pass
+      t <- group.join
+      (inGate, outGate) = t
+      _ <- inGate.pass
+      _ <- doTask
+      _ <- outGate.pass
     } yield ()
 
   def elf2(group: Group, id: Int): IO[Unit] =
@@ -147,8 +150,8 @@ object SantaClausProblem extends IOApp.Simple {
       _ <- IO(println("----------"))
       _ <- choose[(Gate, Gate)](
         NonEmptyList.of(
-          (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g) }),
-          (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g) })
+          (reinGroup.await, { (g: (Gate, Gate)) => run("deliver toys", g) }),
+          (elfGroup.await, { (g: (Gate, Gate)) => run("meet in study", g) })
         )
       )
     } yield ()
