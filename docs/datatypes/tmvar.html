@@ -66,7 +66,7 @@ Writes will block if full and reads will block if empty.</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@6baa0c7a</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@7b28831f</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">Txn</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
@@ -77,11 +77,15 @@ Writes will block if full and reads will block if empty.</p>
   world     &lt;- tmvar.read           <span class="hljs-comment">//Would block if empty.</span>
 } <span class="hljs-keyword">yield</span> hello |+| world
 <span class="hljs-comment">// txn: Txn[String] = Bind(</span>
-<span class="hljs-comment">//   Bind(</span>
-<span class="hljs-comment">//     Alloc(Delay(cats.effect.IO$$$Lambda$9911/0x0000000102cccc40@603e6076)),</span>
-<span class="hljs-comment">//     scala.Function1$$Lambda$9943/0x0000000102d7c040@43a6227e</span>
+<span class="hljs-comment">//   txn = Bind(</span>
+<span class="hljs-comment">//     txn = Alloc(</span>
+<span class="hljs-comment">//       v = Delay(</span>
+<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$9834/0x0000000102d70040@233cd9cb</span>
+<span class="hljs-comment">//       )</span>
+<span class="hljs-comment">//     ),</span>
+<span class="hljs-comment">//     f = scala.Function1$$Lambda$9866/0x0000000102d9b840@53009e4b</span>
 <span class="hljs-comment">//   ),</span>
-<span class="hljs-comment">//   &lt;function1&gt;</span>
+<span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
 <span class="hljs-keyword">val</span> result = stm.commit(txn).unsafeRunSync()
