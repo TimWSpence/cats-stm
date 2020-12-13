@@ -23,20 +23,20 @@ import cats.effect.unsafe.implicits.global
 import org.openjdk.jmh.annotations._
 
 /**
- * To do comparative benchmarks between versions:
- *
- *     benchmarks/run-benchmark TxnBenchmark
- *
- * This will generate results in `benchmarks/results`.
- *
- * Or to run the benchmark from within sbt:
- *
- *     benchmarks/jmh:run -i 10 -wi 10 -f 2 -t 1 io.github.timwspence.cats.stm.TxnBenchmark
- *
- * Which means "10 iterations", "10 warm-up iterations", "2 forks", "1 thread".
- * Please note that benchmarks should be usually executed at least in
- * 10 iterations (as a rule of thumb), but more is better.
- */
+  * To do comparative benchmarks between versions:
+  *
+  *     benchmarks/run-benchmark TxnBenchmark
+  *
+  * This will generate results in `benchmarks/results`.
+  *
+  * Or to run the benchmark from within sbt:
+  *
+  *     benchmarks/jmh:run -i 10 -wi 10 -f 2 -t 1 io.github.timwspence.cats.stm.TxnBenchmark
+  *
+  * Which means "10 iterations", "10 warm-up iterations", "2 forks", "1 thread".
+  * Please note that benchmarks should be usually executed at least in
+  * 10 iterations (as a rule of thumb), but more is better.
+  */
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
