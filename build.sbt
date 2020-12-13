@@ -69,9 +69,10 @@ lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings)
   .aggregate(
     core,
-    laws,
+    benchmarks,
     docs,
-    examples
+    examples,
+    laws,
   )
   .settings(noPublishSettings)
 
@@ -105,6 +106,14 @@ lazy val laws = project.in(file("laws"))
   )
   .dependsOn(core)
 
+lazy val benchmarks = project.in(file("benchmarks"))
+  .settings(commonSettings)
+  .settings(
+    name := "cats-stm",
+  )
+  .dependsOn(core)
+  .enablePlugins(NoPublishPlugin, JmhPlugin)
+
 
 lazy val docs = project.in(file("cats-stm-docs"))
   .settings(
@@ -123,6 +132,7 @@ lazy val docs = project.in(file("cats-stm-docs"))
 lazy val examples = project.in(file("examples"))
   .settings(commonSettings, skipOnPublishSettings)
   .dependsOn(core)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val commonSettings = Seq(
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
