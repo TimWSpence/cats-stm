@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package io.github.timwspence.cats.stm
+package io.github.timwspence.cats.stm;
 
-private[stm] object STMConstants {
+final class STMConstants
+{
 
-  type T = Byte
-  val PureT: T        = 0
-  val AllocT: T       = 1
-  val BindT: T        = 2
-  val HandleErrorT: T = 3
-  val GetT: T         = 4
-  val ModifyT: T      = 5
-  val OrElseT: T      = 6
-  val AbortT: T       = 7
-  val RetryT: T       = 8
+    public static final byte PureT        = 0;
+    public static final byte AllocT       = 1;
+    public static final byte BindT        = 2;
+    public static final byte HandleErrorT = 3;
+    public static final byte GetT         = 4;
+    public static final byte ModifyT      = 5;
+    public static final byte OrElseT      = 6;
+    public static final byte AbortT       = 7;
+    public static final byte RetryT       = 8;
 
 }

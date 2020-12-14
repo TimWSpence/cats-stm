@@ -16,7 +16,7 @@
 
 package io.github.timwspence.cats.stm
 
-import scala.annotation.tailrec
+import scala.annotation.{switch, tailrec}
 import scala.reflect.ClassTag
 
 import cats.data.EitherT
@@ -434,6 +434,7 @@ trait STMLike[F[_]] {
   private[stm] case object TRetry                    extends TResult[Nothing]
 
   private[stm] type TVarId = Long
+  private[stm] type T      = Byte
 
   private[stm] case class TLog(private var map: Map[TVarId, TLogEntry]) {
 
@@ -564,7 +565,7 @@ trait STMLike[F[_]] {
     case class Eff(run: F[Txn[Any]])      extends Trampoline
 
     type Cont = Any => Txn[Any]
-    type Tag  = Int
+    type Tag  = Byte
     val cont: Tag   = 0
     val handle: Tag = 1
 
@@ -583,7 +584,7 @@ trait STMLike[F[_]] {
       ref: Ref[F, List[Deferred[F, Unit]]],
       txn: Txn[Any]
     ): Trampoline =
-      txn.tag match {
+      (txn.tag: @switch) match {
         case PureT =>
           val t = txn.asInstanceOf[Pure[Any]]
           while (!tags.isEmpty && !(tags.head == cont)) {
