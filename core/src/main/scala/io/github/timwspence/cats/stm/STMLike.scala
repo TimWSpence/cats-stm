@@ -292,7 +292,7 @@ trait STMLike[F[_]] {
 
     private[stm] def abort[A](e: Throwable): Txn[A] = Abort(e)
 
-    implicit val txnMonad: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
+    implicit val monadForTxn: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
       new StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] {
 
         override def adaptError[A](fa: Txn[A])(pf: PartialFunction[Throwable, Throwable]): Txn[A] =
@@ -388,7 +388,7 @@ trait STMLike[F[_]] {
         override def widen[A, B >: A](fa: Txn[A]): Txn[B] = fa.widen
       }
 
-    implicit def stmMonoid[A](implicit M: Monoid[A]): Monoid[Txn[A]] =
+    implicit def monoidForTxn[A](implicit M: Monoid[A]): Monoid[Txn[A]] =
       new Monoid[Txn[A]] {
         override def empty: Txn[A] = Txn.pure(M.empty)
 
