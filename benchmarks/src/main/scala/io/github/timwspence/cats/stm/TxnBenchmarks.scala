@@ -49,14 +49,59 @@ class TxnBenchmark {
   var size: Int = _
 
   @Benchmark
-  def commit() = {
+  def get() = {
+    def loop(tvar: TVar[Int], i: Int): IO[Unit] =
+      if (i < size) stm.commit(tvar.get) >> loop(tvar, i + 1)
+      else IO.unit
+
+    stm
+      .commit(TVar.of(0))
+      .flatMap { tvar =>
+        loop(tvar, 0)
+      }
+      .unsafeRunSync()
+  }
+
+  @Benchmark
+  def set() = {
     def loop(tvar: TVar[Int], i: Int): IO[Unit] =
       if (i < size) stm.commit(tvar.set(i)) >> loop(tvar, i + 1)
-      else stm.commit(tvar.set(i))
+      else IO.unit
 
-    stm.commit(TVar.of(0)).flatMap { tvar =>
-      loop(tvar, 0)
-    }
+    stm
+      .commit(TVar.of(0))
+      .flatMap { tvar =>
+        loop(tvar, 0)
+      }
+      .unsafeRunSync()
+  }
+
+  @Benchmark
+  def bind() = {
+    def loop(tvar: TVar[Int], i: Int): Txn[Unit] =
+      if (i < size) tvar.set(i) >> loop(tvar, i + 1)
+      else stm.unit
+
+    stm
+      .commit(TVar.of(0))
+      .flatMap { tvar =>
+        stm.commit(loop(tvar, 0))
+      }
+      .unsafeRunSync()
+  }
+
+  @Benchmark
+  def orElse() = {
+    def loop(tvar: TVar[Int], i: Int): IO[Unit] =
+      if (i < size) stm.commit(stm.retry.orElse(tvar.set(i))) >> loop(tvar, i + 1)
+      else IO.unit
+
+    stm
+      .commit(TVar.of(0))
+      .flatMap { tvar =>
+        loop(tvar, 0)
+      }
+      .unsafeRunSync()
   }
 
 }
