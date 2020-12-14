@@ -286,11 +286,11 @@ trait STMLike[F[_]] {
   }
 
   object Txn {
-    def pure[A](a: A): Txn[A] = Pure(a)
+    private[stm] def pure[A](a: A): Txn[A] = Pure(a)
 
-    def retry[A]: Txn[A] = Retry
+    private[stm] def retry[A]: Txn[A] = Retry
 
-    def abort[A](e: Throwable): Txn[A] = Abort(e)
+    private[stm] def abort[A](e: Throwable): Txn[A] = Abort(e)
 
     implicit val txnMonad: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
       new StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] {
