@@ -16,5 +16,6 @@ on:
       - master
     paths:
       - "docs/**"
+      - "website/**"
       - "**/README.md"
       - ".github/**"
