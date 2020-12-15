@@ -169,8 +169,9 @@ object Main extends IOApp.Simple {
 
 ### Documentation
 
-The documentation is built using [sbt microsites](https://47deg.github.io/sbt-microsites/). You
-can generate it via \`sbt docs/makeMicrosite\`. You can view it locally via \`cd docs/target/site && jekyll serve\`.
+The documentation is built using [docusaurus](https://docusaurus.io/). You can
+generate it via \`nix-shell --run "sbt docs/docusaurusCreateSite"\` . You can then
+view it via \`nix-shell --run "cd website && npm start"\`.
 
 ### Credits
 
