@@ -55,8 +55,10 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/TimWSpence/cats-stm/edit/master/docs/theory/intro.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Introduction</h1></header><article><div><span><h3><a class="anchor" aria-hidden="true" id="the-problem"></a><a href="#the-problem" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The problem</h3>
-<p>Concurrency is <em>hard</em> and so are locks. Consider modelling the transfer of
-balances between bank accounts. You might end up with something like this:</p>
+<p>Reasoning about mutable state in the presence of concurrency is <em>hard</em> and
+reasoning about the traditional solution (locks/mutexes) is even harder.
+Consider the problem of transferring balances between bank accounts. The lock-based
+solution would look something like this:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Account</span>(<span class="hljs-params">private var balance: <span class="hljs-type">Long</span></span>) </span>{
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span> </span>= <span class="hljs-keyword">this</span>.synchronized {
     balance
@@ -67,7 +69,9 @@ balances between bank accounts. You might end up with something like this:</p>
 }
 
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">transfer</span></span>(from: <span class="hljs-type">Account</span>, to: <span class="hljs-type">Account</span>, amount: <span class="hljs-type">Long</span>): <span class="hljs-type">Unit</span> = {
+  <span class="hljs-comment">//Acquire an exclusive lock on from</span>
   from.synchronized {
+    <span class="hljs-comment">//Acquire an exclusive lock on to</span>
     to.synchronized {
       from.modify(_ - amount)
       to.modify(_ + amount)
@@ -75,29 +79,89 @@ balances between bank accounts. You might end up with something like this:</p>
   }
 }
 </code></pre>
-<p>There are a lot of problems with this. Firstly, locks are difficult to reason about
-and acquiring them is manual and hence prone to any of the following problems:</p>
+<p>This kind of lock-based atomicity is prone to the following problems:</p>
 <ul>
 <li>Taking too few locks - leaves you prone to concurrency bugs</li>
 <li>Taking too many locks - inhibits concurrency and can cause deadlock</li>
 <li>Taking the wrong locks - the programmer is responsible for taking the correct lock</li>
-<li>Taking locks in the wrong order - can cause deadlock</li>
+<li>Taking locks in the wrong order - can cause deadlock (see the <a href="https://en.wikipedia.org/wiki/Dining_philosophers_problem">Dining Philosophers</a>)</li>
+<li>Pessimistic - must take all the locks you <em>might</em> need</li>
+<li>Not releasing locks upon cancellation/error - can cause deadlock</li>
+<li>Retrying and waiting for conditions is tricky and manual</li>
 </ul>
-<p>In addition, this approach requires manual recovery of errors and handling of retries.
-Suppose in the above example, we wanted to retry the transaction until <code>from</code> had a
-balance of at least 100? Perhaps not that difficult but if the transfer was nested
-in the middle of a larger transaction which had already acquired locks and modified
-state then it would rapidly become very difficult indeed!</p>
+<h3><a class="anchor" aria-hidden="true" id="composition"></a><a href="#composition" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Composition</h3>
+<p>Not only are locks tricky, manual and error-prone, they also <em>do not compose</em>.
+Suppose we have the following functions:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>: <span class="hljs-type">Unit</span> = ???
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span></span>: <span class="hljs-type">Unit</span> = ???
+</code></pre>
+<p>Assume that they each acquire some locks to mutate some state atomically.</p>
+<p>Now suppose that we want to perform the composition <code>foo &gt;&gt;&gt; bar</code> atomically. How would we do that?</p>
+<p>The steps involved would look something like this:</p>
+<ul>
+<li>Read the <em>entire</em> callgraph of <code>foo</code> and <code>bar</code> to determine what locks they acquire</li>
+<li>Hope that there is a well-defined ordering on these to avoid dining philosopher-style problems</li>
+<li>Hope that the locks are re-entrant (can be acquired multiple times)</li>
+<li>Acquire all the locks in the correct order</li>
+<li>Perform <code>foo &gt;&gt;&gt; bar</code></li>
+<li>Ensure we release all locks correctly, even in the presence of errors/cancellation</li>
+<li>Discover that the business requirements have changed and we now need to execute
+<code>foo &gt;&gt;&gt; baz</code> atomically instead</li>
+<li>Cry</li>
+</ul>
 <h3><a class="anchor" aria-hidden="true" id="a-solution"></a><a href="#a-solution" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A solution</h3>
-<p>A solution to this is to abstract mutable state behind a <code>TVar</code> which exposes
-operations in a <code>Txn</code> monad. These operations can be composed in the <code>Txn</code>
-monad and then atomically evaluated as an <code>IO</code> action.</p>
+<p>We need a composable abstraction for expressing the notion of a transaction on mutable
+memory. As functional programmers, we are extremely familiar with such a concept - monads!</p>
+<p>As with most problems in functional programming, the solution is to define a monadic
+datatype that solves the problem and then find a way to interpret it.</p>
+<p>In this case, that means we end up with something like this:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">STM</span>[<span class="hljs-type">F</span>[_]] </span>{
+  <span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">TVar</span>[<span class="hljs-type">A</span>] </span>{
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span></span>: <span class="hljs-type">Txn</span>[<span class="hljs-type">A</span>]
+    
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">modify</span></span>(f: <span class="hljs-type">A</span> =&gt; <span class="hljs-type">A</span>): <span class="hljs-type">Txn</span>[<span class="hljs-type">Unit</span>]
+  }
+  
+  <span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">Txn</span>[<span class="hljs-type">A</span>] </span>{
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">flatMap</span></span>[<span class="hljs-type">B</span>](f: <span class="hljs-type">A</span> =&gt; <span class="hljs-type">Txn</span>[<span class="hljs-type">B</span>]): <span class="hljs-type">Txn</span>[<span class="hljs-type">B</span>]
+  }
+  
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">commit</span></span>[<span class="hljs-type">A</span>](txn: <span class="hljs-type">Txn</span>[<span class="hljs-type">A</span>]): <span class="hljs-type">F</span>[<span class="hljs-type">A</span>]
+}
+
+<span class="hljs-comment">//Atomically transfer the contents of from to to</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">example</span></span>(stm: <span class="hljs-type">STM</span>[<span class="hljs-type">IO</span>]): <span class="hljs-type">IO</span>[<span class="hljs-type">Unit</span>] = {
+  <span class="hljs-keyword">import</span> stm._
+  <span class="hljs-keyword">for</span> {
+    from &lt;- stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">100</span>))
+    to &lt;- stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>))
+    _ &lt;- stm.commit(
+      <span class="hljs-keyword">for</span> {
+        curr &lt;- from.get
+        _ &lt;- from.set(<span class="hljs-number">0</span>)
+        _ &lt;- to.set(curr)
+      } <span class="hljs-keyword">yield</span> ()
+    )
+  } <span class="hljs-keyword">yield</span> ()
+}
+</code></pre>
+<p>In other words, we introduce a new type <code>TVar</code> of mutable variables, whose operations
+(get/set/modify) are suspended in the <code>Txn</code> monad. We can compose these to form larger
+transactions such as</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> transfer: <span class="hljs-type">Txn</span>[<span class="hljs-type">Unit</span>] = <span class="hljs-keyword">for</span> {
+  curr &lt;- from.get
+  _ &lt;- from.set(<span class="hljs-number">0</span>)
+  _ &lt;- to.set(curr)
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<p>which can be executed atomically using <code>stm.commit</code></p>
 <p>Why does this solve the problem?</p>
-<p>Separating the definition of the transaction from its execution means that we can
-execute the transaction against a log and only commit the final states to the <code>TVar</code>s
-if the whole transaction succeeds. It also allows us to transparently handle retries
-as we do not modify the <code>TVar</code> state until we are sure that the transaction has succeeded.</p>
-<p>Note that transactions having the type <code>STM[A]</code> also prohibits performing <code>IO</code> actions
+<p>Separating the definition of the transaction from its execution means that we
+can execute the transaction against a log (similar to a database) and only
+commit the final states to the <code>TVar</code>s if the whole transaction succeeds. It
+also allows us to transparently handle retries as we do not modify the <code>TVar</code>
+state until we are sure that the transaction has succeeded.</p>
+<p>Note that transactions having the type <code>Txn[A]</code> also prohibits performing <code>IO</code> actions
 during a transaction. This is important as the transaction may be retried multiple
 times before it succeeds and hence the evaluation would not be predictable or
 referentially transparent if it could perform <code>IO</code>.</p>
