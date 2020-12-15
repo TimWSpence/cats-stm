@@ -4,7 +4,7 @@ title:  "TVar"
 ---
 
 A `TVar` (transactional variable) is a mutable memory location that can be be
-read and modified via `STM` actions.
+read and modified via `Txn` actions.
 
 ```scala mdoc
 import cats.effect.IO
