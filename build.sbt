@@ -13,7 +13,7 @@ val PrimaryOS = "ubuntu-latest"
 
 val Scala213 = "2.13.4"
 
-ThisBuild / crossScalaVersions := Seq("3.0.0-M2", "2.12.12", Scala213)
+ThisBuild / crossScalaVersions := Seq("3.0.0-M3", "2.12.12", Scala213)
 
 val LTSJava = "adopt@1.11"
 val LatestJava = "adopt@1.15"
@@ -34,7 +34,7 @@ ThisBuild / githubWorkflowBuildMatrixAdditions += "ci" -> List("ciJVM")
 
 ThisBuild / githubWorkflowBuildMatrixExclusions +=
 MatrixExclude(
-  Map("java" -> LatestJava, "scala" -> "3.0.0-M2")
+  Map("java" -> LatestJava, "scala" -> "3.0.0-M3")
 )
 
 ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
