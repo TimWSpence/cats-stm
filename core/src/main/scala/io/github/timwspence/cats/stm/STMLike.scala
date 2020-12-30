@@ -509,7 +509,7 @@ trait STMLike[F[_]] {
     def withLock[A](fa: F[A])(implicit F: Concurrent[F]): F[A] =
       values.toList
         .sortBy(_.tvar.id)
-        .foldLeft(Resource.liftF(F.unit)) { (locks, e) =>
+        .foldLeft(Resource.eval(F.unit)) { (locks, e) =>
           locks >> e.tvar.lock.permit
         }
         .use(_ => fa)
