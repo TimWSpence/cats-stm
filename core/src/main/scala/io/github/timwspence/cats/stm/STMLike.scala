@@ -519,10 +519,10 @@ trait STMLike[F[_]] {
     def signal(implicit F: Concurrent[F]): F[Unit] =
       //TODO use chain to avoid reverse?
       F.uncancelable(_ =>
-        values.toList.reverse.traverse_(e =>
+        values.toList.traverse_(e =>
           for {
             signals <- e.tvar.retries.getAndSet(Nil)
-            _       <- signals.traverse_(s => s.complete(()))
+            _       <- signals.reverse.traverse_(s => s.complete(()))
           } yield ()
         )
       )
