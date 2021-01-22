@@ -32,4 +32,6 @@ class CatsLawsSpec extends Instances with DisciplineSuite {
   checkAll("Txn[Int]", MonadErrorTests[Txn, Throwable].monadError[Int, Int, Int])
 
   checkAll("Txn[Int]", MonoidKTests[Txn].monoidK[Int])
+
+  checkAll("Txn[Int]", DeferTests[Txn].defer[Int])
 }

@@ -23,7 +23,7 @@ import cats.data.EitherT
 import cats.effect.std.Semaphore
 import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
-import cats.{MonadError, Monoid, MonoidK, StackSafeMonad}
+import cats.{Defer, MonadError, Monoid, MonoidK, StackSafeMonad}
 
 import STMConstants._
 
@@ -42,6 +42,8 @@ trait STMLike[F[_]] {
   def abort[A](e: Throwable): Txn[A] = Txn.abort(e)
 
   def raiseError[A](e: Throwable): Txn[A] = abort(e)
+
+  def defer[A](value: => Txn[A]): Txn[A] = Txn.defer(value)
 
   class TVar[A] private[stm] (
     private[stm] val id: TVarId,
@@ -292,6 +294,9 @@ trait STMLike[F[_]] {
 
     private[stm] def abort[A](e: Throwable): Txn[A] = Abort(e)
 
+    private[stm] def defer[A](value: => Txn[A]): Txn[A] =
+      pure(()).flatMap(_ => value)
+
     implicit val monadForTxn: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
       new StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] {
 
@@ -398,6 +403,14 @@ trait STMLike[F[_]] {
             r <- y
           } yield M.combine(l, r)
       }
+
+    implicit val deferForTxn: Defer[Txn] = new Defer[Txn] {
+
+      override def defer[A](fa: => Txn[A]): Txn[A] = Txn.defer(fa)
+
+
+
+    }
   }
 
   private[stm] case class Pure[A](a: A) extends Txn[A] {
