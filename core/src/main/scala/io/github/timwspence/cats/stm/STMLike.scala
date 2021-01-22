@@ -408,8 +408,6 @@ trait STMLike[F[_]] {
 
       override def defer[A](fa: => Txn[A]): Txn[A] = Txn.defer(fa)
 
-
-
     }
   }
 
