@@ -53,7 +53,7 @@ val CatsEffectVersion = "3.0.0-M5"
 val DisciplineVersion = "1.0.4"
 val ScalaCheckVersion = "1.15.2"
 val MunitVersion = "0.7.21"
-val MunitCatsEffectVersion = "0.12.0"
+val MunitCatsEffectVersion = "0.13.0"
 val ScalacheckEffectVersion = "0.7.0"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
