@@ -51,9 +51,6 @@ trait STMLaws extends HasSTM {
   def abortOrElse[A](error: Throwable, txn: Txn[A]) =
     (stm.abort[A](error) orElse txn) <-> stm.abort[A](error)
 
-  def bindDistributesOverOrElse[A](lhs: Txn[A], rhs: Txn[A], f: A => Txn[A]) =
-    ((lhs orElse rhs) >>= f) <-> ((lhs >>= f) orElse (rhs >>= f))
-
 }
 
 trait STMTests extends Laws with STMLaws {
@@ -77,8 +74,7 @@ trait STMTests extends Laws with STMLaws {
       "set then abort is abort"       -> forAll(setThenAbort[A] _),
       "retry orElse stm is stm"       -> forAll(retryOrElse[A] _),
       "stm orElse retry is stm"       -> forAll(orElseRetry[A] _),
-      "abort orElse stm is abort"     -> forAll(abortOrElse[A] _),
-      "bind distributes over orElse"  -> forAll(bindDistributesOverOrElse[A] _)
+      "abort orElse stm is abort"     -> forAll(abortOrElse[A] _)
     )
 
 }

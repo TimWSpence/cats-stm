@@ -582,12 +582,11 @@ trait STMLike[F[_]] {
     val orElse: Tag      = 2
     val orElseCont: Cont = _ => Txn.pure(())
 
-    var conts: List[Cont] = Nil
-    var tags: List[Tag]   = Nil
-    //TODO this should no longer need to maintain stack of cont and tag
-    var fallbacks: List[(Txn[Any], TLog, List[Cont], List[Tag], List[TLog])] = Nil
-    var errorFallbacks: List[TLog]                                           = Nil
-    var log: TLog                                                            = TLog.empty
+    var conts: List[Cont]                 = Nil
+    var tags: List[Tag]                   = Nil
+    var fallbacks: List[(Txn[Any], TLog)] = Nil
+    var errorFallbacks: List[TLog]        = Nil
+    var log: TLog                         = TLog.empty
 
     //Construction of a TVar requires allocating state but we want this to be tail-recursive
     //and non-effectful so we trampoline it with run
@@ -643,7 +642,7 @@ trait STMLike[F[_]] {
             Eff(log.modifyF(t.tvar, t.f).map(Pure(_)))
         case OrElseT =>
           val t = txn.asInstanceOf[OrElse[Any]]
-          fallbacks = (t.fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
+          fallbacks = (t.fallback, log.snapshot()) :: fallbacks
           tags = orElse :: tags
           conts = orElseCont :: conts
           go(nextId, lock, ref, t.txn)
@@ -671,11 +670,10 @@ trait STMLike[F[_]] {
           }
           if (tags.isEmpty) Done(TRetry)
           else {
-            val (fb, lg, cts, tgs, efbs) = fallbacks.head
+            val (fb, lg) = fallbacks.head
             log = log.delta(lg)
-            conts = cts
-            tags = tgs
-            errorFallbacks = efbs
+            conts = conts.tail
+            tags = tags.tail
             fallbacks = fallbacks.tail
             go(nextId, lock, ref, fb)
           }
