@@ -577,14 +577,16 @@ trait STMLike[F[_]] {
 
     type Cont = Any => Txn[Any]
     type Tag  = Byte
-    val cont: Tag   = 0
-    val handle: Tag = 1
+    val cont: Tag        = 0
+    val handle: Tag      = 1
+    val orElse: Tag      = 2
+    val orElseCont: Cont = _ => Txn.pure(())
 
-    var conts: List[Cont]                                                    = Nil
-    var tags: List[Tag]                                                      = Nil
-    var fallbacks: List[(Txn[Any], TLog, List[Cont], List[Tag], List[TLog])] = Nil
-    var errorFallbacks: List[TLog]                                           = Nil
-    var log: TLog                                                            = TLog.empty
+    var conts: List[Cont]                 = Nil
+    var tags: List[Tag]                   = Nil
+    var fallbacks: List[(Txn[Any], TLog)] = Nil
+    var errorFallbacks: List[TLog]        = Nil
+    var log: TLog                         = TLog.empty
 
     //Construction of a TVar requires allocating state but we want this to be tail-recursive
     //and non-effectful so we trampoline it with run
@@ -599,9 +601,10 @@ trait STMLike[F[_]] {
         case PureT =>
           val t = txn.asInstanceOf[Pure[Any]]
           while (!tags.isEmpty && !(tags.head == cont)) {
+            if (tags.head == handle) errorFallbacks = errorFallbacks.tail
+            if (tags.head == orElse) fallbacks = fallbacks.tail
             tags = tags.tail
             conts = conts.tail
-            errorFallbacks = errorFallbacks.tail
           }
           if (tags.isEmpty)
             Done(TSuccess(t.a))
@@ -639,11 +642,14 @@ trait STMLike[F[_]] {
             Eff(log.modifyF(t.tvar, t.f).map(Pure(_)))
         case OrElseT =>
           val t = txn.asInstanceOf[OrElse[Any]]
-          fallbacks = (t.fallback, log.snapshot(), conts, tags, errorFallbacks) :: fallbacks
+          fallbacks = (t.fallback, log.snapshot()) :: fallbacks
+          tags = orElse :: tags
+          conts = orElseCont :: conts
           go(nextId, lock, ref, t.txn)
         case AbortT =>
           val t = txn.asInstanceOf[Abort]
           while (!tags.isEmpty && !(tags.head == handle)) {
+            if (tags.head == orElse) fallbacks = fallbacks.tail
             tags = tags.tail
             conts = conts.tail
           }
@@ -657,14 +663,18 @@ trait STMLike[F[_]] {
             go(nextId, lock, ref, f(t.error))
           }
         case RetryT =>
-          if (fallbacks.isEmpty) Done(TRetry)
+          while (!tags.isEmpty && !(tags.head == orElse)) {
+            if (tags.head == handle) errorFallbacks = errorFallbacks.tail
+            tags = tags.tail
+            conts = conts.tail
+          }
+          if (tags.isEmpty) Done(TRetry)
           else {
-            val (fb, lg, cts, tgs, efbs) = fallbacks.head
+            val (fb, lg) = fallbacks.head
             log = log.delta(lg)
-            conts = cts
-            tags = tgs
+            conts = conts.tail
+            tags = tags.tail
             fallbacks = fallbacks.tail
-            errorFallbacks = efbs
             go(nextId, lock, ref, fb)
           }
       }

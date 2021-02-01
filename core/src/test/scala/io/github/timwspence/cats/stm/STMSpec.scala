@@ -463,4 +463,17 @@ class STMSpec extends CatsEffectSuite {
 
   }
 
+  test("handle nested retries") {
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      txn = tvar.set(1) >> (
+        tvar.set(3) >> stm.unit.orElse(stm.abort(new RuntimeException())) >> stm.retry
+      ).orElse(tvar.modify(_ + 1))
+      _   <- stm.commit(txn)
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 2))
+    } yield res
+
+  }
+
 }
