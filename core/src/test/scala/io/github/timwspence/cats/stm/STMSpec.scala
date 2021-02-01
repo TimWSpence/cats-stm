@@ -448,4 +448,19 @@ class STMSpec extends CatsEffectSuite {
     } yield res
   }
 
+  test("handle nested errors") {
+    for {
+      tvar <- stm.commit(TVar.of(0))
+      txn = tvar.set(1) >> (
+        //This change to the log should be discarded
+        tvar.set(2) >>
+          stm.unit.handleErrorWith(_ => tvar.modify(_ + 1)) >> stm.abort(new RuntimeException())
+      ).handleErrorWith(_ => tvar.modify(_ + 2))
+      _   <- stm.commit(txn)
+      v   <- stm.commit(tvar.get)
+      res <- IO(assertEquals(v, 3))
+    } yield res
+
+  }
+
 }

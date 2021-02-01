@@ -601,6 +601,7 @@ trait STMLike[F[_]] {
           while (!tags.isEmpty && !(tags.head == cont)) {
             tags = tags.tail
             conts = conts.tail
+            errorFallbacks = errorFallbacks.tail
           }
           if (tags.isEmpty)
             Done(TSuccess(t.a))
