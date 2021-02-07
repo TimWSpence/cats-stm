@@ -1,31 +1,21 @@
 # Credit to https://github.com/profunktor/redis4cats/blob/master/shell.nix
 let
-  config = {
-    packageOverrides = pkgs: rec {
-      sbt = pkgs.sbt.overrideAttrs (
-        old: rec {
-          version = "1.3.13";
-
-          patchPhase = ''
-            echo -java-home ${pkgs.openjdk11} >> conf/sbtopts
-          '';
-        }
-      );
-    };
+  jdk11 = self: super: rec {
+    jre = pkgs.jdk11;
   };
 
   nixpkgs = fetchTarball {
-    name   = "NixOS-unstable-08-06-2020";
-    url    = "https://github.com/NixOS/nixpkgs-channels/archive/dcb64ea42e6.tar.gz";
-    sha256 = "0i77sgs0gic6pwbkvk9lbpfshgizdrqyh18law2ji1409azc09w0";
+    name = "nixpkgs-20-09";
+    url = "https://github.com/NixOS/nixpkgs/archive/20.09.tar.gz";
+    sha256 = "1wg61h4gndm3vcprdcg7rc4s1v3jkm5xd7lw8r2f67w502y94gcy";
   };
-  pkgs = import nixpkgs { inherit config; };
+  pkgs = import nixpkgs { overlays = [ jdk11 ]; };
 in
-  pkgs.mkShell {
-    buildInputs = with pkgs; [
-      sbt                        # 1.3.12
-      nodejs
-      yarn
-      yarn2nix
-    ];
-  }
+pkgs.mkShell {
+  buildInputs = with pkgs; [
+    sbt
+    nodejs-12_x
+    yarn
+    yarn2nix
+  ];
+}
