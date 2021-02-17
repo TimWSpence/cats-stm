@@ -73,7 +73,7 @@ class TVarTest extends CatsEffectSuite {
           .start
       _   <- IO.sleep(1.second)
       _   <- stm.commit(tvar.set(2))
-      v   <- fiber.joinAndEmbedNever
+      v   <- fiber.joinWithNever
       res <- IO(assertEquals(v, 2))
     } yield res
   }
