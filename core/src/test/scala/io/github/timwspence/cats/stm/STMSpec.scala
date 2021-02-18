@@ -426,7 +426,7 @@ class STMSpec extends CatsEffectSuite {
       )
       f1  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> first).start
       f2  <- List(1, iterations).foldLeft(IO.unit)((acc, _) => acc >> second).start
-      _   <- (f1.joinAndEmbedNever, f2.joinAndEmbedNever).tupled
+      _   <- (f1.joinWithNever, f2.joinWithNever).tupled
       v   <- stm.commit(tvar.get)
       res <- IO(assertEquals(v, 0))
     } yield res
