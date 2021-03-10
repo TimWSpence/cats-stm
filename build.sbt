@@ -2,6 +2,8 @@ ThisBuild / baseVersion := "0.10.0"
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
+ThisBuild / startYear := Some(2017)
+ThisBuild / endYear := Some(2021)
 publishGithubUser in ThisBuild := "TimWSpence"
 publishFullName in ThisBuild := "Tim Spence"
 
@@ -11,7 +13,7 @@ ThisBuild / developers := List(
 
 val PrimaryOS = "ubuntu-latest"
 
-val Scala213 = "2.13.4"
+val Scala213 = "2.13.5"
 
 ThisBuild / crossScalaVersions := Seq("3.0.0-M3", "3.0.0-RC1", "2.12.13", Scala213)
 
@@ -138,8 +140,8 @@ lazy val commonSettings = Seq(
     "org.scalameta"              %% "munit"                     % MunitVersion % Test,
     "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
     "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
-    "org.typelevel"              %% "munit-cats-effect-3"         % MunitCatsEffectVersion % Test
-  )
+    "org.typelevel"              %% "munit-cats-effect-3"       % MunitCatsEffectVersion % Test
+  ),
 )
 
 lazy val skipOnPublishSettings = Seq(
