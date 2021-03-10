@@ -2,6 +2,8 @@ ThisBuild / baseVersion := "0.10.0"
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
+ThisBuild / startYear := Some(2017)
+ThisBuild / endYear := Some(2021)
 publishGithubUser in ThisBuild := "TimWSpence"
 publishFullName in ThisBuild := "Tim Spence"
 
