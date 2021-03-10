@@ -16,7 +16,6 @@
 
 package io.github.timwspence.cats.stm
 
-import cats.Eq
 import cats.implicits._
 import cats.laws._
 import org.scalacheck._
@@ -56,7 +55,7 @@ trait STMLaws extends HasSTM {
 trait STMTests extends Laws with STMLaws {
   import stm._
 
-  def stmLaws[A: Arbitrary: Cogen: Eq](implicit
+  def stmLaws[A: Arbitrary](implicit
     ArbTxn: Arbitrary[Txn[A]],
     ArbTVar: Arbitrary[TVar[A]],
     ArbThrowable: Arbitrary[Throwable],
