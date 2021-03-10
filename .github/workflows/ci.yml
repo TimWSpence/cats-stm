@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.0.0-M3, 3.0.0-RC1, 2.12.13, 2.13.4]
+        scala: [3.0.0-M3, 3.0.0-RC1, 2.12.13, 2.13.5]
         java:
           - adopt@1.11
           - adopt@1.15
@@ -57,5 +57,5 @@ jobs:
 
       - run: sbt ++${{ matrix.scala }} '${{ matrix.ci }}'
 
-      - if: matrix.scala == '2.13.4' && matrix.ci == 'ciJVM'
+      - if: matrix.scala == '2.13.5' && matrix.ci == 'ciJVM'
         run: sbt ++${{ matrix.scala }} docs/mdoc
