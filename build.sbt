@@ -41,7 +41,7 @@ ThisBuild / scmInfo := Some(
     url("https://github.com/TimWSpence/cats-stm"),
     "git@github.com:TimWSpence/cats-stm.git"))
 
-addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; mimaReportBinaryIssues")
+addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; core/mimaReportBinaryIssues")
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
@@ -102,6 +102,7 @@ lazy val laws = project.in(file("laws"))
     )
   )
   .dependsOn(core)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val benchmarks = project.in(file("benchmarks"))
   .settings(commonSettings)
@@ -124,6 +125,7 @@ lazy val docs = project.in(file("cats-stm-docs"))
   .settings(commonSettings, skipOnPublishSettings)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
   .dependsOn(core)
+  .enablePlugins(NoPublishPlugin)
 
 
 lazy val examples = project.in(file("examples"))
