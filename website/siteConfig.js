@@ -21,16 +21,16 @@ const siteConfig = {
   headerLinks: [
     { doc: "theory/intro", label: "Docs" },
     { href: apiUrl, label: 'API'},
-    { href: repoUrl, label: "GitHub", external: true }
+    { href: repoUrl, label: "GitHub", class: "github", external: true }
   ],
 
   /* path to images for header/footer */
   headerIcon: "img/logo.png",
 
-  /* colors for website */
+  /* Colors for website */
   colors: {
-    primaryColor: "#CC540A",
-    secondaryColor: "#7F4623"
+    primaryColor: '#d36d6f',
+    secondaryColor: '#294066',
   },
 
   customDocsPath: "cats-stm-docs/target/mdoc",
@@ -41,8 +41,9 @@ const siteConfig = {
   copyright: `Copyright © 2018-${new Date().getFullYear()} Tim Spence`,
 
   highlight: {
-    // Highlight.js theme to use for syntax highlighting in code blocks
-    theme: "github"
+    // Highlight.js theme to use for syntax highlighting in code blocks.
+    theme: 'github-gist',
+    defaultLang: 'plaintext'
   },
 
   /* On page navigation for the current documentation page */
@@ -51,6 +52,11 @@ const siteConfig = {
   separateCss: ["api"],
 
   editUrl: `${repoUrl}/edit/master/docs/`,
+
+  twitterUsername: 'TimWSpence',
+  twitterImage: 'img/undraw_tweetstorm.svg',
+
+  scripts: ['https://buttons.github.io/buttons.js'],
 
   repoUrl,
   gitterUrl

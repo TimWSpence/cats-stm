@@ -10,9 +10,6 @@
 /**/
 /* Thanks to https://raw.githubusercontent.com/fd4s/fs2-kafka/master/website/static/css/custom.css
  */
-.nav-footer {
-  background: unset;
-}
 
 .nav-footer .copyright {
   color: #7c7c7c;
@@ -59,4 +56,12 @@ a {
 
 .onPageNav a:hover {
   color: #122932;
+}
+
+header nav li:last-child a {
+  width: 32px;
+  height: 32px;
+  background-image: url(/cats-stm/img/github.png);
+  background-size: 32px 32px;
+  text-indent: -9999px;
 }
