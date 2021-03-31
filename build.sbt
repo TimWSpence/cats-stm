@@ -15,7 +15,7 @@ val PrimaryOS = "ubuntu-latest"
 
 val Scala213 = "2.13.5"
 
-ThisBuild / crossScalaVersions := Seq("3.0.0-M3", "3.0.0-RC1", "2.12.13", Scala213)
+ThisBuild / crossScalaVersions := Seq("3.0.0-RC2", "3.0.0-RC1", "2.12.13", Scala213)
 
 val LTSJava = "adopt@1.11"
 val LatestJava = "adopt@1.15"
@@ -45,13 +45,13 @@ addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean;
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
-val CatsVersion = "2.4.2"
-val CatsEffectVersion = "3.0.0"
-val DisciplineVersion = "1.0.6"
+val CatsVersion = "2.5.0"
+val CatsEffectVersion = "3.0.1"
+val DisciplineVersion = "1.0.7"
 val ScalaCheckVersion = "1.15.3"
-val MunitVersion = "0.7.22"
-val MunitCatsEffectVersion = "1.0.0"
-val ScalacheckEffectVersion = "0.7.1"
+val MunitVersion = "0.7.23"
+val MunitCatsEffectVersion = "1.0.1"
+val ScalacheckEffectVersion = "1.0.0"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
 inThisBuild(
