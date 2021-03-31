@@ -98,7 +98,7 @@ class Index extends React.Component {
             {[
                 {
                     content:
-                        "Cats STM is a library for writing composable in-memory transactions which will handling correct locking, optimistic concurrency and automatic retries for you.",
+                        "Cats STM is a library for writing composable in-memory transactions which will handling correct locking, optimistic concurrency and automatic retries for you. It is intended as a safe, composable alternative to locks and semaphores that also allows a higher level of concurrency.",
                     image: `${baseUrl}img/hook.png`,
                     imageAlign: 'right',
                 }
