@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Txn · Cats STM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="### Overview"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Txn · Cats STM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://timwspence.github.io/cats-stm//cats-stm/index.html"/><meta property="og:description" content="### Overview"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://timwspence.github.io/cats-stm//cats-stm/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/cats-stm/undefined"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css"/><link rel="stylesheet" href="/cats-stm/css/custom.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cats-stm/js/scrollSpy.js"></script><link rel="stylesheet" href="/cats-stm/css/main.css"/><script src="/cats-stm/js/codetabs.js"></script></head><body class="sideNavVisible"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cats-stm/"><img class="logo" src="/cats-stm/img/logo.png" alt="Cats STM"/><h2 class="headerTitleWithLogo">Cats STM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/cats-stm/docs/theory/intro.html" target="_self">Docs</a></li><li class=""><a href="/cats-stm/api/index.html" target="_self">API</a></li><li class=""><a href="https://github.com/TimWSpence/cats-stm" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Theory</span></h2></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Theory</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/intro.html">Introduction</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cats-stm/docs/theory/txn.html">Txn</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/tvar.html">TVar</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Data Types</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tmvar.html">TMVar</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tqueue.html">TQueue</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tsemaphore.html">TSemaphore</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Worked Examples</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/examples/santa.html">The Santa Claus Problem</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Txn · Cats STM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="### Overview"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Txn · Cats STM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://timwspence.github.io/cats-stm//cats-stm/index.html"/><meta property="og:description" content="### Overview"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://timwspence.github.io/cats-stm//cats-stm/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/cats-stm/undefined"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css"/><link rel="stylesheet" href="/cats-stm/css/custom.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cats-stm/js/scrollSpy.js"></script><link rel="stylesheet" href="/cats-stm/css/main.css"/><script src="/cats-stm/js/codetabs.js"></script></head><body class="sideNavVisible"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cats-stm/"><img class="logo" src="/cats-stm/img/logo.png" alt="Cats STM"/><h2 class="headerTitleWithLogo">Cats STM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/cats-stm/docs/theory/intro.html" target="_self">Docs</a></li><li class=""><a href="/cats-stm/api/index.html" target="_self">API</a></li><li class=""><a href="https://github.com/TimWSpence/cats-stm" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Theory</span></h2></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Overview</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/start.html">Getting started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Theory</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/intro.html">Introduction</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/cats-stm/docs/theory/txn.html">Txn</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/tvar.html">TVar</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Data Types</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tmvar.html">TMVar</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tqueue.html">TQueue</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tsemaphore.html">TSemaphore</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Worked Examples</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/examples/santa.html">The Santa Claus Problem</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -63,7 +63,7 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@647f5125</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@1d94ee7f</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> prog: <span class="hljs-type">IO</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>)] = <span class="hljs-keyword">for</span> {
@@ -81,9 +81,9 @@
 <span class="hljs-comment">// prog: IO[(Int, Int)] = FlatMap(</span>
 <span class="hljs-comment">//   ioe = FlatMap(</span>
 <span class="hljs-comment">//     ioe = Uncancelable(</span>
-<span class="hljs-comment">//       body = cats.effect.IO$$$Lambda$10210/0x0000000802ef4040@4fa339fb</span>
+<span class="hljs-comment">//       body = cats.effect.IO$$$Lambda$10223/0x0000000802f23840@2a94859d</span>
 <span class="hljs-comment">//     ),</span>
-<span class="hljs-comment">//     f = io.github.timwspence.cats.stm.STM$$anon$1$$Lambda$10211/0x0000000802ef4840@514baf53</span>
+<span class="hljs-comment">//     f = io.github.timwspence.cats.stm.STM$$anon$1$$Lambda$10224/0x0000000802f24840@104961a6</span>
 <span class="hljs-comment">//   ),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
@@ -99,13 +99,13 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@12e106a1</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@1433aa70</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@704efbbb</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@242738be</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@663d36e7</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@76d17c60</span>
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">IO</span>[<span class="hljs-type">Unit</span>]  = stm.commit {
   <span class="hljs-keyword">for</span> {
@@ -117,9 +117,9 @@
 }
 <span class="hljs-comment">// txn: IO[Unit] = FlatMap(</span>
 <span class="hljs-comment">//   ioe = Uncancelable(</span>
-<span class="hljs-comment">//     body = cats.effect.IO$$$Lambda$10210/0x0000000802ef4040@644bfb26</span>
+<span class="hljs-comment">//     body = cats.effect.IO$$$Lambda$10223/0x0000000802f23840@4e5a9bac</span>
 <span class="hljs-comment">//   ),</span>
-<span class="hljs-comment">//   f = io.github.timwspence.cats.stm.STM$$anon$1$$Lambda$10211/0x0000000802ef4840@745c93a</span>
+<span class="hljs-comment">//   f = io.github.timwspence.cats.stm.STM$$anon$1$$Lambda$10224/0x0000000802f24840@709225eb</span>
 <span class="hljs-comment">// )</span>
 </code></pre>
 <p><code>txn.unsafeRunSync()</code> will block until the transaction succeeds (or throws an
@@ -134,13 +134,13 @@ alternative action if the first retries:</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@8c05d3b</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@ddd65e5</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@2a911943</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@69c6a517</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@997b5ea</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@6e8ec602</span>
 
 <span class="hljs-keyword">val</span> transferHundred: <span class="hljs-type">Txn</span>[<span class="hljs-type">Unit</span>] = <span class="hljs-keyword">for</span> {
   b &lt;- from.get
@@ -149,7 +149,7 @@ alternative action if the first retries:</p>
   _ &lt;- to.modify(_ + <span class="hljs-number">100</span>)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// transferHundred: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@997b5ea),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@6e8ec602),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -159,7 +159,7 @@ alternative action if the first retries:</p>
   _       &lt;- to.modify(_ + balance)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// transferRemaining: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@997b5ea),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@6e8ec602),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -171,11 +171,11 @@ alternative action if the first retries:</p>
 <span class="hljs-comment">// txn: Txn[(Int, Int)] = Bind(</span>
 <span class="hljs-comment">//   txn = OrElse(</span>
 <span class="hljs-comment">//     txn = Bind(</span>
-<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@997b5ea),</span>
+<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@6e8ec602),</span>
 <span class="hljs-comment">//       f = &lt;function1&gt;</span>
 <span class="hljs-comment">//     ),</span>
 <span class="hljs-comment">//     fallback = Bind(</span>
-<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@997b5ea),</span>
+<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@6e8ec602),</span>
 <span class="hljs-comment">//       f = &lt;function1&gt;</span>
 <span class="hljs-comment">//     )</span>
 <span class="hljs-comment">//   ),</span>
@@ -192,13 +192,13 @@ alternative action if the first retries:</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@752747f2</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@1269b2db</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@217079b7</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@6ef6155b</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@1ae03d37</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@63dc4312</span>
 
 <span class="hljs-keyword">val</span> txn  = <span class="hljs-keyword">for</span> {
   balance &lt;- from.get
@@ -210,7 +210,7 @@ alternative action if the first retries:</p>
   _ &lt;- to.modify(_ + <span class="hljs-number">100</span>)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// txn: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@1ae03d37),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@63dc4312),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -220,4 +220,4 @@ alternative action if the first retries:</p>
 <span class="hljs-comment">// )</span>
 </code></pre>
 <p>Note that aborting a transaction will not modify any of the <code>TVar</code>s involved.</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/theory/intro.html"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/cats-stm/docs/theory/tvar.html"><span>TVar</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/theory/intro">Theory</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2021 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/theory/intro.html"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/cats-stm/docs/theory/tvar.html"><span>TVar</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2021 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>

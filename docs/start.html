@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Getting started · Cats STM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="`libraryDependencies += &quot;io.github.timwspence&quot; %% &quot;cats-stm&quot; % &quot;0.10.1&quot;`"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Getting started · Cats STM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://timwspence.github.io/cats-stm//cats-stm/index.html"/><meta property="og:description" content="`libraryDependencies += &quot;io.github.timwspence&quot; %% &quot;cats-stm&quot; % &quot;0.10.1&quot;`"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://timwspence.github.io/cats-stm//cats-stm/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/cats-stm/undefined"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css"/><link rel="stylesheet" href="/cats-stm/css/custom.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/cats-stm/js/scrollSpy.js"></script><link rel="stylesheet" href="/cats-stm/css/main.css"/><script src="/cats-stm/js/codetabs.js"></script></head><body class="sideNavVisible"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/cats-stm/"><img class="logo" src="/cats-stm/img/logo.png" alt="Cats STM"/><h2 class="headerTitleWithLogo">Cats STM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/cats-stm/docs/theory/intro.html" target="_self">Docs</a></li><li class=""><a href="/cats-stm/api/index.html" target="_self">API</a></li><li class=""><a href="https://github.com/TimWSpence/cats-stm" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Overview</span></h2></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Overview</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/cats-stm/docs/start.html">Getting started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Theory</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/intro.html">Introduction</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/txn.html">Txn</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/theory/tvar.html">TVar</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Data Types</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tmvar.html">TMVar</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tqueue.html">TQueue</a></li><li class="navListItem"><a class="navItem" href="/cats-stm/docs/datatypes/tsemaphore.html">TSemaphore</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Worked Examples</h3><ul class=""><li class="navListItem"><a class="navItem" href="/cats-stm/docs/examples/santa.html">The Santa Claus Problem</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/TimWSpence/cats-stm/edit/master/docs/start.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Getting started</h1></header><article><div><span><p><code>libraryDependencies += &quot;io.github.timwspence&quot; %% &quot;cats-stm&quot; % &quot;0.10.1&quot;</code></p>
+<h3><a class="anchor" aria-hidden="true" id="defining-a-transaction"></a><a href="#defining-a-transaction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Defining a transaction</h3>
+<p>Transactions have type <code>Txn[A]</code> and are composed of operations on mutable
+<code>TVar</code> references.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">IO</span>
+<span class="hljs-keyword">import</span> io.github.timwspence.cats.stm._
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wibble</span></span>(stm: <span class="hljs-type">STM</span>[<span class="hljs-type">IO</span>])(tvar: stm.<span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>]): stm.<span class="hljs-type">Txn</span>[<span class="hljs-type">Int</span>] = {
+  <span class="hljs-keyword">for</span> {
+    current &lt;- tvar.get
+    updated = current + <span class="hljs-number">1</span>
+    _ &lt;- tvar.set(updated)
+  } <span class="hljs-keyword">yield</span> updated
+}
+</code></pre>
+<p><code>TVar</code> is effectively parameterized on an effect <code>F[_]</code>. We make the API nicer to
+work with by making it a dependent type of the STM runtime <code>STM[F]</code> (see the
+<code>stm.TVar[Int]</code> above).</p>
+<h3><a class="anchor" aria-hidden="true" id="committing-a-transaction"></a><a href="#committing-a-transaction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Committing a transaction</h3>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> run: <span class="hljs-type">IO</span>[<span class="hljs-type">Int</span>] = {
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span></span>(stm: <span class="hljs-type">STM</span>[<span class="hljs-type">IO</span>]): <span class="hljs-type">IO</span>[<span class="hljs-type">Int</span>] = {
+    <span class="hljs-keyword">import</span> stm._
+    
+    <span class="hljs-keyword">for</span> {
+      tvar &lt;- stm.commit(<span class="hljs-type">TVar</span>.of[<span class="hljs-type">Int</span>](<span class="hljs-number">0</span>))
+      res  &lt;- stm.commit(wibble(stm)(tvar))
+    } <span class="hljs-keyword">yield</span> res
+  }
+  
+  <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].flatMap(run(_))
+}
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="retrying-a-transaction"></a><a href="#retrying-a-transaction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Retrying a transaction</h3>
+<p>Retries can be introduced via the <code>check</code> combinator. If this transaction is committed
+then it will retry the commit until the predicate passed to <code>check</code> is satisfied.</p>
+<pre><code class="hljs css language-scala">
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">waitTillValueExceeds100</span></span>(tvar: <span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>]): <span class="hljs-type">IO</span>[<span class="hljs-type">Int</span>] =
+  stm.commit(
+    <span class="hljs-keyword">for</span> {
+      current &lt;- tvar.get
+      _       &lt;- stm.check(current &gt; <span class="hljs-number">100</span>)
+    } <span class="hljs-keyword">yield</span> current
+  )
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="alternatives"></a><a href="#alternatives" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Alternatives</h3>
+<p>The combinator <code>orElse</code> introduces an alternative transaction to try in the event
+that one retries.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">transferAvailableFunds</span></span>(from1: <span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>], from2: <span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>], to: <span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>]): <span class="hljs-type">IO</span>[<span class="hljs-type">Unit</span>] =
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">transferFrom</span></span>(from: <span class="hljs-type">TVar</span>[<span class="hljs-type">Int</span>]): <span class="hljs-type">Txn</span>[<span class="hljs-type">Unit</span>] =
+    <span class="hljs-keyword">for</span> {
+      current &lt;- from.get
+      _       &lt;- stm.check(current &gt; <span class="hljs-number">100</span>)
+      _       &lt;- from.modify(_ - <span class="hljs-number">100</span>)
+      _       &lt;- to.modify(_ + <span class="hljs-number">100</span>)
+    } <span class="hljs-keyword">yield</span> ()
+
+  stm.commit(
+    transferFrom(from1).orElse(transferFrom(from2))
+  )
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-next button" href="/cats-stm/docs/theory/intro.html"><span>Introduction</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2021 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
