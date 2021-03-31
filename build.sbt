@@ -1,4 +1,4 @@
-ThisBuild / baseVersion := "0.10.0"
+ThisBuild / baseVersion := "0.10"
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
