@@ -66,9 +66,8 @@ class HomeSplash extends React.Component {
           <Logo img_src={`${baseUrl}img/logo.png`} />
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={siteConfig.apiUrl}>API Docs</Button>
-            <Button href={docUrl("theory/intro", language)}>Documentation</Button>
-            <Button href={siteConfig.repoUrl}>View on GitHub</Button>
+            <Button target="_blank" href="https://scastie.scala-lang.org/tMUIAzcuTWqij1xbC9BYNA">Try It!</Button>
+            <Button href={docUrl("theory/intro", language)}>Get started</Button>
           </PromoSection>
         </div>
       </SplashContainer>
@@ -82,115 +81,60 @@ class Index extends React.Component {
     const { baseUrl } = siteConfig;
 
     const Block = props => (
-      <Container
-        padding={["bottom", "top"]}
-        id={props.id}
-        background={props.background}
-      >
-        <GridBlock
-          align="center"
-          contents={props.children}
-          layout={props.layout}
-        />
-      </Container>
+        <Container
+            padding={['bottom', 'top']}
+            id={props.id}
+            background={props.background}>
+            <GridBlock
+                align={props.align}
+                contents={props.children}
+                layout={props.layout}
+            />
+        </Container>
     );
 
-    const index = `
-[![Build Status](https://github.com/TimWSpence/cats-stm/workflows/Continuous%20Integration/badge.svg)](https://github.com/TimWSpence/cats-stm/actions?query=workflow%3A%22Continuous+Integration%22)
-[![Join the chat at https://gitter.im/cats-stm/community](https://badges.gitter.im/cats-stm/community.svg)](https://gitter.im/cats-stm/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
+    const Hook = () => (
+        <Block background="light" align="left">
+            {[
+                {
+                    content:
+                        "Cats STM is a library for writing composable in-memory transactions which will handling correct locking, optimistic concurrency and automatic retries for you.",
+                    image: `${baseUrl}img/hook.png`,
+                    imageAlign: 'right',
+                }
+            ]}
+        </Block>
+    );
 
-An implementation of Software Transactional Memory for [Cats Effect](https://typelevel.org/cats-effect/), inspired by
-[Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf).
-
-For more information, see the [documentation](https://timwspence.github.io/cats-stm/).
-
-
-### Usage
-
-\`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.10.1"\`
-
-The core abstraction is the \`TVar\` (transactional var), which exposes operations in the
-\`Txn\` monad. Once constructed, \`Txn\` actions can be atomically evaluated in the \`IO\`
-monad.
-
-Here is a contrived example of what this looks like in practice. We use the
-\`check\` combinator to retry transferring money from Tim and Steve until we have
-enough money in Tim's account:
-
-\`\`\`scala
-import scala.concurrent.duration._
-
-import cats.effect.unsafe.implicits.global
-import cats.effect.{IO, IOApp}
-
-object Main extends IOApp.Simple {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
-
-  override def run: IO[Unit] =
-    for {
-      accountForTim   <- stm.commit(TVar.of[Long](100))
-      accountForSteve <- stm.commit(TVar.of[Long](0))
-      _               <- printBalances(accountForTim, accountForSteve)
-      _               <- giveTimMoreMoney(accountForTim).start
-      _               <- transfer(accountForTim, accountForSteve)
-      _               <- printBalances(accountForTim, accountForSteve)
-    } yield ()
-
-  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
-    stm.commit {
-      for {
-        balance <- accountForTim.get
-        _       <- stm.check(balance > 100)
-        _       <- accountForTim.modify(_ - 100)
-        _       <- accountForSteve.modify(_ + 100)
-      } yield ()
-    }
-
-  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] =
-    for {
-      _ <- IO.sleep(5000.millis)
-      _ <- stm.commit(accountForTim.modify(_ + 1))
-    } yield ()
-
-  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
-    for {
-      (amountForTim, amountForSteve) <- stm.commit(for {
-        t <- accountForTim.get
-        s <- accountForSteve.get
-      } yield (t, s))
-      _ <- IO(println(s"Tim: $amountForTim"))
-      _ <- IO(println(s"Steve: $amountForSteve"))
-    } yield ()
-
-}
-\`\`\`
-
-### Documentation
-
-The documentation is built using [docusaurus](https://docusaurus.io/). You can
-generate it via \`nix-shell --run "sbt docs/docusaurusCreateSite"\` . You can then
-view it via \`nix-shell --run "cd website && npm start"\`.
-
-### Credits
-
-This software was inspired by [Beautiful Concurrency](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/beautiful.pdf) and the [stm package](http://hackage.haskell.org/package/stm).
-
-Many thanks to [@impurepics](https://twitter.com/impurepics) for the awesome logo!
-
-## Tool Sponsorship
-
-<img width="185px" height="44px" align="right" src="https://www.yourkit.com/images/yklogo.png"/>Development of Cats STM is generously supported in part by [YourKit](https://www.yourkit.com) through the use of their excellent Java profiler.
-`.trim();
+    const Feature = feature => (
+        <Block align="left">
+            {[{
+                content: feature.children,
+                image: feature.image,
+                imageAlign: feature.align,
+                title: feature.title
+            }]}
+        </Block>
+    );
 
     return (
       <div>
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
-          <div className="index">
-            <MarkdownBlock>{index}</MarkdownBlock>
-          </div>
+            <Hook />
+
+            <Feature align="left" title="Transactional and Safe" image="img/transactional.png">
+              Write `Txn` expressions in terms of mutable `TVar`s (analogous to `Ref` from Cats Effect). Run `Txn[A]` expressions transactionally to obtain an `IO[A]` (or `F[A]` for the `Async[F]` of your choice). The STM runtime will determine what locks need to be acquired and in what order to avoid deadlock.
+            </Feature>
+            <Feature align="right" title="Composable" image="img/composable.png">
+               Trivially compose transactional expressions into larger ones without explicit locking or requiring any knowledge of the internals of the subexpressions and what locks they require.
+            </Feature>
+            <Feature align="left" title="Automatic retries" image="img/retry.png">
+                Specify pre-conditions and the committing of a transaction will be automatically retried until the pre-conditions are satisifed.
+            </Feature>
+            <Feature align="right" title="Fine-grained, optimistic concurrency" image="img/optimistic.png">
+                There are no global locks and per-`TVar` locks are acquired only when a transaction has succeeded and should be committed.
+            </Feature>
         </div>
       </div>
     );
