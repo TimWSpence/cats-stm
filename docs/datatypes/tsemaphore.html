@@ -62,7 +62,7 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@3f90c09c</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@2cb18ef</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">Txn</span>[<span class="hljs-type">Long</span>] = <span class="hljs-keyword">for</span> {
@@ -75,10 +75,10 @@
 <span class="hljs-comment">//   txn = Bind(</span>
 <span class="hljs-comment">//     txn = Alloc(</span>
 <span class="hljs-comment">//       v = Delay(</span>
-<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$10171/0x0000000802e74040@72ac4401</span>
+<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$10192/0x0000000802e34c40@3c65eadc</span>
 <span class="hljs-comment">//       )</span>
 <span class="hljs-comment">//     ),</span>
-<span class="hljs-comment">//     f = scala.Function1$$Lambda$10198/0x0000000802f24840@4dd414b3</span>
+<span class="hljs-comment">//     f = scala.Function1$$Lambda$10219/0x0000000802ee4840@2baec33a</span>
 <span class="hljs-comment">//   ),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
