@@ -12,7 +12,7 @@ For more information, see the [documentation](https://timwspence.github.io/cats-
 
 ### Usage
 
-`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.10.0"`
+`libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.10.1"`
 
 The core abstraction is the `TVar` (transactional var), which exposes operations in the
 `Txn` monad. Once constructed, `Txn` actions can be atomically evaluated in the `IO`
