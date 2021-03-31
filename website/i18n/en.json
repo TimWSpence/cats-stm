@@ -17,6 +17,9 @@
       "examples/santa": {
         "title": "The Santa Claus Problem"
       },
+      "start": {
+        "title": "Getting started"
+      },
       "theory/intro": {
         "title": "Introduction"
       },
@@ -33,6 +36,7 @@
       "GitHub": "GitHub"
     },
     "categories": {
+      "Overview": "Overview",
       "Theory": "Theory",
       "Data Types": "Data Types",
       "Worked Examples": "Worked Examples"

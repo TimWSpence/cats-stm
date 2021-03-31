@@ -67,7 +67,7 @@ class HomeSplash extends React.Component {
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button target="_blank" href="https://scastie.scala-lang.org/tMUIAzcuTWqij1xbC9BYNA">Try It!</Button>
-            <Button href={docUrl("theory/intro", language)}>Get started</Button>
+            <Button href={docUrl("start", language)}>Get started</Button>
           </PromoSection>
         </div>
       </SplashContainer>
