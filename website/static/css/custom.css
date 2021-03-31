@@ -1,61 +1,31 @@
-/**
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
 /* your custom css */
 
-/**/
-/* Thanks to https://raw.githubusercontent.com/fd4s/fs2-kafka/master/website/static/css/custom.css
- */
-
-.nav-footer .copyright {
-  color: #7c7c7c;
+.homeContainer code.hljs {
+  display: inline;
 }
 
-.nav-footer .separator {
-  width: 350px;
-  margin: 0 auto;
-  margin-bottom: 10px;
-  border-top: 0;
+.homeContainer .promoRow {
+  padding: calc(1.5rem + 10px) 0;
 }
 
-.mainContainer {
-  padding-bottom: 0;
+.productShowcaseSection .disclaimer {
+  font-size: 8px;
+  margin-bottom: 1.5rem;
 }
 
-.mainContainer .index {
-  margin: 0 auto;
-  max-width: 650px;
-  padding: 0 10px;
+@media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
-.homeSplashFade .wrapper.homeWrapper {
-  padding-bottom: 0;
-  padding-top: 25px;
+@media only screen and (min-width: 1024px) {
 }
 
-.projectTitleLogo {
-  width: 45px;
-  vertical-align: top;
+@media only screen and (max-width: 1023px) {
 }
 
-.fixedHeaderContainer header img {
-  margin-right: 0;
+@media only screen and (min-width: 1400px) {
 }
 
-.buttonWrapper {
-  margin-bottom: 5px;
-}
-
-a {
-  color: #19647e;
-}
-
-.onPageNav a:hover {
-  color: #122932;
+@media only screen and (min-width: 1500px) {
 }
 
 header nav li:last-child a {
@@ -64,4 +34,11 @@ header nav li:last-child a {
   background-image: url(/cats-stm/img/github.png);
   background-size: 32px 32px;
   text-indent: -9999px;
+}
+
+.productShowcaseSection .logos img {
+  height: 40px;
+  padding-left: 40px;
+  padding-right: 40px;
+  width: auto;
 }

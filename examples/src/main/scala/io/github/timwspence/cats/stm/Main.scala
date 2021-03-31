@@ -18,15 +18,44 @@ package io.github.timwspence.cats.stm
 
 import scala.concurrent.duration._
 
-import cats.effect.unsafe.implicits.global
 import cats.effect.{IO, IOApp}
+
+// import io.github.timwspence.cats.stm._
 
 object Main extends IOApp.Simple {
 
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+  override def run: IO[Unit] = STM.runtime[IO].flatMap(run(_))
 
-  override def run: IO[Unit] =
+  def run(stm: STM[IO]): IO[Unit] = {
+    import stm._
+
+    def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+      stm.commit {
+        for {
+          balance <- accountForTim.get
+          _       <- stm.check(balance > 100)
+          _       <- accountForTim.modify(_ - 100)
+          _       <- accountForSteve.modify(_ + 100)
+        } yield ()
+      }
+
+    def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] =
+      for {
+        _ <- IO.sleep(5000.millis)
+        _ <- stm.commit(accountForTim.modify(_ + 1))
+      } yield ()
+
+    def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
+      for {
+        t <- stm.commit(for {
+          t <- accountForTim.get
+          s <- accountForSteve.get
+        } yield (t, s))
+        (amountForTim, amountForSteve) = t
+        _ <- IO(println(s"Tim: $amountForTim"))
+        _ <- IO(println(s"Steve: $amountForSteve"))
+      } yield ()
+
     for {
       accountForTim   <- stm.commit(TVar.of[Long](100))
       accountForSteve <- stm.commit(TVar.of[Long](0))
@@ -36,31 +65,6 @@ object Main extends IOApp.Simple {
       _               <- printBalances(accountForTim, accountForSteve)
     } yield ()
 
-  private def transfer(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
-    stm.commit {
-      for {
-        balance <- accountForTim.get
-        _       <- stm.check(balance > 100)
-        _       <- accountForTim.modify(_ - 100)
-        _       <- accountForSteve.modify(_ + 100)
-      } yield ()
-    }
-
-  private def giveTimMoreMoney(accountForTim: TVar[Long]): IO[Unit] =
-    for {
-      _ <- IO.sleep(5000.millis)
-      _ <- stm.commit(accountForTim.modify(_ + 1))
-    } yield ()
-
-  private def printBalances(accountForTim: TVar[Long], accountForSteve: TVar[Long]): IO[Unit] =
-    for {
-      t <- stm.commit(for {
-        t <- accountForTim.get
-        s <- accountForSteve.get
-      } yield (t, s))
-      (amountForTim, amountForSteve) = t
-      _ <- IO(println(s"Tim: $amountForTim"))
-      _ <- IO(println(s"Steve: $amountForSteve"))
-    } yield ()
+  }
 
 }
