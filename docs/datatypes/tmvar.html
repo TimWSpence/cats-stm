@@ -66,7 +66,7 @@ Writes will block if full and reads will block if empty.</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@5afbfcc9</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$$anon$1@29adce93</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">Txn</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
@@ -80,10 +80,10 @@ Writes will block if full and reads will block if empty.</p>
 <span class="hljs-comment">//   txn = Bind(</span>
 <span class="hljs-comment">//     txn = Alloc(</span>
 <span class="hljs-comment">//       v = Delay(</span>
-<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$10190/0x0000000802e74c40@26c4db1b</span>
+<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$10188/0x0000000802c80040@3e49d172</span>
 <span class="hljs-comment">//       )</span>
 <span class="hljs-comment">//     ),</span>
-<span class="hljs-comment">//     f = scala.Function1$$Lambda$10217/0x0000000802f24040@f4a49a</span>
+<span class="hljs-comment">//     f = scala.Function1$$Lambda$10215/0x0000000802ca0040@742b5404</span>
 <span class="hljs-comment">//   ),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
