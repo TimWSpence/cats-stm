@@ -47,11 +47,11 @@ addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate
 
 val CatsVersion = "2.5.0"
 val CatsEffectVersion = "3.0.0"
-val DisciplineVersion = "1.0.6"
+val DisciplineVersion = "1.1.4"
 val ScalaCheckVersion = "1.15.3"
-val MunitVersion = "0.7.22"
-val MunitCatsEffectVersion = "1.0.0"
-val ScalacheckEffectVersion = "0.7.1"
+val MunitVersion = "0.7.23"
+val MunitCatsEffectVersion = "1.0.1"
+val ScalacheckEffectVersion = "1.0.0"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
 inThisBuild(
