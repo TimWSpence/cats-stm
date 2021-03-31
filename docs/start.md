@@ -31,6 +31,8 @@ work with by making it a dependent type of the STM runtime `STM[F]` (see the
 
 ### Committing a transaction
 
+Transactions are commited via `STM[F]#commit`.
+
 ```scala
 val run: IO[Int] = {
   def run(stm: STM[IO]): IO[Int] = {
