@@ -51,8 +51,6 @@ const siteConfig = {
 
   separateCss: ["api"],
 
-  editUrl: `${repoUrl}/edit/master/docs/`,
-
   twitterUsername: 'TimWSpence',
   twitterImage: 'img/undraw_tweetstorm.svg',
 
