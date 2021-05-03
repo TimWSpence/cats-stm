@@ -48,7 +48,7 @@ addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate
 val CatsVersion = "2.6.0"
 val CatsEffectVersion = "3.1.0"
 val DisciplineVersion = "1.0.8"
-val ScalaCheckVersion = "1.15.3"
+val ScalaCheckVersion = "1.15.4"
 val MunitVersion = "0.7.25"
 val MunitCatsEffectVersion = "1.0.2"
 val ScalacheckEffectVersion = "1.0.1"
