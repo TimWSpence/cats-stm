@@ -45,13 +45,13 @@ addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean;
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
-val CatsVersion = "2.6.0"
-val CatsEffectVersion = "3.1.0"
-val DisciplineVersion = "1.0.8"
+val CatsVersion = "2.6.1"
+val CatsEffectVersion = "3.1.1"
+val DisciplineVersion = "1.1.5"
 val ScalaCheckVersion = "1.15.4"
-val MunitVersion = "0.7.25"
-val MunitCatsEffectVersion = "1.0.2"
-val ScalacheckEffectVersion = "1.0.1"
+val MunitVersion = "0.7.26"
+val MunitCatsEffectVersion = "1.0.3"
+val ScalacheckEffectVersion = "1.0.2"
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
 inThisBuild(
