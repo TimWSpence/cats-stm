@@ -15,7 +15,7 @@ val PrimaryOS = "ubuntu-latest"
 
 val Scala213 = "2.13.5"
 
-ThisBuild / crossScalaVersions := Seq("3.0.0", "2.12.13", Scala213)
+ThisBuild / crossScalaVersions := Seq("3.0.0", "2.12.14", Scala213)
 
 val LTSJava = "adopt@1.11"
 val LatestJava = "adopt@1.15"
