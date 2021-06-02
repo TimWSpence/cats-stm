@@ -57,5 +57,5 @@ jobs:
 
       - run: sbt --client '++${{ matrix.scala }}; ${{ matrix.ci }}'
 
-      - if: matrix.scala == '2.13.5' && matrix.ci == 'ciJVM'
+      - if: matrix.scala == '2.13.6' && matrix.ci == 'ciJVM'
         run: sbt --client '++${{ matrix.scala }}; docs/mdoc'
