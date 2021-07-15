@@ -65,7 +65,8 @@ inThisBuild(
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings)
   .aggregate(
-    core,
+    core.jvm,
+    core.js,
     benchmarks,
     docs,
     examples,
@@ -73,12 +74,15 @@ lazy val `cats-stm` = project.in(file("."))
   )
   .settings(noPublishSettings)
 
-lazy val core = project.in(file("core"))
+lazy val core = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("core"))
   .settings(commonSettings)
   .settings(
     name := "cats-stm",
   )
   .settings(testFrameworks += new TestFramework("munit.Framework"))
+  .jsSettings(forceJSModuleSupportInTests)
   .settings(initialCommands in console := """
     import cats._
     import cats.implicits._
@@ -96,12 +100,12 @@ lazy val laws = project.in(file("laws"))
   .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
-      "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
-      "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
+      "org.typelevel"              %%% "cats-laws"                 % CatsVersion % Test,
+      "org.typelevel"              %%% "discipline-munit"          % DisciplineVersion % Test,
+      "org.scalacheck"             %%% "scalacheck"                % ScalaCheckVersion % Test,
     )
   )
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmarks = project.in(file("benchmarks"))
@@ -109,14 +113,14 @@ lazy val benchmarks = project.in(file("benchmarks"))
   .settings(
     name := "cats-stm",
   )
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
 
 lazy val docs = project.in(file("cats-stm-docs"))
   .settings(
     moduleName := "cats-stm-docs",
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core.jvm),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
     cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
@@ -124,25 +128,25 @@ lazy val docs = project.in(file("cats-stm-docs"))
   )
   .settings(commonSettings, skipOnPublishSettings)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin)
 
 
 lazy val examples = project.in(file("examples"))
   .settings(commonSettings, skipOnPublishSettings)
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin)
 
 lazy val commonSettings = Seq(
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
   libraryDependencies ++= Seq(
-    "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
-    "org.typelevel"              %% "cats-core"                 % CatsVersion,
-    "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
-    "org.scalameta"              %% "munit"                     % MunitVersion % Test,
-    "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
-    "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
-    "org.typelevel"              %% "munit-cats-effect-3"       % MunitCatsEffectVersion % Test
+    "org.typelevel"              %%% "cats-effect"               % CatsEffectVersion,
+    "org.typelevel"              %%% "cats-core"                 % CatsVersion,
+    "org.scalacheck"             %%% "scalacheck"                % ScalaCheckVersion % Test,
+    "org.scalameta"              %%% "munit"                     % MunitVersion % Test,
+    "org.scalameta"              %%% "munit-scalacheck"          % MunitVersion % Test,
+    "org.typelevel"              %%% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
+    "org.typelevel"              %%% "munit-cats-effect-3"       % MunitCatsEffectVersion % Test
   ),
 )
 
@@ -152,4 +156,9 @@ lazy val skipOnPublishSettings = Seq(
   publishLocal := (()),
   publishArtifact := false,
   publishTo := None
+)
+
+val forceJSModuleSupportInTests = Seq(
+  // Required for munit to work, see https://github.com/scalameta/munit/issues/247
+  Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
 )
