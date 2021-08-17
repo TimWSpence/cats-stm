@@ -1,7 +1,7 @@
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.3")
 // addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.29")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.30")
 addSbtPlugin("com.codecommit" % "sbt-spiewak-sonatype" % "0.21.0")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.22")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
