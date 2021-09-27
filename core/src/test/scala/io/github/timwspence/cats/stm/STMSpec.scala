@@ -476,4 +476,26 @@ class STMSpec extends CatsEffectSuite {
 
   }
 
+  test("instantiate via Make") {
+    STM.Make[IO].runtime.flatMap { stm =>
+      import stm._
+      for {
+        from <- stm.commit(TVar.of(100))
+        to   <- stm.commit(TVar.of(0))
+        _ <- stm.commit {
+          for {
+            balance <- from.get
+            _       <- from.modify(_ - balance)
+            _       <- to.modify(_ + balance)
+          } yield ()
+        }
+        vs <- stm.commit((from.get, to.get).tupled)
+        res <- IO {
+          assertEquals(vs._1, 0)
+          assertEquals(vs._2, 100)
+        }
+      } yield res
+    }
+  }
+
 }

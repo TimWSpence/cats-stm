@@ -26,6 +26,20 @@ object STM {
 
   def apply[F[_]](implicit S: STM[F]): S.type = S
 
+  trait Make[F[_]] {
+    def runtime: F[STM[F]]
+  }
+
+  object Make {
+
+    def apply[F[_]](implicit F: Make[F]): F.type = F
+
+    implicit def asyncInstance[F[_]: Async]: Make[F] =
+      new Make[F] {
+        override def runtime: F[STM[F]] = STM.runtime[F]
+      }
+  }
+
   /*
    * Construct an STM runtime with a fairly arbitrarily chosen bound on the
    * number of concurrent transactions
