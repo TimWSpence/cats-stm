@@ -86,6 +86,8 @@ lazy val core = project.in(file("core"))
     import cats.effect.implicits._
     import cats.effect.unsafe.implicits.global
     """
+  ) .settings(
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
   )
 
 lazy val laws = project.in(file("laws"))
