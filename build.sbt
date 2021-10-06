@@ -15,7 +15,7 @@ val PrimaryOS = "ubuntu-latest"
 
 val Scala213 = "2.13.6"
 
-ThisBuild / crossScalaVersions := Seq("3.0.2", "2.12.14", Scala213)
+ThisBuild / crossScalaVersions := Seq("3.0.2", "2.12.15", Scala213)
 
 val LTSJava = "adopt@1.11"
 val LatestJava = "adopt@1.15"
@@ -52,15 +52,6 @@ val ScalaCheckVersion = "1.15.4"
 val MunitVersion = "0.7.29"
 val MunitCatsEffectVersion = "1.0.6"
 val ScalacheckEffectVersion = "1.0.3"
-
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.4.4"
-inThisBuild(
-  List(
-    scalaVersion := Scala213,
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)
 
 lazy val `cats-stm` = project.in(file("."))
   .settings(commonSettings)
