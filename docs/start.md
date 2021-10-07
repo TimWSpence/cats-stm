@@ -4,7 +4,7 @@ title:  "Getting started"
 ---
 
 ```scala
-libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.10.2"
+libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.11.0"
 ```
 
 ### Defining a transaction
