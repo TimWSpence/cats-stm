@@ -13,23 +13,20 @@ ThisBuild / developers := List(
 
 val PrimaryOS = "ubuntu-latest"
 
-val Scala213 = "2.13.6"
+val Scala213 = "2.13.7"
 
 ThisBuild / crossScalaVersions := Seq("3.1.0", "2.12.15", Scala213)
 
-val LTSJava = "adopt@1.11"
+val LTSJava    = "adopt@1.11"
 val LatestJava = "adopt@1.15"
-val GraalVM8 = "graalvm-ce-java8@20.2.0"
+val GraalVM8   = "graalvm-ce-java8@20.2.0"
 
 ThisBuild / githubWorkflowJavaVersions := Seq(LTSJava, LatestJava, GraalVM8)
 ThisBuild / githubWorkflowOSes := Seq(PrimaryOS)
 
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(List("${{ matrix.ci }}")),
-
-  WorkflowStep.Sbt(
-    List("docs/mdoc"),
-    cond = Some(s"matrix.scala == '$Scala213' && matrix.ci == 'ciJVM'")),
+  WorkflowStep.Sbt(List("docs/mdoc"), cond = Some(s"matrix.scala == '$Scala213' && matrix.ci == 'ciJVM'"))
 )
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "ci" -> List("ciJVM")
@@ -37,37 +34,38 @@ ThisBuild / githubWorkflowBuildMatrixAdditions += "ci" -> List("ciJVM")
 ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
 
 ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/TimWSpence/cats-stm"),
-    "git@github.com:TimWSpence/cats-stm.git"))
+  ScmInfo(url("https://github.com/TimWSpence/cats-stm"), "git@github.com:TimWSpence/cats-stm.git")
+)
 
 addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; core/mimaReportBinaryIssues")
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
-val CatsVersion = "2.6.1"
-val CatsEffectVersion = "3.2.9"
-val DisciplineVersion = "1.0.9"
-val ScalaCheckVersion = "1.15.4"
-val MunitVersion = "0.7.29"
-val MunitCatsEffectVersion = "1.0.6"
+val CatsVersion             = "2.6.1"
+val CatsEffectVersion       = "3.2.9"
+val DisciplineVersion       = "1.0.9"
+val ScalaCheckVersion       = "1.15.4"
+val MunitVersion            = "0.7.29"
+val MunitCatsEffectVersion  = "1.0.6"
 val ScalacheckEffectVersion = "1.0.3"
 
-lazy val `cats-stm` = project.in(file("."))
+lazy val `cats-stm` = project
+  .in(file("."))
   .settings(commonSettings)
   .aggregate(
     core,
     benchmarks,
     docs,
     examples,
-    laws,
+    laws
   )
   .settings(noPublishSettings)
 
-lazy val core = project.in(file("core"))
+lazy val core = project
+  .in(file("core"))
   .settings(commonSettings)
   .settings(
-    name := "cats-stm",
+    name := "cats-stm"
   )
   .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(initialCommands in console := """
@@ -76,52 +74,54 @@ lazy val core = project.in(file("core"))
     import cats.effect._
     import cats.effect.implicits._
     import cats.effect.unsafe.implicits.global
-    """
-  ) .settings(
+    """)
+  .settings(
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
   )
 
-lazy val laws = project.in(file("laws"))
+lazy val laws = project
+  .in(file("laws"))
   .settings(commonSettings)
   .settings(
-    name := "cats-stm",
+    name := "cats-stm"
   )
   .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"              %% "cats-laws"                 % CatsVersion % Test,
-      "org.typelevel"              %% "discipline-munit"          % DisciplineVersion % Test,
-      "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
+      "org.typelevel"  %% "cats-laws"        % CatsVersion       % Test,
+      "org.typelevel"  %% "discipline-munit" % DisciplineVersion % Test,
+      "org.scalacheck" %% "scalacheck"       % ScalaCheckVersion % Test
     )
   )
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
 
-lazy val benchmarks = project.in(file("benchmarks"))
+lazy val benchmarks = project
+  .in(file("benchmarks"))
   .settings(commonSettings)
   .settings(
-    name := "cats-stm",
+    name := "cats-stm"
   )
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
-
-lazy val docs = project.in(file("cats-stm-docs"))
+lazy val docs = project
+  .in(file("cats-stm-docs"))
   .settings(
     moduleName := "cats-stm-docs",
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
     cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value
   )
   .settings(commonSettings, skipOnPublishSettings)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
 
-
-lazy val examples = project.in(file("examples"))
+lazy val examples = project
+  .in(file("examples"))
   .settings(commonSettings, skipOnPublishSettings)
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
@@ -129,14 +129,14 @@ lazy val examples = project.in(file("examples"))
 lazy val commonSettings = Seq(
   organizationHomepage := Some(url("https://github.com/TimWSpence")),
   libraryDependencies ++= Seq(
-    "org.typelevel"              %% "cats-effect"               % CatsEffectVersion,
-    "org.typelevel"              %% "cats-core"                 % CatsVersion,
-    "org.scalacheck"             %% "scalacheck"                % ScalaCheckVersion % Test,
-    "org.scalameta"              %% "munit"                     % MunitVersion % Test,
-    "org.scalameta"              %% "munit-scalacheck"          % MunitVersion % Test,
-    "org.typelevel"              %% "scalacheck-effect-munit"   % ScalacheckEffectVersion % Test,
-    "org.typelevel"              %% "munit-cats-effect-3"       % MunitCatsEffectVersion % Test
-  ),
+    "org.typelevel"  %% "cats-effect"             % CatsEffectVersion,
+    "org.typelevel"  %% "cats-core"               % CatsVersion,
+    "org.scalacheck" %% "scalacheck"              % ScalaCheckVersion       % Test,
+    "org.scalameta"  %% "munit"                   % MunitVersion            % Test,
+    "org.scalameta"  %% "munit-scalacheck"        % MunitVersion            % Test,
+    "org.typelevel"  %% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
+    "org.typelevel"  %% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test
+  )
 )
 
 lazy val skipOnPublishSettings = Seq(
