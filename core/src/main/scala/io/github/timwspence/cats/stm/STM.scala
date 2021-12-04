@@ -114,6 +114,8 @@ object STM {
                 }
               } yield r
 
+            def newTVar[A](a: A): Txn[TVar[A]] =
+              Alloc(F.ref(a))
           }
       }
   }
