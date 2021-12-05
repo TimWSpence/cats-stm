@@ -46,7 +46,7 @@ val CatsEffectVersion       = "3.3.0"
 val DisciplineVersion       = "1.0.9"
 val ScalaCheckVersion       = "1.15.4"
 val MunitVersion            = "0.7.29"
-val MunitCatsEffectVersion  = "1.0.6"
+val MunitCatsEffectVersion  = "1.0.7"
 val ScalacheckEffectVersion = "1.0.3"
 
 lazy val `cats-stm` = project
