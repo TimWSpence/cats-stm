@@ -45,7 +45,7 @@ trait STMLike[F[_]] {
 
   def defer[A](value: => Txn[A]): Txn[A] = Txn.defer(value)
 
-  def newTVar[A](a: A): Txn[TVar[A]]
+  def concurrent: Concurrent[F]
 
   class TVar[A] private[stm] (
     private[stm] val id: TVarId,
@@ -66,7 +66,7 @@ trait STMLike[F[_]] {
 
   object TVar {
     def of[A](a: A): Txn[TVar[A]] =
-      newTVar(a)
+      Alloc(concurrent.ref(a))
   }
 
   sealed abstract class Txn[+A] {

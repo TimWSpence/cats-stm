@@ -17,7 +17,7 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.std.Semaphore
-import cats.effect.{Async, Deferred, Ref}
+import cats.effect.{Async, Concurrent, Deferred, Ref}
 import cats.implicits._
 
 trait STM[F[_]] extends STMLike[F] with TMVarLike[F] with TQueueLike[F] with TSemaphoreLike[F] {}
@@ -114,8 +114,8 @@ object STM {
                 }
               } yield r
 
-            def newTVar[A](a: A): Txn[TVar[A]] =
-              Alloc(F.ref(a))
+            def concurrent: Concurrent[F] =
+              F
           }
       }
   }
