@@ -16,6 +16,7 @@
 
 package io.github.timwspence.cats.stm
 
+import cats.{Contravariant, Functor, Invariant}
 import cats.effect.IO
 import munit.CatsEffectSuite
 
@@ -65,5 +66,22 @@ class TDeferredSpec extends CatsEffectSuite {
       _  <- assertIO(f.joinWithNever, 42)
       _  <- assertIO(ff.joinWithNever, "42")
     } yield ()
+  }
+
+  test("map/contramap") {
+    for {
+      d <- stm.commit(TDeferred[Int])
+      dSource = d.map[String](_.toString)
+      dSink   = d.contramap[String](_.toInt)
+      f <- stm.commit(dSource.get).start
+      _ <- assertIO(stm.commit(dSink.complete("42")), true)
+      _ <- assertIO(f.joinWithNever, "42")
+    } yield ()
+  }
+
+  test("instances") {
+    Invariant[TDeferred]
+    Contravariant[TDeferredSink]
+    Functor[TDeferredSource]
   }
 }

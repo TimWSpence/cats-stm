@@ -16,18 +16,48 @@
 
 package io.github.timwspence.cats.stm
 
-import cats.Invariant
+import cats.{Contravariant, Functor, Invariant}
 
 trait TDeferredLike[F[_]] extends STMLike[F] {
 
-  sealed abstract class TDeferred[A] {
-
+  sealed trait TDeferredSource[+A] { self =>
     def get: Txn[A]
-
     def tryGet: Txn[Option[A]]
+    def map[B](f: A => B): TDeferredSource[B] =
+      new TDeferredSource[B] {
+        final override def get: Txn[B] =
+          self.get.map(f)
+        final override def tryGet: Txn[Option[B]] =
+          self.tryGet.map(_.map(f))
+      }
+  }
 
+  final object TDeferredSource {
+    implicit final def functorForTDeferredSource: Functor[TDeferredSource] =
+      new Functor[TDeferredSource] {
+        final override def map[A, B](td: TDeferredSource[A])(f: A => B): TDeferredSource[B] =
+          td.map(f)
+      }
+  }
+
+  sealed trait TDeferredSink[-A] { self =>
     def complete(a: A): Txn[Boolean]
+    def contramap[B](f: B => A): TDeferredSink[B] =
+      new TDeferredSink[B] {
+        final override def complete(b: B): Txn[Boolean] =
+          self.complete(f(b))
+      }
+  }
 
+  final object TDeferredSink {
+    implicit final def contravariantForTDeferredSink: Contravariant[TDeferredSink] =
+      new Contravariant[TDeferredSink] {
+        final override def contramap[A, B](td: TDeferredSink[A])(f: B => A): TDeferredSink[B] =
+          td.contramap(f)
+      }
+  }
+
+  sealed abstract class TDeferred[A] extends TDeferredSource[A] with TDeferredSink[A] {
     def imap[B](f: A => B)(g: B => A): TDeferred[B] =
       new TDeferred.MappedTDeferred[A, B](this)(f)(g)
   }
@@ -45,16 +75,16 @@ trait TDeferredLike[F[_]] extends STMLike[F] {
 
     final private class TDeferredImpl[A](repr: TVar[Option[A]]) extends TDeferred[A] {
 
-      final def get: Txn[A] =
+      final override def get: Txn[A] =
         repr.get.flatMap {
           case Some(a) => pure(a)
           case None    => retry
         }
 
-      final def tryGet: Txn[Option[A]] =
+      final override def tryGet: Txn[Option[A]] =
         repr.get
 
-      final def complete(a: A): Txn[Boolean] =
+      final override def complete(a: A): Txn[Boolean] =
         repr.get.flatMap {
           case Some(_) => pure(false)
           case None    => repr.set(Some(a)).as(true)
