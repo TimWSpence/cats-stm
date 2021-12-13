@@ -16,6 +16,8 @@
 
 package io.github.timwspence.cats.stm
 
+import cats.Invariant
+
 trait TDeferredLike[F[_]] extends STMLike[F] {
 
   sealed abstract class TDeferred[A] {
@@ -34,6 +36,12 @@ trait TDeferredLike[F[_]] extends STMLike[F] {
 
     final def apply[A]: Txn[TDeferred[A]] =
       TVar.of[Option[A]](None).map(new TDeferredImpl(_))
+
+    implicit final def invariantForTDeferred: Invariant[TDeferred] =
+      new Invariant[TDeferred] {
+        final override def imap[A, B](td: TDeferred[A])(f: A => B)(g: B => A): TDeferred[B] =
+          td.imap(f)(g)
+      }
 
     final private class TDeferredImpl[A](repr: TVar[Option[A]]) extends TDeferred[A] {
 
