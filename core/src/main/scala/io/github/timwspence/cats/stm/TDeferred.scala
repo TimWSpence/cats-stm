@@ -18,26 +18,51 @@ package io.github.timwspence.cats.stm
 
 trait TDeferredLike[F[_]] extends STMLike[F] {
 
-  final class TDeferred[A] private (repr: TVar[Option[A]]) {
+  sealed abstract class TDeferred[A] {
 
-    final def get: Txn[A] =
-      repr.get.flatMap {
-        case Some(a) => pure(a)
-        case None    => retry
-      }
+    def get: Txn[A]
 
-    final def tryGet: Txn[Option[A]] =
-      repr.get
+    def tryGet: Txn[Option[A]]
 
-    final def complete(a: A): Txn[Boolean] =
-      repr.get.flatMap {
-        case Some(_) => pure(false)
-        case None    => repr.set(Some(a)).as(true)
-      }
+    def complete(a: A): Txn[Boolean]
+
+    def imap[B](f: A => B)(g: B => A): TDeferred[B] =
+      new TDeferred.MappedTDeferred[A, B](this)(f)(g)
   }
 
   final object TDeferred {
+
     final def apply[A]: Txn[TDeferred[A]] =
-      TVar.of[Option[A]](None).map(new TDeferred(_))
+      TVar.of[Option[A]](None).map(new TDeferredImpl(_))
+
+    final private class TDeferredImpl[A](repr: TVar[Option[A]]) extends TDeferred[A] {
+
+      final def get: Txn[A] =
+        repr.get.flatMap {
+          case Some(a) => pure(a)
+          case None    => retry
+        }
+
+      final def tryGet: Txn[Option[A]] =
+        repr.get
+
+      final def complete(a: A): Txn[Boolean] =
+        repr.get.flatMap {
+          case Some(_) => pure(false)
+          case None    => repr.set(Some(a)).as(true)
+        }
+    }
+
+    final private class MappedTDeferred[A, B](self: TDeferred[A])(f: A => B)(g: B => A) extends TDeferred[B] {
+
+      final override def get: Txn[B] =
+        self.get.map(f)
+
+      final override def tryGet: Txn[Option[B]] =
+        self.tryGet.map(_.map(f))
+
+      final override def complete(b: B): Txn[Boolean] =
+        self.complete(g(b))
+    }
   }
 }

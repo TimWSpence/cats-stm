@@ -54,4 +54,16 @@ class TDeferredSpec extends CatsEffectSuite {
       _ <- assertIO(f.joinWithNever, if (c1) 42 else 33)
     } yield ()
   }
+
+  test("imap") {
+    for {
+      d <- stm.commit(TDeferred[Int])
+      dd = d.imap[String](_.toString)(_.toInt)
+      f  <- stm.commit(d.get).start
+      ff <- stm.commit(dd.get).start
+      _  <- assertIO(stm.commit(dd.complete("42")), true)
+      _  <- assertIO(f.joinWithNever, 42)
+      _  <- assertIO(ff.joinWithNever, "42")
+    } yield ()
+  }
 }
