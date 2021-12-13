@@ -18,8 +18,6 @@ package io.github.timwspence.cats.stm
 
 import scala.collection.immutable.Queue
 
-import cats.effect.Concurrent
-
 /**
   * Convenience definition of a queue in the `STM` monad.
   */
@@ -81,7 +79,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
     /**
       * Create a new empty `TQueue`.
       */
-    def empty[A](implicit F: Concurrent[F]): Txn[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
+    def empty[A]: Txn[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
 
   }
 
