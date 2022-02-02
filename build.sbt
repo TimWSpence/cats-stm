@@ -1,4 +1,4 @@
-ThisBuild / baseVersion := "0.11"
+ThisBuild / baseVersion := "0.12"
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
@@ -13,7 +13,7 @@ ThisBuild / developers := List(
 
 val PrimaryOS = "ubuntu-latest"
 
-val Scala213 = "2.13.7"
+val Scala213 = "2.13.8"
 
 ThisBuild / crossScalaVersions := Seq("3.0.2", "2.12.15", Scala213)
 
@@ -42,11 +42,11 @@ addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean;
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
 
 val CatsVersion             = "2.7.0"
-val CatsEffectVersion       = "3.3.0"
+val CatsEffectVersion       = "3.3.5"
 val DisciplineVersion       = "1.0.9"
 val ScalaCheckVersion       = "1.15.4"
 val MunitVersion            = "0.7.29"
-val MunitCatsEffectVersion  = "1.0.6"
+val MunitCatsEffectVersion  = "1.0.7"
 val ScalacheckEffectVersion = "1.0.3"
 
 lazy val `cats-stm` = project
