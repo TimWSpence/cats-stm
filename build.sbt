@@ -13,7 +13,7 @@ ThisBuild / developers := List(
 
 val PrimaryOS = "ubuntu-latest"
 
-val Scala213 = "2.13.7"
+val Scala213 = "2.13.8"
 
 ThisBuild / crossScalaVersions := Seq("3.0.2", "2.12.15", Scala213)
 
