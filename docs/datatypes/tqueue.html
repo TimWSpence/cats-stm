@@ -64,7 +64,7 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@277f14b9</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@543a6d7a</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">Txn</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
@@ -78,11 +78,11 @@
 <span class="hljs-comment">//   txn = Bind(</span>
 <span class="hljs-comment">//     txn = Alloc(</span>
 <span class="hljs-comment">//       v = Delay(</span>
-<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$9607/0x0000000802c9f440@66ae5513,</span>
+<span class="hljs-comment">//         thunk = cats.effect.IO$$$Lambda$9603/0x0000000802cb0440@74df34f4,</span>
 <span class="hljs-comment">//         event = cats.effect.tracing.TracingEvent$StackTrace</span>
 <span class="hljs-comment">//       )</span>
 <span class="hljs-comment">//     ),</span>
-<span class="hljs-comment">//     f = scala.Function1$$Lambda$9646/0x0000000802d3f040@7ba87934</span>
+<span class="hljs-comment">//     f = scala.Function1$$Lambda$9648/0x0000000802d45040@13ae7865</span>
 <span class="hljs-comment">//   ),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
@@ -90,4 +90,4 @@
 <span class="hljs-keyword">val</span> result = stm.commit(txn).unsafeRunSync()
 <span class="hljs-comment">// result: String = "helloworld"</span>
 </code></pre>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/datatypes/tmvar.html"><span class="arrow-prev">← </span><span>TMVar</span></a><a class="docs-next button" href="/cats-stm/docs/datatypes/tsemaphore.html"><span>TSemaphore</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2021 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/datatypes/tmvar.html"><span class="arrow-prev">← </span><span>TMVar</span></a><a class="docs-next button" href="/cats-stm/docs/datatypes/tsemaphore.html"><span>TSemaphore</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2022 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>

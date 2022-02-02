@@ -63,7 +63,7 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@fcb90aa</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@7d366141</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> prog: <span class="hljs-type">IO</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>)] = <span class="hljs-keyword">for</span> {
@@ -81,10 +81,10 @@
 <span class="hljs-comment">// prog: IO[(Int, Int)] = FlatMap(</span>
 <span class="hljs-comment">//   ioe = FlatMap(</span>
 <span class="hljs-comment">//     ioe = Uncancelable(</span>
-<span class="hljs-comment">//       body = cats.effect.IO$$$Lambda$9654/0x0000000802d45840@2b21005,</span>
+<span class="hljs-comment">//       body = cats.effect.IO$$$Lambda$9656/0x0000000802d4b840@454410c9,</span>
 <span class="hljs-comment">//       event = cats.effect.tracing.TracingEvent$StackTrace</span>
 <span class="hljs-comment">//     ),</span>
-<span class="hljs-comment">//     f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$9655/0x0000000802d46040@51af9e39,</span>
+<span class="hljs-comment">//     f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$9657/0x0000000802d4c040@33ee213a,</span>
 <span class="hljs-comment">//     event = cats.effect.tracing.TracingEvent$StackTrace</span>
 <span class="hljs-comment">//   ),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;,</span>
@@ -102,13 +102,13 @@
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@f3790ab</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@1631a0a8</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@450b9e09</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@58c3e746</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@5b79e9ab</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@3d6476cf</span>
 
 <span class="hljs-keyword">val</span> txn: <span class="hljs-type">IO</span>[<span class="hljs-type">Unit</span>]  = stm.commit {
   <span class="hljs-keyword">for</span> {
@@ -120,10 +120,10 @@
 }
 <span class="hljs-comment">// txn: IO[Unit] = FlatMap(</span>
 <span class="hljs-comment">//   ioe = Uncancelable(</span>
-<span class="hljs-comment">//     body = cats.effect.IO$$$Lambda$9654/0x0000000802d45840@49cd8e59,</span>
+<span class="hljs-comment">//     body = cats.effect.IO$$$Lambda$9656/0x0000000802d4b840@7fc167a8,</span>
 <span class="hljs-comment">//     event = cats.effect.tracing.TracingEvent$StackTrace</span>
 <span class="hljs-comment">//   ),</span>
-<span class="hljs-comment">//   f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$9655/0x0000000802d46040@65efaf01,</span>
+<span class="hljs-comment">//   f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$9657/0x0000000802d4c040@64eebc18,</span>
 <span class="hljs-comment">//   event = cats.effect.tracing.TracingEvent$StackTrace</span>
 <span class="hljs-comment">// )</span>
 </code></pre>
@@ -139,13 +139,13 @@ alternative action if the first retries:</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@71cf36a6</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@23509e14</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@791b1822</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@3d9c46bf</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@69e64725</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@49149a83</span>
 
 <span class="hljs-keyword">val</span> transferHundred: <span class="hljs-type">Txn</span>[<span class="hljs-type">Unit</span>] = <span class="hljs-keyword">for</span> {
   b &lt;- from.get
@@ -154,7 +154,7 @@ alternative action if the first retries:</p>
   _ &lt;- to.modify(_ + <span class="hljs-number">100</span>)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// transferHundred: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@69e64725),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@49149a83),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -164,7 +164,7 @@ alternative action if the first retries:</p>
   _       &lt;- to.modify(_ + balance)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// transferRemaining: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@69e64725),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@49149a83),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -176,11 +176,11 @@ alternative action if the first retries:</p>
 <span class="hljs-comment">// txn: Txn[(Int, Int)] = Bind(</span>
 <span class="hljs-comment">//   txn = OrElse(</span>
 <span class="hljs-comment">//     txn = Bind(</span>
-<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@69e64725),</span>
+<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@49149a83),</span>
 <span class="hljs-comment">//       f = &lt;function1&gt;</span>
 <span class="hljs-comment">//     ),</span>
 <span class="hljs-comment">//     fallback = Bind(</span>
-<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@69e64725),</span>
+<span class="hljs-comment">//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@49149a83),</span>
 <span class="hljs-comment">//       f = &lt;function1&gt;</span>
 <span class="hljs-comment">//     )</span>
 <span class="hljs-comment">//   ),</span>
@@ -197,13 +197,13 @@ alternative action if the first retries:</p>
 <span class="hljs-keyword">import</span> io.github.timwspence.cats.stm.<span class="hljs-type">STM</span>
 
 <span class="hljs-keyword">val</span> stm = <span class="hljs-type">STM</span>.runtime[<span class="hljs-type">IO</span>].unsafeRunSync()
-<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@36416b3b</span>
+<span class="hljs-comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@580be1c5</span>
 <span class="hljs-keyword">import</span> stm._
 
 <span class="hljs-keyword">val</span> to   = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">1</span>)).unsafeRunSync()
-<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@3b8b48be</span>
+<span class="hljs-comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@7f0c74ee</span>
 <span class="hljs-keyword">val</span> from = stm.commit(<span class="hljs-type">TVar</span>.of(<span class="hljs-number">0</span>)).unsafeRunSync()
-<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@3cde01e8</span>
+<span class="hljs-comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@207a7c0e</span>
 
 <span class="hljs-keyword">val</span> txn  = <span class="hljs-keyword">for</span> {
   balance &lt;- from.get
@@ -215,7 +215,7 @@ alternative action if the first retries:</p>
   _ &lt;- to.modify(_ + <span class="hljs-number">100</span>)
 } <span class="hljs-keyword">yield</span> ()
 <span class="hljs-comment">// txn: Txn[Unit] = Bind(</span>
-<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@3cde01e8),</span>
+<span class="hljs-comment">//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@207a7c0e),</span>
 <span class="hljs-comment">//   f = &lt;function1&gt;</span>
 <span class="hljs-comment">// )</span>
 
@@ -225,4 +225,4 @@ alternative action if the first retries:</p>
 <span class="hljs-comment">// )</span>
 </code></pre>
 <p>Note that aborting a transaction will not modify any of the <code>TVar</code>s involved.</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/theory/intro.html"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/cats-stm/docs/theory/tvar.html"><span>TVar</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2021 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cats-stm/docs/theory/intro.html"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/cats-stm/docs/theory/tvar.html"><span>TVar</span><span class="arrow-next"> →</span></a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/cats-stm/" class="nav-home"></a><div><h5>Docs</h5><a href="/cats-stm/docs/start">Getting started</a><a href="/cats-stm/docs/examples/santa">Examples</a></div><div><h5>Community</h5><a href="https://timwspence.github.io/blog/">Blog</a><a href="https://gitter.im/cats-stm/community">Gitter</a></div><div><h5>More</h5><a class="github-button" href="https://github.com/TimWSpence/cats-stm" data-icon="octicon-star" data-count-href="/TimWSpence/cats-stm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a><div class="social"><a href="https://twitter.com/TimWSpence" class="twitter-follow-button">Follow @TimWSpence</a></div></div></section><section class="copyright">Copyright © 2018-2022 Tim Spence</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
