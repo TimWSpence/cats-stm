@@ -20,7 +20,7 @@ import cats.effect.std.Semaphore
 import cats.effect.{Async, Concurrent, Deferred, Ref}
 import cats.implicits._
 
-trait STM[F[_]] extends STMLike[F] with TMVarLike[F] with TQueueLike[F] with TSemaphoreLike[F] {}
+trait STM[F[_]] extends STMLike[F] with TDeferredLike[F] with TMVarLike[F] with TQueueLike[F] with TSemaphoreLike[F] {}
 
 object STM {
 
