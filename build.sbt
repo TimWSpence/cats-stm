@@ -33,7 +33,7 @@ val MunitVersion            = "0.7.29"
 val MunitCatsEffectVersion  = "1.0.7"
 val ScalacheckEffectVersion = "1.0.3"
 
-lazy val `cats-stm` =  tlCrossRootProject
+lazy val `cats-stm` = tlCrossRootProject
   .aggregate(
     core,
     benchmarks,
@@ -92,7 +92,7 @@ lazy val docs = project
     moduleName := "cats-stm-docs",
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
-    cleanFiles += (ScalaUnidoc / unidoc / target ).value,
+    cleanFiles += (ScalaUnidoc / unidoc / target).value,
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
