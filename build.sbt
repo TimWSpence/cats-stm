@@ -96,8 +96,8 @@ lazy val docs = project
   .settings(
     tlSiteHeliumConfig ~= { _.site.landingPage(logo = Some(Image.internal(Root / "static" / "logo.png"))) },
     tlSiteRelatedProjects := Seq(
-      "cats"        -> url("https://typelevel.org/cats/"),
-      "cats effect" -> url("https://typelevel.org/cats-effect/")
+      TypelevelProject.Cats,
+      TypelevelProject.CatsEffect
     )
   )
   .enablePlugins(TypelevelSitePlugin)
