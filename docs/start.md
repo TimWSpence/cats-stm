@@ -1,7 +1,4 @@
----
-id: start
-title:  "Getting started"
----
+# Getting started
 
 ```scala
 libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.11.0"

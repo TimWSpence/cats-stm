@@ -1,7 +1,4 @@
----
-id: tsemaphore
-title:  "TSemaphore"
----
+# TSemaphore
 
 A convenience implementation of a semaphore in the `STM` monad, built on top of
 [`TVar`](../theory/tvar.md).

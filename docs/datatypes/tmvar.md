@@ -1,7 +1,4 @@
----
-id: tmvar
-title:  "TMVar"
----
+# TMVar
 
 A convenience implementation built on top of [`TVar`](../theory/tvar.md), which provides
 similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/concurrency/mvar.html).
