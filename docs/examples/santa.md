@@ -67,13 +67,15 @@ object Group {
 
   def join(g: Group): IO[(Gate, Gate)] = stm.commit {
     for {
-      (nLeft, g1, g2) <- g.tv.get
+      value <- g.tv.get
+      (nLeft, g1, g2) = value
       _ <- stm.check(nLeft > 0)
       _ <- g.tv.set((nLeft - 1, g1, g2))
     } yield (g1, g2)
   }
   def await(g: Group): Txn[(Gate, Gate)] = for {
-    (nLeft, g1, g2) <- g.tv.get
+    value <- g.tv.get
+    (nLeft, g1, g2) = value
     _ <- stm.check(nLeft === 0)
     newG1 <- Gate.of(g.n)
     newG2 <- Gate.of(g.n)
@@ -82,7 +84,8 @@ object Group {
 }
 
 def helper1(group: Group, doTask: IO[Unit]): IO[Unit] = for {
-  (inGate, outGate) <- group.join
+  value <- group.join
+  (inGate, outGate) = value
   _ <- inGate.pass
   _ <- doTask
   _ <- outGate.pass
@@ -110,7 +113,7 @@ def reindeer(g: Group, i: Int): IO[FiberIO[Nothing]] = {
 }
 
 def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
-  def actions : NonEmptyList[Txn[IO[Unit]]] =  choices.map{
+  def actions : NonEmptyList[Txn[IO[Unit]]] =  choices.map {
     case (guard, rhs) =>  for {
       value <- guard
     } yield rhs(value)
@@ -131,8 +134,8 @@ def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
   for {
     _ <- IO(println("----------"))
     _ <- choose[(Gate, Gate)](NonEmptyList.of(
-      (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g)}),
-      (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g)})
+      (reinGroup.await, { (g: (Gate, Gate)) => run("deliver toys", g)}),
+      (elfGroup.await, { (g: (Gate, Gate)) => run("meet in study", g)})
     ))
   } yield ()
 }

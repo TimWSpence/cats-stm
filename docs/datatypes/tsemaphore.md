@@ -4,7 +4,7 @@ title:  "TSemaphore"
 ---
 
 A convenience implementation of a semaphore in the `STM` monad, built on top of
-[`TVar`](datatypes/tvar.md).
+[`TVar`](tvar.md).
 
 ```scala mdoc
 import cats.effect.IO
