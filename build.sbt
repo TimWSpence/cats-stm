@@ -21,8 +21,6 @@ ThisBuild / scmInfo := Some(
   ScmInfo(url("https://github.com/TimWSpence/cats-stm"), "git@github.com:TimWSpence/cats-stm.git")
 )
 
-ThisBuild / tlSitePublishBranch := Some("master")
-
 addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; core/mimaReportBinaryIssues")
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
