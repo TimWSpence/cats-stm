@@ -1,3 +1,7 @@
+import laika.helium.Helium
+import laika.ast.Path._
+import laika.ast.Image
+
 ThisBuild / tlBaseVersion := "0.12" // your current series x.y
 
 ThisBuild / organization := "io.github.timwspence"
@@ -90,9 +94,10 @@ lazy val docs = project
   .in(file("site"))
   .settings(commonSettings)
   .settings(
+    tlSiteHeliumConfig ~= { _.site.landingPage(logo = Some(Image.internal(Root / "static" / "logo.png"))) },
     tlSiteRelatedProjects := Seq(
-      "cats" -> url("https://typelevel.org/cats/"),
-      "cats effect" -> url("https://typelevel.org/cats-effect/"),
+      "cats"        -> url("https://typelevel.org/cats/"),
+      "cats effect" -> url("https://typelevel.org/cats-effect/")
     )
   )
   .enablePlugins(TypelevelSitePlugin)
