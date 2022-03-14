@@ -3,7 +3,7 @@ id: tmvar
 title:  "TMVar"
 ---
 
-A convenience implementation built on top of [`TVar`](theory/tvar.md), which provides
+A convenience implementation built on top of [`TVar`](datatypes/tvar.md), which provides
 similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/concurrency/mvar.html).
 
 You can think of this as a mutable memory location that may contain a value.
