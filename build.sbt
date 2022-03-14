@@ -94,7 +94,6 @@ lazy val docs = project
   .in(file("site"))
   .settings(commonSettings)
   .settings(
-    tlSiteHeliumConfig ~= { _.site.landingPage(logo = Some(Image.internal(Root / "static" / "logo.png"))) },
     tlSiteRelatedProjects := Seq(
       TypelevelProject.Cats,
       TypelevelProject.CatsEffect
