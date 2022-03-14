@@ -21,6 +21,8 @@ ThisBuild / scmInfo := Some(
   ScmInfo(url("https://github.com/TimWSpence/cats-stm"), "git@github.com:TimWSpence/cats-stm.git")
 )
 
+ThisBuild / tlSitePublishBranch := Some("master")
+
 addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; core/mimaReportBinaryIssues")
 
 addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
@@ -87,19 +89,17 @@ lazy val benchmarks = project
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
 lazy val docs = project
-  .in(file("cats-stm-docs"))
-  .settings(
-    moduleName := "cats-stm-docs",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core),
-    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
-    cleanFiles += (ScalaUnidoc / unidoc / target).value,
-    docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
-  )
+  .in(file("site"))
   .settings(commonSettings)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
+  .enablePlugins(TypelevelSitePlugin)
   .dependsOn(core)
-  .enablePlugins(NoPublishPlugin)
+
+lazy val unidoc = project
+  .in(file("unidoc"))
+  .enablePlugins(TypelevelUnidocPlugin) // also enables the ScalaUnidocPlugin
+  .settings(
+    name := "cats-stm-docs"
+  )
 
 lazy val examples = project
   .in(file("examples"))

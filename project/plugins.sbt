@@ -1,6 +1,5 @@
 addSbtPlugin("org.scalameta"      % "sbt-scalafmt"  % "2.4.6")
 addSbtPlugin("ch.epfl.scala"      % "sbt-scalafix"  % "0.9.34")
-addSbtPlugin("org.scalameta"      % "sbt-mdoc"      % "2.3.1")
-addSbtPlugin("com.github.sbt"     % "sbt-unidoc"    % "0.5.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"       % "0.4.3")
 addSbtPlugin("org.typelevel"      % "sbt-typelevel" % "0.4.6")
+addSbtPlugin("org.typelevel" % "sbt-typelevel-site" % "0.4.6")
