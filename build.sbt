@@ -89,6 +89,12 @@ lazy val benchmarks = project
 lazy val docs = project
   .in(file("site"))
   .settings(commonSettings)
+  .settings(
+    tlSiteRelatedProjects := Seq(
+      "cats" -> url("https://typelevel.org/cats/"),
+      "cats effect" -> url("https://typelevel.org/cats-effect/"),
+    )
+  )
   .enablePlugins(TypelevelSitePlugin)
   .dependsOn(core)
 

@@ -4,6 +4,10 @@
 libraryDependencies += "io.github.timwspence" %% "cats-stm" % "0.11.0"
 ```
 
+### Scastie
+
+The quickest way to try it out is via [Scastie](https://scastie.scala-lang.org/tMUIAzcuTWqij1xbC9BYNA)
+
 ### Defining a transaction
 
 Transactions have type `Txn[A]` and are composed of operations on mutable

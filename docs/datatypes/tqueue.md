@@ -1,6 +1,6 @@
 # TQueue
 
-A convenience implementation of a queue in the `STM` monad, built on top of
+A convenience implementation of a queue in the `Txn` monad, built on top of
 [`TVar`](../theory/tvar.md).
 
 ```scala mdoc
