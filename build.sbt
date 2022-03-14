@@ -94,6 +94,7 @@ lazy val docs = project
   .in(file("site"))
   .settings(commonSettings)
   .settings(
+    laikaConfig ~= { _.withRawContent },
     tlSiteRelatedProjects := Seq(
       TypelevelProject.Cats,
       TypelevelProject.CatsEffect
