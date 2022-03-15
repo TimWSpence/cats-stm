@@ -515,8 +515,6 @@ class STMSpec extends BaseSpec {
   }
 
   test("instantiate via Make") {
-    val stm = stmRuntime()
-    import stm._
     STM.Make[IO].runtime.flatMap { stm =>
       import stm._
       for {
