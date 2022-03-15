@@ -1,7 +1,3 @@
-import laika.helium.Helium
-import laika.ast.Path._
-import laika.ast.Image
-
 ThisBuild / tlBaseVersion := "0.13" // your current series x.y
 
 ThisBuild / organization := "io.github.timwspence"
@@ -13,7 +9,6 @@ ThisBuild / developers := List(
 )
 ThisBuild / startYear := Some(2017)
 
-// true by default, set to false to publish to s01.oss.sonatype.org
 ThisBuild / tlSonatypeUseLegacyHost := true
 
 val Scala213 = "2.13.8"
