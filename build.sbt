@@ -71,9 +71,6 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
 lazy val laws = project
   .in(file("laws"))
   .settings(
-    name := "cats-stm-laws"
-  )
-  .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"  %% "cats-laws"        % CatsVersion       % Test,
       "org.typelevel"  %% "discipline-munit" % DisciplineVersion % Test,
@@ -86,9 +83,6 @@ lazy val laws = project
 
 lazy val benchmarks = project
   .in(file("benchmarks"))
-  .settings(
-    name := "cats-stm-benchmarks"
-  )
   .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
