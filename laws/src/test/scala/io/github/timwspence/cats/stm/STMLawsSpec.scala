@@ -18,13 +18,9 @@ package io.github.timwspence.cats.stm
 
 import munit.{CatsEffectSuite, DisciplineSuite}
 import cats.effect.IO
-import org.scalacheck.Arbitrary
 
 class STMLawsSpec extends CatsEffectSuite with STMTests with Instances with DisciplineSuite with HasSTM {
   override val stm: STM[IO] = STM.runtime[IO].unsafeRunSync()
-  import stm._
-
-  implicitly[Arbitrary[Txn[Int]]]
 
   checkAll("stm", stmLaws[Int])
 
