@@ -20,8 +20,7 @@ import cats.effect.IO
 
 class TSemaphoreSpec extends BaseSpec {
 
-  test("Acquire decrements the number of permits") {
-    val stm = stmRuntime()
+  stmTest("Acquire decrements the number of permits") { stm =>
     import stm._
     for {
       v <- stm.commit(
@@ -35,8 +34,7 @@ class TSemaphoreSpec extends BaseSpec {
     } yield res
   }
 
-  test("Release increments the number of permits") {
-    val stm = stmRuntime()
+  stmTest("Release increments the number of permits") { stm =>
     import stm._
     for {
       v <- stm.commit(

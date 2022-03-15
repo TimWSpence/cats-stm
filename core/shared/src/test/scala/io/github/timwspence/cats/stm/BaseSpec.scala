@@ -16,16 +16,14 @@
 
 package io.github.timwspence.cats.stm
 
-import cats.effect.{IO, Resource}
+import cats.effect.IO
 import munit.CatsEffectSuite
 
 trait BaseSpec extends CatsEffectSuite {
 
-  val stmRuntime = ResourceSuiteLocalFixture(
-    "stm runtime",
-    Resource.make(STM.runtime[IO])(_ => IO.unit)
-  )
-
-  override def munitFixtures = List(stmRuntime)
+  def stmTest[A](name: String)(run: STM[IO] => IO[A])(implicit loc: munit.Location): Unit =
+    test(name) {
+      STM.runtime[IO].flatMap(run)
+    }
 
 }

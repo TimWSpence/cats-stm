@@ -20,9 +20,9 @@ import cats.effect.IO
 
 class SyntaxSpec extends BaseSpec {
 
-  test("summon stm instances") {
-    implicit val stm = stmRuntime()
-    import stm._
+  stmTest("summon stm instances") { stm =>
+    implicit val s = stm
+    import s._
     STM[IO].commit(TVar.of(1))
   }
 

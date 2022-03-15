@@ -21,8 +21,7 @@ import cats.effect.IO
 
 class TDeferredSpec extends BaseSpec {
 
-  test("complete unblocks getters") {
-    val stm = stmRuntime()
+  stmTest("complete unblocks getters") { stm =>
     import stm._
     for {
       d  <- stm.commit(TDeferred[Int])
@@ -43,8 +42,7 @@ class TDeferredSpec extends BaseSpec {
     } yield ()
   }
 
-  test("can only be completed once") {
-    val stm = stmRuntime()
+  stmTest("can only be completed once") { stm =>
     import stm._
     for {
       d   <- stm.commit(TDeferred[Int])
@@ -56,8 +54,7 @@ class TDeferredSpec extends BaseSpec {
     } yield ()
   }
 
-  test("imap") {
-    val stm = stmRuntime()
+  stmTest("imap") { stm =>
     import stm._
     for {
       d <- stm.commit(TDeferred[Int])
@@ -70,8 +67,7 @@ class TDeferredSpec extends BaseSpec {
     } yield ()
   }
 
-  test("map/contramap") {
-    val stm = stmRuntime()
+  stmTest("map/contramap") { stm =>
     import stm._
     for {
       d <- stm.commit(TDeferred[Int])
@@ -84,10 +80,11 @@ class TDeferredSpec extends BaseSpec {
   }
 
   test("instances") {
-    val stm = stmRuntime()
-    import stm._
-    Invariant[TDeferred]
-    Contravariant[TDeferredSink]
-    Functor[TDeferredSource]
+    STM.runtime[IO].map { stm =>
+      import stm._
+      Invariant[TDeferred]
+      Contravariant[TDeferredSink]
+      Functor[TDeferredSource]
+    }
   }
 }

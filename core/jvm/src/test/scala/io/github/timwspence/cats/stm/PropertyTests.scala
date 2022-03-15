@@ -31,10 +31,11 @@ import org.scalacheck.effect.PropF
   * adds the same amount to another tvar. The sum of the tvar values
   * should be invariant under the execution of all these transactions.
   */
+//TODO cross-build this for ScalaJS
 class MaintainsInvariants extends BaseSpec with ScalaCheckEffectSuite {
 
   test("Transactions maintain invariants") {
-    val stm = stmRuntime()
+    val stm = STM.runtime[IO].unsafeRunSync()
     import stm._
 
     val tvarGen: Gen[TVar[Long]] = for {
