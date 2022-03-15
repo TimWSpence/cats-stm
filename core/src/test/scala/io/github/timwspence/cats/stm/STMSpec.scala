@@ -20,19 +20,17 @@ import scala.concurrent.duration._
 
 import cats.effect.IO
 import cats.implicits._
-import munit.CatsEffectSuite
 import scala.util.Random
 
 /**
   * Basic tests for correctness in the absence of
   * (most) concurrency
   */
-class STMSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class STMSpec extends BaseSpec {
 
   test("Basic transaction is executed") {
+    val stm = stmRuntime()
+    import stm._
     for {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
@@ -52,6 +50,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("Abort primitive aborts whole transaction") {
+    val stm = stmRuntime()
+    import stm._
     for {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
@@ -71,6 +71,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("Check retries until transaction succeeds") {
+    val stm = stmRuntime()
+    import stm._
     var checkCounter = 0
 
     for {
@@ -98,6 +100,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("Check retries repeatedly") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
 
@@ -123,6 +127,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("OrElse runs second transaction if first retries") {
+    val stm = stmRuntime()
+    import stm._
     for {
       account <- stm.commit(TVar.of(100))
 
@@ -145,6 +151,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("OrElse reverts changes if retrying") {
+    val stm = stmRuntime()
+    import stm._
     for {
       account <- stm.commit(TVar.of(100))
 
@@ -166,6 +174,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("OrElse reverts changes to tvars not previously modified if retrying") {
+    val stm = stmRuntime()
+    import stm._
     for {
       account <- stm.commit(TVar.of(100))
       other   <- stm.commit(TVar.of(100))
@@ -195,6 +205,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("nested orElse") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(100))
       first = for {
@@ -222,6 +234,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("Transaction is retried if TVar in if branch is subsequently modified") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
 
@@ -255,6 +269,8 @@ class STMSpec extends CatsEffectSuite {
     *  id and hence we would only register one to retry
     */
   test("Commit is referentially transparent") {
+    val stm = stmRuntime()
+    import stm._
     for {
       flag <- stm.commit(TVar.of(false))
       tvar <- stm.commit(TVar.of(0L))
@@ -284,6 +300,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("commit is referentially transparent 2") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
       inc = stm.commit(tvar.modify(_ + 1))
@@ -293,6 +311,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("Modify is referentially transparent 2") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
       inc = tvar.modify(_ + 1)
@@ -303,6 +323,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("stack-safe construction") {
+    val stm = stmRuntime()
+    import stm._
     val iterations = 100000
     stm.commit(TVar.of(0L)).flatMap { tvar =>
       IO.pure(
@@ -314,6 +336,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("stack-safe evaluation") {
+    val stm = stmRuntime()
+    import stm._
     val iterations = 100000
 
     for {
@@ -331,6 +355,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("race retrying fiber and fiber which unblocks it") {
+    val stm = stmRuntime()
+    import stm._
     val iterations = 100
 
     List.range(0, iterations).traverse { _ =>
@@ -352,6 +378,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("lots of contention and retrying") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
       fs <- Random.shuffle(List.range(0, 100)).parTraverse { n =>
@@ -372,6 +400,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("unblock all transactions") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar1 <- stm.commit(TVar.of(0))
       tvar2 <- stm.commit(TVar.of(0))
@@ -407,6 +437,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("loop retry and completion") {
+    val stm = stmRuntime()
+    import stm._
     val iterations = 10
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -433,6 +465,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("handle error") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
       _ <- stm.commit(
@@ -449,6 +483,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("handle nested errors") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
       txn = tvar.set(1) >> (
@@ -464,6 +500,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("handle nested retries") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
       txn = tvar.set(1) >> (
@@ -477,6 +515,8 @@ class STMSpec extends CatsEffectSuite {
   }
 
   test("instantiate via Make") {
+    val stm = stmRuntime()
+    import stm._
     STM.Make[IO].runtime.flatMap { stm =>
       import stm._
       for {

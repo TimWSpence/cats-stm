@@ -18,14 +18,12 @@ package io.github.timwspence.cats.stm
 
 import cats.{Contravariant, Functor, Invariant}
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class TDeferredSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TDeferredSpec extends BaseSpec {
 
   test("complete unblocks getters") {
+    val stm = stmRuntime()
+    import stm._
     for {
       d  <- stm.commit(TDeferred[Int])
       v  <- stm.commit(TVar.of(0))
@@ -46,6 +44,8 @@ class TDeferredSpec extends CatsEffectSuite {
   }
 
   test("can only be completed once") {
+    val stm = stmRuntime()
+    import stm._
     for {
       d   <- stm.commit(TDeferred[Int])
       f   <- stm.commit(d.get).start
@@ -57,6 +57,8 @@ class TDeferredSpec extends CatsEffectSuite {
   }
 
   test("imap") {
+    val stm = stmRuntime()
+    import stm._
     for {
       d <- stm.commit(TDeferred[Int])
       dd = d.imap[String](_.toString)(_.toInt)
@@ -69,6 +71,8 @@ class TDeferredSpec extends CatsEffectSuite {
   }
 
   test("map/contramap") {
+    val stm = stmRuntime()
+    import stm._
     for {
       d <- stm.commit(TDeferred[Int])
       dSource = d.map[String](_.toString)
@@ -80,6 +84,8 @@ class TDeferredSpec extends CatsEffectSuite {
   }
 
   test("instances") {
+    val stm = stmRuntime()
+    import stm._
     Invariant[TDeferred]
     Contravariant[TDeferredSink]
     Functor[TDeferredSource]

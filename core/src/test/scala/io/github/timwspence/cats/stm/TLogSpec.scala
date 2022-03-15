@@ -17,16 +17,14 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class TLogSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TLogSpec extends BaseSpec {
 
   val inc: Int => Int = _ + 1
 
   test("getF when not present") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
@@ -38,6 +36,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("get when present") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
@@ -50,6 +50,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("isDirty when empty") {
+    val stm = stmRuntime()
+    import stm._
     val tlog = TLog.empty
     for {
       v   <- tlog.isDirty
@@ -58,6 +60,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("isDirty when non-empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
@@ -68,6 +72,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("isDirty when non-empty and dirty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
@@ -79,6 +85,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("commit") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
@@ -92,6 +100,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("snapshot") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar  <- stm.commit(TVar.of[Any](1))
       tvar2 <- stm.commit(TVar.of[Any](2))
@@ -108,6 +118,8 @@ class TLogSpec extends CatsEffectSuite {
   }
 
   test("delta") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar  <- stm.commit(TVar.of[Any](1))
       tvar2 <- stm.commit(TVar.of[Any](2))

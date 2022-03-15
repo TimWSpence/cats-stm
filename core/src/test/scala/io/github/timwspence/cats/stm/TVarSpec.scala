@@ -20,14 +20,12 @@ import scala.concurrent.duration._
 
 import cats.implicits._
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class TVarTest extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TVarSpec extends BaseSpec {
 
   test("Get returns current value") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tvar  <- TVar.of("hello")
@@ -38,6 +36,8 @@ class TVarTest extends CatsEffectSuite {
   }
 
   test("Set changes current value") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {
@@ -51,6 +51,8 @@ class TVarTest extends CatsEffectSuite {
   }
 
   test("Modify changes current value") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tvar  <- TVar.of("hello")
@@ -62,6 +64,8 @@ class TVarTest extends CatsEffectSuite {
   }
 
   test("Transaction is registered for retry") {
+    val stm = stmRuntime()
+    import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
       fiber <-
@@ -79,6 +83,8 @@ class TVarTest extends CatsEffectSuite {
   }
 
   test("TVar.of is referentially transparent") {
+    val stm = stmRuntime()
+    import stm._
     val t: Txn[TVar[Int]] = TVar.of(0)
 
     for {

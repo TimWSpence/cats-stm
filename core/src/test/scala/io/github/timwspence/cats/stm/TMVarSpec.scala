@@ -17,14 +17,12 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class TMVarSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TMVarSpec extends BaseSpec {
 
   test("Read returns current value when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.of("hello")
@@ -35,6 +33,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("Read does not modify value when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.of("hello")
@@ -46,6 +46,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("Take returns current value when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.of("hello")
@@ -56,6 +58,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("Take empties tmvar when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.of("hello")
@@ -67,6 +71,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("Put stores a value when empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.empty[String]
@@ -78,6 +84,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("TryPut returns true when empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar  <- TMVar.empty[String]
@@ -88,6 +96,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("TryPut returns false when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {
@@ -101,6 +111,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("IsEmpty is false when not empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.of("world")
@@ -111,6 +123,8 @@ class TMVarSpec extends CatsEffectSuite {
   }
 
   test("IsEmpty is true when empty") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tmvar <- TMVar.empty[String]
