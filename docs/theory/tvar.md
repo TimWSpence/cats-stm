@@ -1,7 +1,4 @@
----
-id: tvar
-title:  "TVar"
----
+# TVar
 
 A `TVar` (transactional variable) is a mutable memory location that can be be
 read and modified via `Txn` actions.

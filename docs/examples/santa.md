@@ -1,7 +1,4 @@
----
-id: santa
-title:  "The Santa Claus Problem"
----
+# The Santa Claus Problem
 
 > Santa repeatedly sleeps until wakened by either all of his nine rein-deer, back from their holidays, or by a group of three of his ten elves. If awakened by the reindeer, he harnesses each of them to his sleigh, delivers toys with them and finally unharnesses them (allowing them to go off on holiday). If awakened by a group of elves, he shows each of the group into his study, consults with them on toy R&D and finally shows them each out (allowing them to go back to work). Santa should give priority to the reindeer in the case that there is both a group of elves and a group of reindeer waiting.
 
@@ -67,13 +64,15 @@ object Group {
 
   def join(g: Group): IO[(Gate, Gate)] = stm.commit {
     for {
-      (nLeft, g1, g2) <- g.tv.get
+      value <- g.tv.get
+      (nLeft, g1, g2) = value
       _ <- stm.check(nLeft > 0)
       _ <- g.tv.set((nLeft - 1, g1, g2))
     } yield (g1, g2)
   }
   def await(g: Group): Txn[(Gate, Gate)] = for {
-    (nLeft, g1, g2) <- g.tv.get
+    value <- g.tv.get
+    (nLeft, g1, g2) = value
     _ <- stm.check(nLeft === 0)
     newG1 <- Gate.of(g.n)
     newG2 <- Gate.of(g.n)
@@ -82,7 +81,8 @@ object Group {
 }
 
 def helper1(group: Group, doTask: IO[Unit]): IO[Unit] = for {
-  (inGate, outGate) <- group.join
+  value <- group.join
+  (inGate, outGate) = value
   _ <- inGate.pass
   _ <- doTask
   _ <- outGate.pass
@@ -110,7 +110,7 @@ def reindeer(g: Group, i: Int): IO[FiberIO[Nothing]] = {
 }
 
 def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
-  def actions : NonEmptyList[Txn[IO[Unit]]] =  choices.map{
+  def actions : NonEmptyList[Txn[IO[Unit]]] =  choices.map {
     case (guard, rhs) =>  for {
       value <- guard
     } yield rhs(value)
@@ -131,8 +131,8 @@ def santa(elfGroup: Group, reinGroup: Group): IO[Unit] = {
   for {
     _ <- IO(println("----------"))
     _ <- choose[(Gate, Gate)](NonEmptyList.of(
-      (reinGroup.await, { g: (Gate, Gate) => run("deliver toys", g)}),
-      (elfGroup.await, { g: (Gate, Gate) => run("meet in study", g)})
+      (reinGroup.await, { (g: (Gate, Gate)) => run("deliver toys", g)}),
+      (elfGroup.await, { (g: (Gate, Gate)) => run("meet in study", g)})
     ))
   } yield ()
 }

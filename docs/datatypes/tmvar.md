@@ -1,10 +1,6 @@
----
-id: tmvar
-title:  "TMVar"
----
+# TMVar
 
-A convenience implementation built on top of [`TVar`](theory/tvar.md), which provides
-similar semantics to Cats Effect [`MVar`](https://typelevel.org/cats-effect/concurrency/mvar.html).
+A convenience implementation in the `Txn` monad, built on top of [`TVar`](../theory/tvar.md).
 
 You can think of this as a mutable memory location that may contain a value.
 Writes will block if full and reads will block if empty.

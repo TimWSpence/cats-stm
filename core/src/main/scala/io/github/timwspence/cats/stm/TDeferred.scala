@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 TimWSpence
+ * Copyright 2017 TimWSpence
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ trait TDeferredLike[F[_]] extends STMLike[F] {
       }
   }
 
-  final object TDeferredSource {
+  object TDeferredSource {
     implicit final def functorForTDeferredSource: Functor[TDeferredSource] =
       new Functor[TDeferredSource] {
         final override def map[A, B](td: TDeferredSource[A])(f: A => B): TDeferredSource[B] =
@@ -49,7 +49,7 @@ trait TDeferredLike[F[_]] extends STMLike[F] {
       }
   }
 
-  final object TDeferredSink {
+  object TDeferredSink {
     implicit final def contravariantForTDeferredSink: Contravariant[TDeferredSink] =
       new Contravariant[TDeferredSink] {
         final override def contramap[A, B](td: TDeferredSink[A])(f: B => A): TDeferredSink[B] =
@@ -62,7 +62,7 @@ trait TDeferredLike[F[_]] extends STMLike[F] {
       new TDeferred.MappedTDeferred[A, B](this)(f)(g)
   }
 
-  final object TDeferred {
+  object TDeferred {
 
     final def apply[A]: Txn[TDeferred[A]] =
       TVar.of[Option[A]](None).map(new TDeferredImpl(_))

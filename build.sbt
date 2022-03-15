@@ -1,35 +1,23 @@
-ThisBuild / baseVersion := "0.12"
+import laika.helium.Helium
+import laika.ast.Path._
+import laika.ast.Image
+
+ThisBuild / tlBaseVersion := "0.12" // your current series x.y
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
-ThisBuild / startYear := Some(2017)
-ThisBuild / endYear := Some(2021)
-publishGithubUser in ThisBuild := "TimWSpence"
-publishFullName in ThisBuild := "Tim Spence"
-
+ThisBuild / licenses := Seq(License.Apache2)
 ThisBuild / developers := List(
-  Developer("TimWSpence", "Tim Spence", "@TimWSpence", url("https://github.com/TimWSpence"))
+  tlGitHubDev("TimWSpence", "Tim Spence")
 )
+ThisBuild / startYear := Some(2017)
 
-val PrimaryOS = "ubuntu-latest"
+// true by default, set to false to publish to s01.oss.sonatype.org
+ThisBuild / tlSonatypeUseLegacyHost := true
 
 val Scala213 = "2.13.8"
-
-ThisBuild / crossScalaVersions := Seq("3.0.2", "2.12.15", Scala213)
-
-val LTSJava    = "adopt@1.11"
-val LatestJava = "adopt@1.15"
-val GraalVM8   = "graalvm-ce-java8@20.2.0"
-
-ThisBuild / githubWorkflowJavaVersions := Seq(LTSJava, LatestJava, GraalVM8)
-ThisBuild / githubWorkflowOSes := Seq(PrimaryOS)
-
-ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Sbt(List("${{ matrix.ci }}")),
-  WorkflowStep.Sbt(List("docs/mdoc"), cond = Some(s"matrix.scala == '$Scala213' && matrix.ci == 'ciJVM'"))
-)
-
-ThisBuild / githubWorkflowBuildMatrixAdditions += "ci" -> List("ciJVM")
+ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.0.2")
+ThisBuild / scalaVersion := Scala213 // the default Scala
 
 ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
 
@@ -49,9 +37,7 @@ val MunitVersion            = "0.7.29"
 val MunitCatsEffectVersion  = "1.0.7"
 val ScalacheckEffectVersion = "1.0.3"
 
-lazy val `cats-stm` = project
-  .in(file("."))
-  .settings(commonSettings)
+lazy val `cats-stm` = tlCrossRootProject
   .aggregate(
     core,
     benchmarks,
@@ -59,7 +45,6 @@ lazy val `cats-stm` = project
     examples,
     laws
   )
-  .settings(noPublishSettings)
 
 lazy val core = project
   .in(file("core"))
@@ -68,7 +53,7 @@ lazy val core = project
     name := "cats-stm"
   )
   .settings(testFrameworks += new TestFramework("munit.Framework"))
-  .settings(initialCommands in console := """
+  .settings(console / initialCommands := """
     import cats._
     import cats.implicits._
     import cats.effect._
@@ -106,23 +91,28 @@ lazy val benchmarks = project
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
 lazy val docs = project
-  .in(file("cats-stm-docs"))
+  .in(file("site"))
+  .settings(commonSettings)
   .settings(
-    moduleName := "cats-stm-docs",
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
-    target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
-    cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
-    docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value
+    laikaConfig ~= { _.withRawContent },
+    tlSiteRelatedProjects := Seq(
+      TypelevelProject.Cats,
+      TypelevelProject.CatsEffect
+    )
   )
-  .settings(commonSettings, skipOnPublishSettings)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
+  .enablePlugins(TypelevelSitePlugin)
   .dependsOn(core)
-  .enablePlugins(NoPublishPlugin)
+
+lazy val unidoc = project
+  .in(file("unidoc"))
+  .enablePlugins(TypelevelUnidocPlugin) // also enables the ScalaUnidocPlugin
+  .settings(
+    name := "cats-stm-docs"
+  )
 
 lazy val examples = project
   .in(file("examples"))
-  .settings(commonSettings, skipOnPublishSettings)
+  .settings(commonSettings)
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
 
@@ -137,12 +127,4 @@ lazy val commonSettings = Seq(
     "org.typelevel"  %% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
     "org.typelevel"  %% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test
   )
-)
-
-lazy val skipOnPublishSettings = Seq(
-  skip in publish := true,
-  publish := (()),
-  publishLocal := (()),
-  publishArtifact := false,
-  publishTo := None
 )
