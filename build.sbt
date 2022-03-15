@@ -25,10 +25,6 @@ ThisBuild / scmInfo := Some(
   ScmInfo(url("https://github.com/TimWSpence/cats-stm"), "git@github.com:TimWSpence/cats-stm.git")
 )
 
-addCommandAlias("ciJVM", "; project cats-stm; headerCheck; scalafmtCheck; clean; test; core/mimaReportBinaryIssues")
-
-addCommandAlias("prePR", "; project `cats-stm`; clean; scalafmtAll; headerCreate")
-
 val CatsVersion             = "2.7.0"
 val CatsEffectVersion       = "3.3.7"
 val DisciplineVersion       = "1.0.9"
@@ -52,7 +48,6 @@ lazy val core = project
   .settings(
     name := "cats-stm"
   )
-  .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(console / initialCommands := """
     import cats._
     import cats.implicits._
@@ -70,7 +65,6 @@ lazy val laws = project
   .settings(
     name := "cats-stm"
   )
-  .settings(testFrameworks += new TestFramework("munit.Framework"))
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"  %% "cats-laws"        % CatsVersion       % Test,
