@@ -20,7 +20,7 @@ import scala.util.Random
 
 import cats.effect.IO
 import cats.implicits._
-import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
+import munit.ScalaCheckEffectSuite
 import org.scalacheck._
 import org.scalacheck.effect.PropF
 
@@ -31,41 +31,40 @@ import org.scalacheck.effect.PropF
   * adds the same amount to another tvar. The sum of the tvar values
   * should be invariant under the execution of all these transactions.
   */
-class MaintainsInvariants extends CatsEffectSuite with ScalaCheckEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
-
-  val tvarGen: Gen[TVar[Long]] = for {
-    value <- Gen.posNum[Long]
-  } yield stm.commit(TVar.of(value)).unsafeRunSync()
-
-  def txnGen(count: TVar[Int]): List[TVar[Long]] => Gen[Txn[Unit]] =
-    tvars =>
-      for {
-        fromIdx <- Gen.choose(0, tvars.length - 1)
-        toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
-        txn <- for {
-          balance <- tvars(fromIdx).get
-          transfer = Math.abs(Random.nextLong()) % balance
-          _ <- tvars(fromIdx).modify(_ - transfer)
-          _ <- tvars(toIdx).modify(_ + transfer)
-        } yield ()
-        _ <- count.modify(_ + 1)
-      } yield txn
-
-  val gen: Gen[(Long, List[TVar[Long]], IO[Unit], IO[(Int, Int)])] = for {
-    tvars <- Gen.listOfN(50, tvarGen)
-    count <- Gen.const(stm.commit(TVar.of(0)).unsafeRunSync())
-    total = tvars.foldM(0L)((acc, tvar) => stm.commit(tvar.get).map(acc + _)).unsafeRunSync()
-    txns <- Gen.listOf(txnGen(count)(tvars))
-    commit  = txns.traverse(t => stm.commit(t).start)
-    run     = commit.flatMap(l => l.traverse(_.join)).void
-    numTxns = txns.length
-    c       = stm.commit(count.get).map((_, numTxns))
-  } yield (total, tvars, run, c)
+class MaintainsInvariants extends BaseSpec with ScalaCheckEffectSuite {
 
   test("Transactions maintain invariants") {
+    val stm = stmRuntime()
+    import stm._
+
+    val tvarGen: Gen[TVar[Long]] = for {
+      value <- Gen.posNum[Long]
+    } yield stm.commit(TVar.of(value)).unsafeRunSync()
+
+    def txnGen(count: TVar[Int]): List[TVar[Long]] => Gen[Txn[Unit]] =
+      tvars =>
+        for {
+          fromIdx <- Gen.choose(0, tvars.length - 1)
+          toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
+          txn <- for {
+            balance <- tvars(fromIdx).get
+            transfer = Math.abs(Random.nextLong()) % balance
+            _ <- tvars(fromIdx).modify(_ - transfer)
+            _ <- tvars(toIdx).modify(_ + transfer)
+          } yield ()
+          _ <- count.modify(_ + 1)
+        } yield txn
+
+    val gen: Gen[(Long, List[TVar[Long]], IO[Unit], IO[(Int, Int)])] = for {
+      tvars <- Gen.listOfN(50, tvarGen)
+      count <- Gen.const(stm.commit(TVar.of(0)).unsafeRunSync())
+      total = tvars.foldM(0L)((acc, tvar) => stm.commit(tvar.get).map(acc + _)).unsafeRunSync()
+      txns <- Gen.listOf(txnGen(count)(tvars))
+      commit  = txns.traverse(t => stm.commit(t).start)
+      run     = commit.flatMap(l => l.traverse(_.join)).void
+      numTxns = txns.length
+      c       = stm.commit(count.get).map((_, numTxns))
+    } yield (total, tvars, run, c)
     PropF
       .forAllF(gen) { g =>
         val total = g._1

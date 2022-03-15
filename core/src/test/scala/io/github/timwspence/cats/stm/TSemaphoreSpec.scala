@@ -17,14 +17,12 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class TSemaphoreSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TSemaphoreSpec extends BaseSpec {
 
   test("Acquire decrements the number of permits") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {
@@ -38,6 +36,8 @@ class TSemaphoreSpec extends CatsEffectSuite {
   }
 
   test("Release increments the number of permits") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {

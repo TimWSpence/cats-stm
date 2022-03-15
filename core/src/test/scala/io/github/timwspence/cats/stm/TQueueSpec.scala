@@ -18,14 +18,12 @@ package io.github.timwspence.cats.stm
 
 import cats.effect.IO
 import cats.implicits._
-import munit.CatsEffectSuite
 
-class TQueueSpec extends CatsEffectSuite {
-
-  val stm = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class TQueueSpec extends BaseSpec {
 
   test("Read removes the first element") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(for {
         tqueue <- TQueue.empty[String]
@@ -41,6 +39,8 @@ class TQueueSpec extends CatsEffectSuite {
   }
 
   test("Peek does not remove the first element") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {
@@ -59,6 +59,8 @@ class TQueueSpec extends CatsEffectSuite {
   }
 
   test("TQueue is FIFO") {
+    val stm = stmRuntime()
+    import stm._
     for {
       v <- stm.commit(
         for {

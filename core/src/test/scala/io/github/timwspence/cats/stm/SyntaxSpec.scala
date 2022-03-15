@@ -17,14 +17,12 @@
 package io.github.timwspence.cats.stm
 
 import cats.effect.IO
-import munit.CatsEffectSuite
 
-class SyntaxSpec extends CatsEffectSuite {
-
-  implicit val stm: STM[IO] = STM.runtime[IO].unsafeRunSync()
-  import stm._
+class SyntaxSpec extends BaseSpec {
 
   test("summon stm instances") {
+    implicit val stm = stmRuntime()
+    import stm._
     STM[IO].commit(TVar.of(1))
   }
 

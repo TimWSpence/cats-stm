@@ -16,12 +16,16 @@
 
 package io.github.timwspence.cats.stm
 
-import munit.{CatsEffectSuite, DisciplineSuite}
-import cats.effect.IO
+import cats.effect.{IO, Resource}
+import munit.CatsEffectSuite
 
-class STMLawsSpec extends CatsEffectSuite with STMTests with Instances with DisciplineSuite with HasSTM {
-  override val stm: STM[IO] = STM.runtime[IO].unsafeRunSync()
+trait BaseSpec extends CatsEffectSuite {
 
-  checkAll("stm", stmLaws[Int])
+  val stmRuntime = ResourceSuiteLocalFixture(
+    "stm runtime",
+    Resource.make(STM.runtime[IO])(_ => IO.unit)
+  )
+
+  override def munitFixtures = List(stmRuntime)
 
 }
