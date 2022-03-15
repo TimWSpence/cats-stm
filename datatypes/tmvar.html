@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Laika 0.18.1 + Helium Theme" />
-    <title>Cats STM</title>
+    <title>TMVar</title>
     
       <meta name="author" content="Tim Spence"/>
     
@@ -20,10 +20,10 @@
     
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.207/distr/fira_code.css">
     
-    <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
-    <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
-    <link rel="stylesheet" type="text/css" href="site/styles.css" />
-    <script src="helium/laika-helium.js"></script>
+    <link rel="stylesheet" type="text/css" href="../helium/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../helium/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../site/styles.css" />
+    <script src="../helium/laika-helium.js"></script>
     
     
     <script> /* for avoiding page load transitions */ </script>
@@ -69,18 +69,18 @@
       </div>
 
       <ul class="nav-list">
-        <li class="level1 active"><a href="#">Cats STM</a></li>
-        <li class="level1"><a href="start.html">Getting started</a></li>
+        <li class="level1"><a href="../index.html">Cats STM</a></li>
+        <li class="level1"><a href="../start.html">Getting started</a></li>
         <li class="level1 nav-header">theory</li>
-        <li class="level2"><a href="theory/intro.html">Introduction</a></li>
-        <li class="level2"><a href="theory/txn.html">Txn</a></li>
-        <li class="level2"><a href="theory/tvar.html">TVar</a></li>
+        <li class="level2"><a href="../theory/intro.html">Introduction</a></li>
+        <li class="level2"><a href="../theory/txn.html">Txn</a></li>
+        <li class="level2"><a href="../theory/tvar.html">TVar</a></li>
         <li class="level1 nav-header">datatypes</li>
-        <li class="level2"><a href="datatypes/tmvar.html">TMVar</a></li>
-        <li class="level2"><a href="datatypes/tsemaphore.html">TSemaphore</a></li>
-        <li class="level2"><a href="datatypes/tqueue.html">TQueue</a></li>
+        <li class="level2 active"><a href="#">TMVar</a></li>
+        <li class="level2"><a href="tsemaphore.html">TSemaphore</a></li>
+        <li class="level2"><a href="tqueue.html">TQueue</a></li>
         <li class="level1 nav-header">examples</li>
-        <li class="level2"><a href="examples/santa.html">The Santa Claus Problem</a></li>
+        <li class="level2"><a href="../examples/santa.html">The Santa Claus Problem</a></li>
       </ul>
 
       <ul class="nav-list">
@@ -97,13 +97,9 @@
     <div id="container">
 
       <nav id="page-nav">
-        <p class="header"><a href="#">Cats STM</a></p>
+        <p class="header"><a href="#">TMVar</a></p>
 
         <ul class="nav-list">
-          <li class="level1"><a href="#transactional-and-safe">Transactional and Safe</a></li>
-          <li class="level1"><a href="#composable">Composable</a></li>
-          <li class="level1"><a href="#automatic-retries">Automatic retries</a></li>
-          <li class="level1"><a href="#fine-grained-optimistic-concurrency">Fine-grained, optimistic concurrency</a></li>
         </ul>
 
         <p class="footer"></p>
@@ -111,23 +107,43 @@
 
       <main class="content">
 
-        <img align="right" src="static/logo.png" height="200px" style="padding-left: 20px"/>
-        <h1 id="cats-stm" class="title">Cats STM</h1>
-        <p><a href="https://github.com/TimWSpence/cats-stm/actions?query=workflow%3A%22Continuous+Integration%22"><img src="https://github.com/TimWSpence/cats-stm/workflows/Continuous%20Integration/badge.svg" alt="Build Status"></a>
-        <a href="https://scala-steward.org"><img src="https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=" alt="Scala Steward badge"></a><a href="https://maven-badges.herokuapp.com/maven-central/io.github.timwspence/cats-stm_2.13"><img src="https://img.shields.io/maven-central/v/io.github.timwspence/cats-stm_2.13.svg" alt="Maven Central"></a></p>
-        <p>Cats STM is a library for writing composable in-memory transactions which will handling correct locking, optimistic concurrency and automatic retries for you. It is intended as a safe, composable alternative to locks and semaphores that also allows a higher level of concurrency.</p>
-        
-        <h3 id="transactional-and-safe" class="section">Transactional and Safe<a class="anchor-link right" href="#transactional-and-safe"><i class="icofont-laika">&#xef71;</i></a></h3>
-        <p>Write <code>Txn</code> expressions in terms of mutable <code>TVar</code>s (analogous to Ref from Cats Effect). Run <code>Txn[A]</code> expressions transactionally to obtain an <code>IO[A]</code> (or <code>F[A]</code> for the <code>Async[F]</code> of your choice). The <code>STM</code> runtime will determine what locks need to be acquired and in what order to avoid deadlock.</p>
-        
-        <h3 id="composable" class="section">Composable<a class="anchor-link right" href="#composable"><i class="icofont-laika">&#xef71;</i></a></h3>
-        <p>Trivially compose transactional expressions into larger ones without explicit locking or requiring any knowledge of the internals of the subexpressions and what locks they require.</p>
-        
-        <h3 id="automatic-retries" class="section">Automatic retries<a class="anchor-link right" href="#automatic-retries"><i class="icofont-laika">&#xef71;</i></a></h3>
-        <p>Specify pre-conditions and the committing of a transaction will be automatically retried until the pre-conditions are satisifed.</p>
-        
-        <h3 id="fine-grained-optimistic-concurrency" class="section">Fine-grained, optimistic concurrency<a class="anchor-link right" href="#fine-grained-optimistic-concurrency"><i class="icofont-laika">&#xef71;</i></a></h3>
-        <p>There are no global locks and per-<code>TVar</code> locks are acquired only when a transaction has succeeded and should be committed.</p>
+        <h1 id="tmvar" class="title">TMVar</h1>
+        <p>A convenience implementation in the <code>Txn</code> monad, built on top of <a href="../theory/tvar.html"><code>TVar</code></a>.</p>
+        <p>You can think of this as a mutable memory location that may contain a value.
+        Writes will block if full and reads will block if empty.</p>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">global</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">semigroup</span><span>.</span><span class="identifier">_</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">instances</span><span>.</span><span class="identifier">string</span><span>.</span><span class="identifier">_</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@691bf1f6
+</span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">txn</span><span>: </span><span class="type-name">Txn</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">tmvar</span><span>     &lt;- </span><span class="type-name">TMVar</span><span>.</span><span class="identifier">empty</span><span>[</span><span class="type-name">String</span><span>]
+  </span><span class="identifier">_</span><span>         &lt;- </span><span class="identifier">tmvar</span><span>.</span><span class="identifier">put</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)   </span><span class="comment">//Would block if full
+</span><span>  </span><span class="identifier">hello</span><span>     &lt;- </span><span class="identifier">tmvar</span><span>.</span><span class="identifier">take</span><span>           </span><span class="comment">//Would block if empty
+</span><span>  </span><span class="identifier">_</span><span>         &lt;- </span><span class="identifier">tmvar</span><span>.</span><span class="identifier">put</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)   </span><span class="comment">//Would block if full
+</span><span>  </span><span class="identifier">world</span><span>     &lt;- </span><span class="identifier">tmvar</span><span>.</span><span class="identifier">read</span><span>           </span><span class="comment">//Would block if empty.
+</span><span>} </span><span class="keyword">yield</span><span> </span><span class="identifier">hello</span><span> |+| </span><span class="identifier">world</span><span>
+</span><span class="comment">// txn: Txn[String] = Bind(
+//   txn = Bind(
+//     txn = Alloc(
+//       v = Delay(
+//         thunk = cats.effect.IO$$$Lambda$10967/1245554313@3814fde5,
+//         event = cats.effect.tracing.TracingEvent$StackTrace
+//       )
+//     ),
+//     f = scala.Function1$$Lambda$11013/655301713@b22014f
+//   ),
+//   f = &lt;function1&gt;
+// )
+</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">txn</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+</span><span class="comment">// result: String = &quot;Helloworld&quot;</span></code></pre>
 
         <hr style="margin-top: 30px"/>
         <footer style="font-size: 90%; text-align: center">
