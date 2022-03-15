@@ -8,7 +8,7 @@ Cats STM is a library for writing composable in-memory transactions which will h
 
 ### Transactional and Safe
 
-Write Txn expressions in terms of mutable TVars (analogous to Ref from Cats Effect). Run `Txn[A]` expressions transactionally to obtain an `IO[A]` (or `F[A]` for the `Async[F]` of your choice). The `STM` runtime will determine what locks need to be acquired and in what order to avoid deadlock.
+Write `Txn` expressions in terms of mutable `TVar`s (analogous to Ref from Cats Effect). Run `Txn[A]` expressions transactionally to obtain an `IO[A]` (or `F[A]` for the `Async[F]` of your choice). The `STM` runtime will determine what locks need to be acquired and in what order to avoid deadlock.
 
 ### Composable
 
