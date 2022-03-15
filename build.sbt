@@ -72,9 +72,13 @@ lazy val laws = project
   .in(file("laws"))
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"  %% "cats-laws"        % CatsVersion       % Test,
-      "org.typelevel"  %% "discipline-munit" % DisciplineVersion % Test,
-      "org.scalacheck" %% "scalacheck"       % ScalaCheckVersion % Test
+      "org.scalacheck" %%% "scalacheck"              % ScalaCheckVersion       % Test,
+      "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
+      "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
+      "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
+      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test,
+      "org.typelevel"  %%% "cats-laws"               % CatsVersion             % Test,
+      "org.typelevel"  %%% "discipline-munit"        % DisciplineVersion       % Test
     )
   )
   //TODO cross-build this
