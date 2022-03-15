@@ -20,8 +20,7 @@ import cats.effect.IO
 
 class TMVarSpec extends BaseSpec {
 
-  test("Read returns current value when not empty") {
-    val stm = stmRuntime()
+  stmTest("Read returns current value when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -32,8 +31,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Read does not modify value when not empty") {
-    val stm = stmRuntime()
+  stmTest("Read does not modify value when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -45,8 +43,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Take returns current value when not empty") {
-    val stm = stmRuntime()
+  stmTest("Take returns current value when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -57,8 +54,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Take empties tmvar when not empty") {
-    val stm = stmRuntime()
+  stmTest("Take empties tmvar when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -70,8 +66,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Put stores a value when empty") {
-    val stm = stmRuntime()
+  stmTest("Put stores a value when empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -83,8 +78,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("TryPut returns true when empty") {
-    val stm = stmRuntime()
+  stmTest("TryPut returns true when empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -95,8 +89,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("TryPut returns false when not empty") {
-    val stm = stmRuntime()
+  stmTest("TryPut returns false when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(
@@ -110,8 +103,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("IsEmpty is false when not empty") {
-    val stm = stmRuntime()
+  stmTest("IsEmpty is false when not empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -122,8 +114,7 @@ class TMVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("IsEmpty is true when empty") {
-    val stm = stmRuntime()
+  stmTest("IsEmpty is true when empty") { stm =>
     import stm._
     for {
       v <- stm.commit(for {

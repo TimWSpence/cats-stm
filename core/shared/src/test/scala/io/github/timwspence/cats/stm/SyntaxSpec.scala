@@ -16,16 +16,14 @@
 
 package io.github.timwspence.cats.stm
 
-import cats.effect.{IO, Resource}
-import munit.CatsEffectSuite
+import cats.effect.IO
 
-trait BaseSpec extends CatsEffectSuite {
+class SyntaxSpec extends BaseSpec {
 
-  val stmRuntime = ResourceSuiteLocalFixture(
-    "stm runtime",
-    Resource.make(STM.runtime[IO])(_ => IO.unit)
-  )
-
-  override def munitFixtures = List(stmRuntime)
+  stmTest("summon stm instances") { stm =>
+    implicit val s = stm
+    import s._
+    STM[IO].commit(TVar.of(1))
+  }
 
 }

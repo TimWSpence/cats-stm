@@ -21,8 +21,7 @@ import cats.implicits._
 
 class TQueueSpec extends BaseSpec {
 
-  test("Read removes the first element") {
-    val stm = stmRuntime()
+  stmTest("Read removes the first element") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -38,8 +37,7 @@ class TQueueSpec extends BaseSpec {
     } yield res
   }
 
-  test("Peek does not remove the first element") {
-    val stm = stmRuntime()
+  stmTest("Peek does not remove the first element") { stm =>
     import stm._
     for {
       v <- stm.commit(
@@ -58,8 +56,7 @@ class TQueueSpec extends BaseSpec {
 
   }
 
-  test("TQueue is FIFO") {
-    val stm = stmRuntime()
+  stmTest("TQueue is FIFO") { stm =>
     import stm._
     for {
       v <- stm.commit(

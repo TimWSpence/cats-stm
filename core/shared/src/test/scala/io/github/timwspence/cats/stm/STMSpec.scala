@@ -28,8 +28,7 @@ import scala.util.Random
   */
 class STMSpec extends BaseSpec {
 
-  test("Basic transaction is executed") {
-    val stm = stmRuntime()
+  stmTest("Basic transaction is executed") { stm =>
     import stm._
     for {
       from <- stm.commit(TVar.of(100))
@@ -49,8 +48,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("Abort primitive aborts whole transaction") {
-    val stm = stmRuntime()
+  stmTest("Abort primitive aborts whole transaction") { stm =>
     import stm._
     for {
       from <- stm.commit(TVar.of(100))
@@ -70,8 +68,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("Check retries until transaction succeeds") {
-    val stm = stmRuntime()
+  stmTest("Check retries until transaction succeeds") { stm =>
     import stm._
     var checkCounter = 0
 
@@ -99,8 +96,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("Check retries repeatedly") {
-    val stm = stmRuntime()
+  stmTest("Check retries repeatedly") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -126,8 +122,7 @@ class STMSpec extends BaseSpec {
 
   }
 
-  test("OrElse runs second transaction if first retries") {
-    val stm = stmRuntime()
+  stmTest("OrElse runs second transaction if first retries") { stm =>
     import stm._
     for {
       account <- stm.commit(TVar.of(100))
@@ -150,8 +145,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("OrElse reverts changes if retrying") {
-    val stm = stmRuntime()
+  stmTest("OrElse reverts changes if retrying") { stm =>
     import stm._
     for {
       account <- stm.commit(TVar.of(100))
@@ -173,8 +167,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("OrElse reverts changes to tvars not previously modified if retrying") {
-    val stm = stmRuntime()
+  stmTest("OrElse reverts changes to tvars not previously modified if retrying") { stm =>
     import stm._
     for {
       account <- stm.commit(TVar.of(100))
@@ -204,8 +197,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("nested orElse") {
-    val stm = stmRuntime()
+  stmTest("nested orElse") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(100))
@@ -233,8 +225,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("Transaction is retried if TVar in if branch is subsequently modified") {
-    val stm = stmRuntime()
+  stmTest("Transaction is retried if TVar in if branch is subsequently modified") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
@@ -268,8 +259,7 @@ class STMSpec extends BaseSpec {
     *  atomically invocation both needed to retry - they would have the same
     *  id and hence we would only register one to retry
     */
-  test("Commit is referentially transparent") {
-    val stm = stmRuntime()
+  stmTest("Commit is referentially transparent") { stm =>
     import stm._
     for {
       flag <- stm.commit(TVar.of(false))
@@ -299,8 +289,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("commit is referentially transparent 2") {
-    val stm = stmRuntime()
+  stmTest("commit is referentially transparent 2") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
@@ -310,8 +299,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("Modify is referentially transparent 2") {
-    val stm = stmRuntime()
+  stmTest("Modify is referentially transparent 2") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0L))
@@ -322,8 +310,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("stack-safe construction") {
-    val stm = stmRuntime()
+  stmTest("stack-safe construction") { stm =>
     import stm._
     val iterations = 100000
     stm.commit(TVar.of(0L)).flatMap { tvar =>
@@ -335,8 +322,7 @@ class STMSpec extends BaseSpec {
     }
   }
 
-  test("stack-safe evaluation") {
-    val stm = stmRuntime()
+  stmTest("stack-safe evaluation") { stm =>
     import stm._
     val iterations = 100000
 
@@ -354,8 +340,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("race retrying fiber and fiber which unblocks it") {
-    val stm = stmRuntime()
+  stmTest("race retrying fiber and fiber which unblocks it") { stm =>
     import stm._
     val iterations = 100
 
@@ -377,8 +362,7 @@ class STMSpec extends BaseSpec {
     }
   }
 
-  test("lots of contention and retrying") {
-    val stm = stmRuntime()
+  stmTest("lots of contention and retrying") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -399,8 +383,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("unblock all transactions") {
-    val stm = stmRuntime()
+  stmTest("unblock all transactions") { stm =>
     import stm._
     for {
       tvar1 <- stm.commit(TVar.of(0))
@@ -436,8 +419,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("loop retry and completion") {
-    val stm = stmRuntime()
+  stmTest("loop retry and completion") { stm =>
     import stm._
     val iterations = 10
     for {
@@ -464,8 +446,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("handle error") {
-    val stm = stmRuntime()
+  stmTest("handle error") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -482,8 +463,7 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  test("handle nested errors") {
-    val stm = stmRuntime()
+  stmTest("handle nested errors") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -499,8 +479,7 @@ class STMSpec extends BaseSpec {
 
   }
 
-  test("handle nested retries") {
-    val stm = stmRuntime()
+  stmTest("handle nested retries") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))

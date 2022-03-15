@@ -23,8 +23,7 @@ import cats.effect.IO
 
 class TVarSpec extends BaseSpec {
 
-  test("Get returns current value") {
-    val stm = stmRuntime()
+  stmTest("Get returns current value") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -35,8 +34,7 @@ class TVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Set changes current value") {
-    val stm = stmRuntime()
+  stmTest("Set changes current value") { stm =>
     import stm._
     for {
       v <- stm.commit(
@@ -50,8 +48,7 @@ class TVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Modify changes current value") {
-    val stm = stmRuntime()
+  stmTest("Modify changes current value") { stm =>
     import stm._
     for {
       v <- stm.commit(for {
@@ -63,8 +60,7 @@ class TVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("Transaction is registered for retry") {
-    val stm = stmRuntime()
+  stmTest("Transaction is registered for retry") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
@@ -82,8 +78,7 @@ class TVarSpec extends BaseSpec {
     } yield res
   }
 
-  test("TVar.of is referentially transparent") {
-    val stm = stmRuntime()
+  stmTest("TVar.of is referentially transparent") { stm =>
     import stm._
     val t: Txn[TVar[Int]] = TVar.of(0)
 

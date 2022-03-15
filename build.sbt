@@ -2,10 +2,11 @@ import laika.helium.Helium
 import laika.ast.Path._
 import laika.ast.Image
 
-ThisBuild / tlBaseVersion := "0.12" // your current series x.y
+ThisBuild / tlBaseVersion := "0.13" // your current series x.y
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
+ThisBuild / organizationHomepage := Some(url("https://github.com/TimWSpence"))
 ThisBuild / licenses := Seq(License.Apache2)
 ThisBuild / developers := List(
   tlGitHubDev("TimWSpence", "Tim Spence")
@@ -42,11 +43,19 @@ lazy val `cats-stm` = tlCrossRootProject
     laws
   )
 
-lazy val core = project
+lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
-  .settings(commonSettings)
   .settings(
-    name := "cats-stm"
+    name := "cats-stm",
+    libraryDependencies ++= Seq(
+      "org.typelevel"  %%% "cats-effect"             % CatsEffectVersion,
+      "org.typelevel"  %%% "cats-core"               % CatsVersion,
+      "org.scalacheck" %%% "scalacheck"              % ScalaCheckVersion       % Test,
+      "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
+      "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
+      "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
+      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test
+    )
   )
   .settings(console / initialCommands := """
     import cats._
@@ -61,32 +70,28 @@ lazy val core = project
 
 lazy val laws = project
   .in(file("laws"))
-  .settings(commonSettings)
-  .settings(
-    name := "cats-stm"
-  )
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"  %% "cats-laws"        % CatsVersion       % Test,
-      "org.typelevel"  %% "discipline-munit" % DisciplineVersion % Test,
-      "org.scalacheck" %% "scalacheck"       % ScalaCheckVersion % Test
+      "org.scalacheck" %%% "scalacheck"              % ScalaCheckVersion       % Test,
+      "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
+      "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
+      "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
+      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test,
+      "org.typelevel"  %%% "cats-laws"               % CatsVersion             % Test,
+      "org.typelevel"  %%% "discipline-munit"        % DisciplineVersion       % Test
     )
   )
-  .dependsOn(core)
+  //TODO cross-build this
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmarks = project
   .in(file("benchmarks"))
-  .settings(commonSettings)
-  .settings(
-    name := "cats-stm"
-  )
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin, JmhPlugin)
 
 lazy val docs = project
   .in(file("site"))
-  .settings(commonSettings)
   .settings(
     laikaConfig ~= { _.withRawContent },
     tlSiteRelatedProjects := Seq(
@@ -95,7 +100,8 @@ lazy val docs = project
     )
   )
   .enablePlugins(TypelevelSitePlugin)
-  .dependsOn(core)
+  //TODO cross-build this
+  .dependsOn(core.jvm)
 
 lazy val unidoc = project
   .in(file("unidoc"))
@@ -104,21 +110,7 @@ lazy val unidoc = project
     name := "cats-stm-docs"
   )
 
-lazy val examples = project
+lazy val examples = crossProject(JVMPlatform, JSPlatform)
   .in(file("examples"))
-  .settings(commonSettings)
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
-
-lazy val commonSettings = Seq(
-  organizationHomepage := Some(url("https://github.com/TimWSpence")),
-  libraryDependencies ++= Seq(
-    "org.typelevel"  %% "cats-effect"             % CatsEffectVersion,
-    "org.typelevel"  %% "cats-core"               % CatsVersion,
-    "org.scalacheck" %% "scalacheck"              % ScalaCheckVersion       % Test,
-    "org.scalameta"  %% "munit"                   % MunitVersion            % Test,
-    "org.scalameta"  %% "munit-scalacheck"        % MunitVersion            % Test,
-    "org.typelevel"  %% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
-    "org.typelevel"  %% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test
-  )
-)

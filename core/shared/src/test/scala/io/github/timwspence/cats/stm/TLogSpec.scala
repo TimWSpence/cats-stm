@@ -22,8 +22,7 @@ class TLogSpec extends BaseSpec {
 
   val inc: Int => Int = _ + 1
 
-  test("getF when not present") {
-    val stm = stmRuntime()
+  stmTest("getF when not present") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
@@ -35,8 +34,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("get when present") {
-    val stm = stmRuntime()
+  stmTest("get when present") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
@@ -49,8 +47,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("isDirty when empty") {
-    val stm = stmRuntime()
+  stmTest("isDirty when empty") { stm =>
     import stm._
     val tlog = TLog.empty
     for {
@@ -59,8 +56,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("isDirty when non-empty") {
-    val stm = stmRuntime()
+  stmTest("isDirty when non-empty") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
@@ -71,8 +67,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("isDirty when non-empty and dirty") {
-    val stm = stmRuntime()
+  stmTest("isDirty when non-empty and dirty") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
@@ -84,8 +79,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("commit") {
-    val stm = stmRuntime()
+  stmTest("commit") { stm =>
     import stm._
     for {
       tvar <- stm.commit(TVar.of[Any](1))
@@ -99,8 +93,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("snapshot") {
-    val stm = stmRuntime()
+  stmTest("snapshot") { stm =>
     import stm._
     for {
       tvar  <- stm.commit(TVar.of[Any](1))
@@ -117,8 +110,7 @@ class TLogSpec extends BaseSpec {
     } yield res
   }
 
-  test("delta") {
-    val stm = stmRuntime()
+  stmTest("delta") { stm =>
     import stm._
     for {
       tvar  <- stm.commit(TVar.of[Any](1))

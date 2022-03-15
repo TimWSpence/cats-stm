@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package io.github.timwspence.cats.stm
+package io.github.timwspence.cats.stm;
 
-import cats.effect.IO
+object STMConstants {
 
-class SyntaxSpec extends BaseSpec {
-
-  test("summon stm instances") {
-    implicit val stm = stmRuntime()
-    import stm._
-    STM[IO].commit(TVar.of(1))
-  }
+  final val PureT        = 0
+  final val AllocT       = 1
+  final val BindT        = 2
+  final val HandleErrorT = 3
+  final val GetT         = 4
+  final val ModifyT      = 5
+  final val OrElseT      = 6
+  final val AbortT       = 7
+  final val RetryT       = 8
 
 }
