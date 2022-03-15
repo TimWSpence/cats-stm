@@ -2,7 +2,7 @@ import laika.helium.Helium
 import laika.ast.Path._
 import laika.ast.Image
 
-ThisBuild / tlBaseVersion := "0.12" // your current series x.y
+ThisBuild / tlBaseVersion := "0.13" // your current series x.y
 
 ThisBuild / organization := "io.github.timwspence"
 ThisBuild / organizationName := "TimWSpence"
