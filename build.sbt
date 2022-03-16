@@ -12,7 +12,7 @@ ThisBuild / startYear := Some(2017)
 ThisBuild / tlSonatypeUseLegacyHost := true
 
 val Scala213 = "2.13.8"
-ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.0.2")
+ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.1.1")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 
 ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
