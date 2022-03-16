@@ -1,7 +1,4 @@
----
-id: intro
-title:  "Introduction"
----
+# Introduction
 
 ### The problem
 
@@ -33,13 +30,14 @@ def transfer(from: Account, to: Account, amount: Long): Unit = {
 ```
 
 This kind of lock-based atomicity is prone to the following problems:
- * Taking too few locks - leaves you prone to concurrency bugs
- * Taking too many locks - inhibits concurrency and can cause deadlock
- * Taking the wrong locks - the programmer is responsible for taking the correct lock
- * Taking locks in the wrong order - can cause deadlock (see the [Dining Philosophers](https://en.wikipedia.org/wiki/Dining_philosophers_problem))
- * Pessimistic - must take all the locks you _might_ need
- * Not releasing locks upon cancellation/error - can cause deadlock
- * Retrying and waiting for conditions is tricky and manual
+
+* Taking too few locks - leaves you prone to concurrency bugs
+* Taking too many locks - inhibits concurrency and can cause deadlock
+* Taking the wrong locks - the programmer is responsible for taking the correct lock
+* Taking locks in the wrong order - can cause deadlock (see the [Dining Philosophers](https://en.wikipedia.org/wiki/Dining_philosophers_problem))
+* Pessimistic - must take all the locks you _might_ need
+* Not releasing locks upon cancellation/error - can cause deadlock
+* Retrying and waiting for conditions is tricky and manual
 
 ### Composition
 

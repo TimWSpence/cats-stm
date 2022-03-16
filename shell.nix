@@ -15,8 +15,5 @@ in
 pkgs.mkShell {
   buildInputs = with pkgs; [
     sbt
-    nodejs-12_x
-    yarn
-    yarn2nix
   ];
 }

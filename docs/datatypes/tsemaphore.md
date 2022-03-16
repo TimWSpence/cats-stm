@@ -1,10 +1,7 @@
----
-id: tsemaphore
-title:  "TSemaphore"
----
+# TSemaphore
 
-A convenience implementation of a semaphore in the `STM` monad, built on top of
-[`TVar`](theory/tvar.md).
+A convenience implementation of a semaphore in the `Txn` monad, built on top of
+[`TVar`](../theory/tvar.md).
 
 ```scala mdoc
 import cats.effect.IO

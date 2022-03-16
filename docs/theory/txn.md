@@ -1,7 +1,4 @@
----
-id: txn
-title:  "Txn"
----
+# Txn
 
 ### Overview
 

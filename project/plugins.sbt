@@ -1,8 +1,7 @@
-addSbtPlugin("io.spray"      % "sbt-revolver" % "0.9.1")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
-// addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
-addSbtPlugin("ch.epfl.scala"      % "sbt-scalafix"         % "0.9.34")
-addSbtPlugin("com.codecommit"     % "sbt-spiewak-sonatype" % "0.22.1")
-addSbtPlugin("org.scalameta"      % "sbt-mdoc"             % "2.3.0")
-addSbtPlugin("com.github.sbt"     % "sbt-unidoc"           % "0.5.0")
-addSbtPlugin("pl.project13.scala" % "sbt-jmh"              % "0.4.3")
+resolvers +=
+  "Sonatype S01 OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+
+addSbtPlugin("ch.epfl.scala"      % "sbt-scalafix"       % "0.9.34")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh"            % "0.4.3")
+addSbtPlugin("org.typelevel"      % "sbt-typelevel"      % "0.4.6-18-a4282ae-SNAPSHOT")
+addSbtPlugin("org.typelevel"      % "sbt-typelevel-site" % "0.4.6-18-a4282ae-SNAPSHOT")
