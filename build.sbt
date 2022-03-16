@@ -14,6 +14,7 @@ ThisBuild / tlSonatypeUseLegacyHost := false
 val Scala213 = "2.13.8"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.0.2")
 ThisBuild / scalaVersion := Scala213 // the default Scala
+ThisBuild / tlJdkRelease := Some(8)
 
 val CatsVersion             = "2.7.0"
 val CatsEffectVersion       = "3.3.7"
