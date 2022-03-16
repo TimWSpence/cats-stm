@@ -35,7 +35,8 @@ lazy val `cats-stm` = tlCrossRootProject
     benchmarks,
     docs,
     examples,
-    laws
+    laws,
+    unidoc
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
