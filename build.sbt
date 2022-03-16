@@ -15,12 +15,6 @@ val Scala213 = "2.13.8"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.0.2")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 
-ThisBuild / homepage := Some(url("https://github.com/TimWSpence/cats-stm"))
-
-ThisBuild / scmInfo := Some(
-  ScmInfo(url("https://github.com/TimWSpence/cats-stm"), "git@github.com:TimWSpence/cats-stm.git")
-)
-
 val CatsVersion             = "2.7.0"
 val CatsEffectVersion       = "3.3.7"
 val DisciplineVersion       = "1.0.9"
@@ -34,6 +28,7 @@ lazy val `cats-stm` = tlCrossRootProject
     core,
     benchmarks,
     docs,
+    unidoc,
     examples,
     laws
   )
@@ -59,9 +54,6 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
     import cats.effect.implicits._
     import cats.effect.unsafe.implicits.global
     """)
-  .settings(
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
-  )
 
 lazy val laws = project
   .in(file("laws"))
