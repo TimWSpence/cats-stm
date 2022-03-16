@@ -9,7 +9,7 @@ ThisBuild / developers := List(
 )
 ThisBuild / startYear := Some(2017)
 
-ThisBuild / tlSonatypeUseLegacyHost := true
+ThisBuild / tlSonatypeUseLegacyHost := false
 
 val Scala213 = "2.13.8"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.15", "3.0.2")
