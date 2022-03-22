@@ -22,7 +22,7 @@ ThisBuild / scmInfo := Some(
 )
 
 val CatsVersion             = "2.7.0"
-val CatsEffectVersion       = "3.3.7"
+val CatsEffectVersion       = "3.3.8"
 val DisciplineVersion       = "1.0.9"
 val ScalaCheckVersion       = "1.15.4"
 val MunitVersion            = "0.7.29"
