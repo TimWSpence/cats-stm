@@ -29,10 +29,9 @@ lazy val `cats-stm` = tlCrossRootProject
     core,
     benchmarks,
     docs,
-    unidoc,
     examples,
     laws,
-    unidoc
+    unidocs
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
@@ -92,11 +91,12 @@ lazy val docs = project
   //TODO cross-build this
   .dependsOn(core.jvm)
 
-lazy val unidoc = project
+lazy val unidocs = project
   .in(file("unidoc"))
   .enablePlugins(TypelevelUnidocPlugin) // also enables the ScalaUnidocPlugin
   .settings(
-    name := "cats-stm-docs"
+    name := "cats-stm-docs",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core.jvm)
   )
 
 lazy val examples = crossProject(JVMPlatform, JSPlatform)
