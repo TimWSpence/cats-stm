@@ -24,7 +24,6 @@ val MunitVersion            = "0.7.29"
 val MunitCatsEffectVersion  = "1.0.7"
 val ScalacheckEffectVersion = "1.0.3"
 
-
 lazy val `cats-stm` = tlCrossRootProject
   .aggregate(
     core,
@@ -32,7 +31,7 @@ lazy val `cats-stm` = tlCrossRootProject
     docs,
     examples,
     laws,
-    unidoc
+    unidocs
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
@@ -92,16 +91,15 @@ lazy val docs = project
   //TODO cross-build this
   .dependsOn(core.jvm)
 
-lazy val unidoc = project
+lazy val unidocs = project
   .in(file("unidoc"))
   .enablePlugins(TypelevelUnidocPlugin) // also enables the ScalaUnidocPlugin
   .settings(
-    name := "cats-stm-docs"
+    name := "cats-stm-docs",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core.jvm)
   )
 
 lazy val examples = crossProject(JVMPlatform, JSPlatform)
   .in(file("examples"))
   .dependsOn(core)
   .enablePlugins(NoPublishPlugin)
-
-ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(`cats-stm`.js.aggregate: _*)
