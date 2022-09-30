@@ -18,7 +18,7 @@ ThisBuild / tlJdkRelease := Some(8)
 
 val CatsVersion             = "2.7.0"
 val CatsEffectVersion       = "3.3.14"
-val DisciplineVersion       = "1.0.9"
+val DisciplineVersion       = "2.0.0-M3"
 val ScalaCheckVersion       = "1.15.4"
 val MunitVersion            = "1.0.0-M6"
 val MunitCatsEffectVersion  = "2.0.0-M3"
@@ -67,7 +67,7 @@ lazy val laws = project
       "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
       "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
       "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
-      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test,
+      "org.typelevel"  %%% "munit-cats-effect"       % MunitCatsEffectVersion  % Test,
       "org.typelevel"  %%% "cats-laws"               % CatsVersion             % Test,
       "org.typelevel"  %%% "discipline-munit"        % DisciplineVersion       % Test
     )
