@@ -16,13 +16,13 @@ ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.16", "3.1.3")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 ThisBuild / tlJdkRelease := Some(8)
 
-val CatsVersion             = "2.7.0"
+val CatsVersion             = "2.8.0"
 val CatsEffectVersion       = "3.3.14"
-val DisciplineVersion       = "1.0.9"
-val ScalaCheckVersion       = "1.15.4"
-val MunitVersion            = "0.7.29"
-val MunitCatsEffectVersion  = "1.0.7"
-val ScalacheckEffectVersion = "1.0.3"
+val DisciplineVersion       = "2.0.0-M3"
+val ScalaCheckVersion       = "1.17.0"
+val MunitVersion            = "1.0.0-M6"
+val MunitCatsEffectVersion  = "2.0.0-M3"
+val ScalacheckEffectVersion = "2.0.0-M2"
 
 lazy val `cats-stm` = tlCrossRootProject
   .aggregate(
@@ -34,7 +34,7 @@ lazy val `cats-stm` = tlCrossRootProject
     unidocs
   )
 
-lazy val core = crossProject(JVMPlatform, JSPlatform)
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .in(file("core"))
   .settings(
     name := "cats-stm",
@@ -45,8 +45,11 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
       "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
       "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
       "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
-      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test
+      "org.typelevel"  %%% "munit-cats-effect"       % MunitCatsEffectVersion  % Test
     )
+  )
+  .nativeSettings(
+    tlVersionIntroduced := List("2.12", "2.13", "3").map(_ -> "0.13.2").toMap
   )
   .settings(console / initialCommands := """
     import cats._
@@ -64,7 +67,7 @@ lazy val laws = project
       "org.scalameta"  %%% "munit"                   % MunitVersion            % Test,
       "org.scalameta"  %%% "munit-scalacheck"        % MunitVersion            % Test,
       "org.typelevel"  %%% "scalacheck-effect-munit" % ScalacheckEffectVersion % Test,
-      "org.typelevel"  %%% "munit-cats-effect-3"     % MunitCatsEffectVersion  % Test,
+      "org.typelevel"  %%% "munit-cats-effect"       % MunitCatsEffectVersion  % Test,
       "org.typelevel"  %%% "cats-laws"               % CatsVersion             % Test,
       "org.typelevel"  %%% "discipline-munit"        % DisciplineVersion       % Test
     )
