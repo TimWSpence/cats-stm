@@ -17,7 +17,7 @@ ThisBuild / scalaVersion := Scala213 // the default Scala
 ThisBuild / tlJdkRelease := Some(8)
 
 val CatsVersion             = "2.9.0"
-val CatsEffectVersion       = "3.4.2"
+val CatsEffectVersion       = "3.4.4"
 val DisciplineVersion       = "2.0.0-M3"
 val ScalaCheckVersion       = "1.17.0"
 val MunitVersion            = "1.0.0-M7"
