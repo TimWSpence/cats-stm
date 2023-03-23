@@ -122,7 +122,7 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@516ae138
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@39432663
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">prog</span><span>: </span><span class="type-name">IO</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>)] = </span><span class="keyword">for</span><span> {
@@ -140,10 +140,10 @@
 </span><span class="comment">// prog: IO[(Int, Int)] = FlatMap(
 //   ioe = FlatMap(
 //     ioe = Uncancelable(
-//       body = cats.effect.IO$$$Lambda$11143/1062026686@1e29a25e,
+//       body = cats.effect.IO$$$Lambda$11194/2113135348@2a783c60,
 //       event = cats.effect.tracing.TracingEvent$StackTrace
 //     ),
-//     f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$11144/192840953@461b350a,
+//     f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$11195/1156639827@2d6f2766,
 //     event = cats.effect.tracing.TracingEvent$StackTrace
 //   ),
 //   f = &lt;function1&gt;,
@@ -161,13 +161,13 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@2c77d1c9
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@23881575
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">to</span><span>   = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">1</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@2a12865e
+</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@3585f59
 </span><span class="keyword">val</span><span> </span><span class="identifier">from</span><span> = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">0</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@79fafa10
+</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@68a8e86e
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">txn</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>]  = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span> {
   </span><span class="keyword">for</span><span> {
@@ -179,10 +179,10 @@
 }
 </span><span class="comment">// txn: IO[Unit] = FlatMap(
 //   ioe = Uncancelable(
-//     body = cats.effect.IO$$$Lambda$11143/1062026686@66562340,
+//     body = cats.effect.IO$$$Lambda$11194/2113135348@3c28b60a,
 //     event = cats.effect.tracing.TracingEvent$StackTrace
 //   ),
-//   f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$11144/192840953@74bd4fda,
+//   f = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2$$Lambda$11195/1156639827@5f682f47,
 //   event = cats.effect.tracing.TracingEvent$StackTrace
 // )</span></code></pre>
         <p><code>txn.unsafeRunSync()</code> will block until the transaction succeeds (or throws an
@@ -198,13 +198,13 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@4aa31765
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@1e8b1164
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">to</span><span>   = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">1</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@64274e5b
+</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@31cf6143
 </span><span class="keyword">val</span><span> </span><span class="identifier">from</span><span> = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">0</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@33bc3dbc
+</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@482e0996
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">transferHundred</span><span>: </span><span class="type-name">Txn</span><span>[</span><span class="type-name">Unit</span><span>] = </span><span class="keyword">for</span><span> {
   </span><span class="identifier">b</span><span> &lt;- </span><span class="identifier">from</span><span>.</span><span class="identifier">get</span><span>
@@ -213,7 +213,7 @@
   </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">to</span><span>.</span><span class="identifier">modify</span><span>(</span><span class="identifier">_</span><span> + </span><span class="number-literal">100</span><span>)
 } </span><span class="keyword">yield</span><span> ()
 </span><span class="comment">// transferHundred: Txn[Unit] = Bind(
-//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@33bc3dbc),
+//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@482e0996),
 //   f = &lt;function1&gt;
 // )
 </span><span>
@@ -223,7 +223,7 @@
   </span><span class="identifier">_</span><span>       &lt;- </span><span class="identifier">to</span><span>.</span><span class="identifier">modify</span><span>(</span><span class="identifier">_</span><span> + </span><span class="identifier">balance</span><span>)
 } </span><span class="keyword">yield</span><span> ()
 </span><span class="comment">// transferRemaining: Txn[Unit] = Bind(
-//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@33bc3dbc),
+//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@482e0996),
 //   f = &lt;function1&gt;
 // )
 </span><span>
@@ -235,11 +235,11 @@
 </span><span class="comment">// txn: Txn[(Int, Int)] = Bind(
 //   txn = OrElse(
 //     txn = Bind(
-//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@33bc3dbc),
+//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@482e0996),
 //       f = &lt;function1&gt;
 //     ),
 //     fallback = Bind(
-//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@33bc3dbc),
+//       txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@482e0996),
 //       f = &lt;function1&gt;
 //     )
 //   ),
@@ -256,13 +256,13 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@2de1678e
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@562215c3
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">to</span><span>   = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">1</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@7fab5568
+</span><span class="comment">// to: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@10643e52
 </span><span class="keyword">val</span><span> </span><span class="identifier">from</span><span> = </span><span class="identifier">stm</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="type-name">TVar</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">0</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@21208950
+</span><span class="comment">// from: TVar[Int] = io.github.timwspence.cats.stm.STMLike$TVar@5a6b9064
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">txn</span><span>  = </span><span class="keyword">for</span><span> {
   </span><span class="identifier">balance</span><span> &lt;- </span><span class="identifier">from</span><span>.</span><span class="identifier">get</span><span>
@@ -274,7 +274,7 @@
   </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">to</span><span>.</span><span class="identifier">modify</span><span>(</span><span class="identifier">_</span><span> + </span><span class="number-literal">100</span><span>)
 } </span><span class="keyword">yield</span><span> ()
 </span><span class="comment">// txn: Txn[Unit] = Bind(
-//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@21208950),
+//   txn = Get(tvar = io.github.timwspence.cats.stm.STMLike$TVar@5a6b9064),
 //   f = &lt;function1&gt;
 // )
 </span><span>
