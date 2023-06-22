@@ -86,9 +86,9 @@
         <li class="level2"><a href="../theory/txn.html">Txn</a></li>
         <li class="level2"><a href="../theory/tvar.html">TVar</a></li>
         <li class="level1 nav-header">datatypes</li>
-        <li class="level2"><a href="tsemaphore.html">TSemaphore</a></li>
-        <li class="level2"><a href="tqueue.html">TQueue</a></li>
         <li class="level2 active"><a href="#">TMVar</a></li>
+        <li class="level2"><a href="tqueue.html">TQueue</a></li>
+        <li class="level2"><a href="tsemaphore.html">TSemaphore</a></li>
         <li class="level1 nav-header">examples</li>
         <li class="level2"><a href="../examples/santa.html">The Santa Claus Problem</a></li>
       </ul>
@@ -129,7 +129,7 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@4b3312c4
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@4297e524
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">txn</span><span>: </span><span class="type-name">Txn</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span> {
@@ -143,11 +143,11 @@
 //   txn = Bind(
 //     txn = Alloc(
 //       v = Delay(
-//         thunk = cats.effect.IO$$$Lambda$11114/872057718@ad22e10,
+//         thunk = cats.effect.IO$$$Lambda$11146/1035313124@6913ac61,
 //         event = cats.effect.tracing.TracingEvent$StackTrace
 //       )
 //     ),
-//     f = scala.Function1$$Lambda$11173/536047986@490b4357
+//     f = scala.Function1$$Lambda$11205/445402462@7bc53d3a
 //   ),
 //   f = &lt;function1&gt;
 // )
