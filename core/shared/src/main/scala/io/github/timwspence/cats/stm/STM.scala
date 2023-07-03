@@ -24,6 +24,8 @@ trait STM[F[_]] extends STMLike[F] with TDeferredLike[F] with TMVarLike[F] with 
 
 object STM {
 
+  val x: Int = "foo"
+
   def apply[F[_]](implicit S: STM[F]): S.type = S
 
   def runtime[F[_]](implicit F: Make[F]): F[STM[F]] = F.runtime(4)
