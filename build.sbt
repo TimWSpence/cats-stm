@@ -12,7 +12,7 @@ ThisBuild / startYear := Some(2017)
 ThisBuild / tlSonatypeUseLegacyHost := false
 
 val Scala213 = "2.13.11"
-ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.18", "3.3.0")
+ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.18", "3.3.1")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 ThisBuild / tlJdkRelease := Some(8)
 
