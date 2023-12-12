@@ -17,6 +17,7 @@
 package io.github.timwspence.cats.stm
 
 import scala.annotation.{switch, tailrec}
+import scala.collection.immutable.LongMap
 import scala.reflect.ClassTag
 
 import cats.data.EitherT
@@ -450,7 +451,7 @@ trait STMLike[F[_]] {
   private[stm] type TVarId = Long
   private[stm] type T      = Byte
 
-  private[stm] case class TLog(private var map: Map[TVarId, TLogEntry]) {
+  private[stm] case class TLog(private var map: LongMap[TLogEntry]) {
 
     def values: Iterable[TLogEntry] = map.values
 
@@ -472,7 +473,7 @@ trait STMLike[F[_]] {
       tvar.value.get.flatMap { v =>
         F.delay {
           val e = TLogEntry(v, v, tvar)
-          map = map + (tvar.id -> e)
+          map = map.updated(tvar.id, e)
           v
         }
       }
@@ -485,7 +486,7 @@ trait STMLike[F[_]] {
       val e       = map(tvar.id)
       val current = e.get
       val entry   = e.set(f(current))
-      map = map + (tvar.id -> entry)
+      map = map.updated(tvar.id, entry)
     }
 
     /*
@@ -498,7 +499,7 @@ trait STMLike[F[_]] {
       tvar.value.get.flatMap { v =>
         F.delay {
           val e = TLogEntry(v, f(v), tvar)
-          map = map + (tvar.id -> e)
+          map = map.updated(tvar.id, e)
         }
       }
 
@@ -546,7 +547,7 @@ trait STMLike[F[_]] {
   }
 
   private[stm] object TLog {
-    def empty: TLog = TLog(Map.empty)
+    def empty: TLog = TLog(LongMap.empty)
   }
 
   private[stm] case class TLogEntry(initial: Any, current: Any, tvar: TVar[Any]) { self =>
