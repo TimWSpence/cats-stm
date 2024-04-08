@@ -11,7 +11,7 @@ ThisBuild / startYear := Some(2017)
 
 ThisBuild / tlSonatypeUseLegacyHost := false
 
-val Scala213 = "2.13.12"
+val Scala213 = "2.13.13"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.19", "3.4.1")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 ThisBuild / tlJdkRelease := Some(8)
