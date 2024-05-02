@@ -11,7 +11,7 @@ ThisBuild / startYear := Some(2017)
 
 ThisBuild / tlSonatypeUseLegacyHost := false
 
-val Scala213 = "2.13.12"
+val Scala213 = "2.13.13"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.19", "3.4.1")
 ThisBuild / scalaVersion := Scala213 // the default Scala
 ThisBuild / tlJdkRelease := Some(8)
@@ -20,7 +20,7 @@ val CatsVersion             = "2.10.0"
 val CatsEffectVersion       = "3.5.4"
 val DisciplineVersion       = "2.0.0-M3"
 val ScalaCheckVersion       = "1.17.1"
-val MunitVersion            = "1.0.0-M11"
+val MunitVersion            = "1.0.0-RC1"
 val MunitCatsEffectVersion  = "2.0.0-M5"
 val ScalacheckEffectVersion = "2.0.0-M2"
 
