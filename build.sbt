@@ -85,10 +85,7 @@ lazy val docs = project
   .in(file("site"))
   .settings(
     laikaConfig ~= { _.withRawContent },
-    tlSiteRelatedProjects := Seq(
-      TypelevelProject.Cats,
-      TypelevelProject.CatsEffect
-    )
+    tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate)
   )
   .enablePlugins(TypelevelSitePlugin)
   //TODO cross-build this
