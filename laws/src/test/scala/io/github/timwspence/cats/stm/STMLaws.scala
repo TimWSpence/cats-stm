@@ -66,14 +66,14 @@ trait STMTests extends Laws with STMLaws {
     new DefaultRuleSet(
       name = "stm",
       parent = None,
-      "get then get is get"           -> forAll(getThenGet[A] _),
-      "set then get is set then pure" -> forAll(setThenGet[A] _),
-      "set then set is set"           -> forAll(setThenSet[A] _),
-      "set then retry is retry"       -> forAll(setThenRetry[A] _),
-      "set then abort is abort"       -> forAll(setThenAbort[A] _),
-      "retry orElse stm is stm"       -> forAll(retryOrElse[A] _),
-      "stm orElse retry is stm"       -> forAll(orElseRetry[A] _),
-      "abort orElse stm is abort"     -> forAll(abortOrElse[A] _)
+      "get then get is get"           -> forAll(getThenGet[A](_)),
+      "set then get is set then pure" -> forAll(setThenGet[A](_, _)),
+      "set then set is set"           -> forAll(setThenSet[A](_, _, _)),
+      "set then retry is retry"       -> forAll(setThenRetry[A](_, _)),
+      "set then abort is abort"       -> forAll(setThenAbort[A](_, _, _)),
+      "retry orElse stm is stm"       -> forAll(retryOrElse[A](_)),
+      "stm orElse retry is stm"       -> forAll(orElseRetry[A](_)),
+      "abort orElse stm is abort"     -> forAll(abortOrElse[A](_, _))
     )
 
 }
