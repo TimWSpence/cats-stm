@@ -42,13 +42,13 @@ trait STMLaws extends HasSTM {
     (tvar.set(a) >> stm.abort[A](error)) <-> stm.abort[A](error)
 
   def retryOrElse[A](txn: Txn[A]) =
-    (stm.retry[A] orElse txn) <-> txn
+    (stm.retry[A].orElse(txn)) <-> txn
 
   def orElseRetry[A](txn: Txn[A]) =
-    (txn orElse stm.retry[A]) <-> txn
+    (txn.orElse(stm.retry[A])) <-> txn
 
   def abortOrElse[A](error: Throwable, txn: Txn[A]) =
-    (stm.abort[A](error) orElse txn) <-> stm.abort[A](error)
+    (stm.abort[A](error).orElse(txn)) <-> stm.abort[A](error)
 
 }
 
