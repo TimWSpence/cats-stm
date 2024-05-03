@@ -25,6 +25,7 @@ import cats.effect.std.Semaphore
 import cats.effect.{Async, Concurrent, Deferred, Ref, Resource}
 import cats.implicits._
 import cats.{Defer, MonadError, Monoid, MonoidK, StackSafeMonad}
+import org.typelevel.scalaccompat.annotation._
 
 import STMConstants._
 
@@ -94,7 +95,7 @@ trait STMLike[F[_]] {
       * Non matching errors and successful values are not affected by this function.
       */
     final def adaptError(pf: PartialFunction[Throwable, Throwable]): Txn[A] =
-      recoverWith(pf.andThen(raiseError[A] _))
+      recoverWith(pf.andThen(raiseError[A](_)))
 
     /*
      * Replaces the `A` value in `F[A]` with the supplied value.
@@ -301,6 +302,7 @@ trait STMLike[F[_]] {
     private[stm] def defer[A](value: => Txn[A]): Txn[A] =
       pure(()).flatMap(_ => value)
 
+    @nowarn3
     implicit val monadForTxn: StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] =
       new StackSafeMonad[Txn] with MonadError[Txn, Throwable] with MonoidK[Txn] {
 

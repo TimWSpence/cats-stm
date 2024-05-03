@@ -42,13 +42,13 @@ trait STMLaws extends HasSTM {
     (tvar.set(a) >> stm.abort[A](error)) <-> stm.abort[A](error)
 
   def retryOrElse[A](txn: Txn[A]) =
-    (stm.retry[A] orElse txn) <-> txn
+    (stm.retry[A].orElse(txn)) <-> txn
 
   def orElseRetry[A](txn: Txn[A]) =
-    (txn orElse stm.retry[A]) <-> txn
+    (txn.orElse(stm.retry[A])) <-> txn
 
   def abortOrElse[A](error: Throwable, txn: Txn[A]) =
-    (stm.abort[A](error) orElse txn) <-> stm.abort[A](error)
+    (stm.abort[A](error).orElse(txn)) <-> stm.abort[A](error)
 
 }
 
@@ -66,14 +66,14 @@ trait STMTests extends Laws with STMLaws {
     new DefaultRuleSet(
       name = "stm",
       parent = None,
-      "get then get is get"           -> forAll(getThenGet[A] _),
-      "set then get is set then pure" -> forAll(setThenGet[A] _),
-      "set then set is set"           -> forAll(setThenSet[A] _),
-      "set then retry is retry"       -> forAll(setThenRetry[A] _),
-      "set then abort is abort"       -> forAll(setThenAbort[A] _),
-      "retry orElse stm is stm"       -> forAll(retryOrElse[A] _),
-      "stm orElse retry is stm"       -> forAll(orElseRetry[A] _),
-      "abort orElse stm is abort"     -> forAll(abortOrElse[A] _)
+      "get then get is get"           -> forAll(getThenGet[A](_)),
+      "set then get is set then pure" -> forAll(setThenGet[A](_, _)),
+      "set then set is set"           -> forAll(setThenSet[A](_, _, _)),
+      "set then retry is retry"       -> forAll(setThenRetry[A](_, _)),
+      "set then abort is abort"       -> forAll(setThenAbort[A](_, _, _)),
+      "retry orElse stm is stm"       -> forAll(retryOrElse[A](_)),
+      "stm orElse retry is stm"       -> forAll(orElseRetry[A](_)),
+      "abort orElse stm is abort"     -> forAll(abortOrElse[A](_, _))
     )
 
 }
