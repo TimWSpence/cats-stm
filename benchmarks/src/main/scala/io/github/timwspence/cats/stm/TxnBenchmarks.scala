@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import org.openjdk.jmh.annotations._
+import org.typelevel.scalaccompat.annotation._
 
 /**
   * To do comparative benchmarks between versions:
@@ -45,6 +46,7 @@ class TxnBenchmark {
   val stm = STM.runtime[IO].unsafeRunSync()
   import stm._
 
+  @nowarn3
   @Param(Array("1000"))
   var size: Int = _
 
