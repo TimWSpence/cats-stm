@@ -21,7 +21,7 @@ val CatsEffectVersion       = "3.5.7"
 val DisciplineVersion       = "2.0.0"
 val ScalaCheckVersion       = "1.17.1"
 val MunitVersion            = "1.0.0-M11"
-val MunitCatsEffectVersion  = "2.0.0"
+val MunitCatsEffectVersion  = "2.1.0"
 val ScalacheckEffectVersion = "2.0.0-M2"
 
 lazy val `cats-stm` = tlCrossRootProject
