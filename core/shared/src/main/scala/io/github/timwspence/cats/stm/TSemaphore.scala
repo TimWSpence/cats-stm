@@ -16,22 +16,18 @@
 
 package io.github.timwspence.cats.stm
 
-/**
-  * Convenience definition of a semaphore in the `STM` monad.
+/** Convenience definition of a semaphore in the `STM` monad.
   *
   * Analogous to `cats.effect.concurrent.Semaphore`.
   */
 trait TSemaphoreLike[F[_]] extends STMLike[F] {
   final class TSemaphore private[stm] (private val tvar: TVar[Long]) {
 
-    /**
-      * Get the number of permits currently available.
+    /** Get the number of permits currently available.
       */
     def available: Txn[Long] = tvar.get
 
-    /**
-      * Acquire a permit. Retries if no permits are
-      * available.
+    /** Acquire a permit. Retries if no permits are available.
       */
     def acquire: Txn[Unit] =
       tvar.get.flatMap {
@@ -39,16 +35,14 @@ trait TSemaphoreLike[F[_]] extends STMLike[F] {
         case _ => tvar.modify(_ - 1)
       }
 
-    /**
-      * Release a currently held permit.
+    /** Release a currently held permit.
       */
     def release: Txn[Unit] = tvar.modify(_ + 1)
   }
 
   object TSemaphore {
 
-    /**
-      * Create a new `TSem` with `permits` available permits.
+    /** Create a new `TSem` with `permits` available permits.
       */
     def make(permits: Long): Txn[TSemaphore] =
       TVar.of(permits).map(tvar => new TSemaphore(tvar))

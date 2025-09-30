@@ -24,12 +24,9 @@ import munit.ScalaCheckEffectSuite
 import org.scalacheck._
 import org.scalacheck.effect.PropF
 
-/**
-  * Test that concurrently executing transactions behave correctly.
-  * We do this by setting up a list of TVar[Long] and a set of
-  * STM transactions which subtracts an amount from one tvar and
-  * adds the same amount to another tvar. The sum of the tvar values
-  * should be invariant under the execution of all these transactions.
+/** Test that concurrently executing transactions behave correctly. We do this by setting up a list of TVar[Long] and a
+  * set of STM transactions which subtracts an amount from one tvar and adds the same amount to another tvar. The sum of
+  * the tvar values should be invariant under the execution of all these transactions.
   */
 //TODO cross-build this for ScalaJS
 class MaintainsInvariants extends BaseSpec with ScalaCheckEffectSuite {

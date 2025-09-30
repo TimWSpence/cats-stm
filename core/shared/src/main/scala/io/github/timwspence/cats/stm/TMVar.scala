@@ -16,9 +16,7 @@
 
 package io.github.timwspence.cats.stm
 
-/**
-  * Convenience definition providing `MVar`-like behaviour
-  * in the `STM` monad. That is, a `TMVar` is a mutable memory
+/** Convenience definition providing `MVar`-like behaviour in the `STM` monad. That is, a `TMVar` is a mutable memory
   * location which is either empty or contains a value.
   *
   * Analogous to `cats.effect.concurrent.MVar`.
@@ -26,9 +24,7 @@ package io.github.timwspence.cats.stm
 trait TMVarLike[F[_]] extends STMLike[F] {
   final class TMVar[A] private[stm] (private val tvar: TVar[Option[A]]) {
 
-    /**
-      * Store a value. Retries if the `TMVar` already
-      * contains a value.
+    /** Store a value. Retries if the `TMVar` already contains a value.
       */
     def put(a: A): Txn[Unit] =
       tvar.get.flatMap {
@@ -36,8 +32,7 @@ trait TMVarLike[F[_]] extends STMLike[F] {
         case None    => tvar.set(Some(a))
       }
 
-    /**
-      * Read the current value. Retries if empty.
+    /** Read the current value. Retries if empty.
       */
     def read: Txn[A] =
       tvar.get.flatMap {
@@ -45,9 +40,7 @@ trait TMVarLike[F[_]] extends STMLike[F] {
         case None        => retry
       }
 
-    /**
-      * Read the current value and empty it at the same
-      * time. Retries if empty.
+    /** Read the current value and empty it at the same time. Retries if empty.
       */
     def take: Txn[A] =
       tvar.get.flatMap {
@@ -55,9 +48,7 @@ trait TMVarLike[F[_]] extends STMLike[F] {
         case None        => retry
       }
 
-    /**
-      * Try to store a value. Returns `false` if put failed,
-      * `true` otherwise.
+    /** Try to store a value. Returns `false` if put failed, `true` otherwise.
       */
     def tryPut(a: A): Txn[Boolean] =
       tvar.get.flatMap {
@@ -65,15 +56,11 @@ trait TMVarLike[F[_]] extends STMLike[F] {
         case None    => tvar.set(Some(a)) >> pure(true)
       }
 
-    /**
-      * Try to read the current value. Returns `None` if
-      * empty, `Some(current)` otherwise.
+    /** Try to read the current value. Returns `None` if empty, `Some(current)` otherwise.
       */
     def tryRead: Txn[Option[A]] = tvar.get
 
-    /**
-      * Try to take the current value. Returns `None` if
-      * empty, `Some(current)` otherwise.
+    /** Try to take the current value. Returns `None` if empty, `Some(current)` otherwise.
       */
     def tryTake: Txn[Option[A]] =
       tvar.get.flatMap {
@@ -81,8 +68,7 @@ trait TMVarLike[F[_]] extends STMLike[F] {
         case None        => pure(None)
       }
 
-    /**
-      * Check if currently empty.
+    /** Check if currently empty.
       */
     def isEmpty: Txn[Boolean] = tryRead.map(_.isEmpty)
 
@@ -90,13 +76,11 @@ trait TMVarLike[F[_]] extends STMLike[F] {
 
   object TMVar {
 
-    /**
-      * Create a new `TMVar`, initialized with a value.
+    /** Create a new `TMVar`, initialized with a value.
       */
     def of[A](value: A): Txn[TMVar[A]] = make(Some(value))
 
-    /**
-      * Create a new empty `TMVar`.
+    /** Create a new empty `TMVar`.
       */
     def empty[A]: Txn[TMVar[A]] = make(None)
 

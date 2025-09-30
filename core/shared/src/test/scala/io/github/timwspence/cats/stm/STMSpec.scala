@@ -22,9 +22,7 @@ import cats.effect.IO
 import cats.implicits._
 import scala.util.Random
 
-/**
-  * Basic tests for correctness in the absence of
-  * (most) concurrency
+/** Basic tests for correctness in the absence of (most) concurrency
   */
 class STMSpec extends BaseSpec {
 
@@ -76,9 +74,9 @@ class STMSpec extends BaseSpec {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
       _ <- (for {
-          _ <- IO.sleep(2.seconds)
-          _ <- stm.commit(from.modify(_ + 1))
-        } yield ()).start
+        _ <- IO.sleep(2.seconds)
+        _ <- stm.commit(from.modify(_ + 1))
+      } yield ()).start
       _ <- stm.commit {
         for {
           balance <- from.get
@@ -219,7 +217,7 @@ class STMSpec extends BaseSpec {
         _       <- tvar.modify(_ - 50)
       } yield ()
 
-      v   <- stm.commit((first.orElse(second).orElse(third) >> tvar.get))
+      v   <- stm.commit(first.orElse(second).orElse(third) >> tvar.get)
       res <- IO(assertEquals(v, 50))
 
     } yield res
@@ -250,14 +248,11 @@ class STMSpec extends BaseSpec {
     } yield res
   }
 
-  /**
-    *  This seemingly strange test guards against reintroducing the issue
-    *  fixed in ad10e29ae38aa8b9507833fe84a68cf7961aac57
-    *  (https://github.com/TimWSpence/cats-stm/pull/96) whereby
-    *  atomically was not referentially transparent and would re-use tx ids
-    *  which caused problems if two transactions produced by the same
-    *  atomically invocation both needed to retry - they would have the same
-    *  id and hence we would only register one to retry
+  /** This seemingly strange test guards against reintroducing the issue fixed in
+    * ad10e29ae38aa8b9507833fe84a68cf7961aac57 (https://github.com/TimWSpence/cats-stm/pull/96) whereby atomically was
+    * not referentially transparent and would re-use tx ids which caused problems if two transactions produced by the
+    * same atomically invocation both needed to retry - they would have the same id and hence we would only register one
+    * to retry
     */
   stmTest("Commit is referentially transparent") { stm =>
     import stm._
@@ -453,8 +448,8 @@ class STMSpec extends BaseSpec {
       _ <- stm.commit(
         for {
           _ <- tvar.set(1)
-          _ <- (tvar.modify(_ + 1) >> stm.abort(new RuntimeException("BOOM"))).handleErrorWith {
-            case _ => tvar.modify(_ + 2)
+          _ <- (tvar.modify(_ + 1) >> stm.abort(new RuntimeException("BOOM"))).handleErrorWith { case _ =>
+            tvar.modify(_ + 2)
           }
         } yield ()
       )
@@ -468,7 +463,7 @@ class STMSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of(0))
       txn = tvar.set(1) >> (
-        //This change to the log should be discarded
+        // This change to the log should be discarded
         tvar.set(2) >>
           stm.unit.handleErrorWith(_ => tvar.modify(_ + 1)) >> stm.abort(new RuntimeException())
       ).handleErrorWith(_ => tvar.modify(_ + 2))
