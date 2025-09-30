@@ -90,9 +90,8 @@ trait STMLike[F[_]] {
     final def >>[B](that: => Txn[B]): Txn[B] =
       flatMap(_ => that)
 
-    /**
-      * Transform certain errors using `pf` and rethrow them.
-      * Non matching errors and successful values are not affected by this function.
+    /** Transform certain errors using `pf` and rethrow them. Non matching errors and successful values are not affected
+      * by this function.
       */
     final def adaptError(pf: PartialFunction[Throwable, Throwable]): Txn[A] =
       recoverWith(pf.andThen(raiseError[A](_)))
@@ -103,116 +102,99 @@ trait STMLike[F[_]] {
     final def as[B](b: B): Txn[B] =
       map(_ => b)
 
-    /**
-      * Handle errors by turning them into Either values.
+    /** Handle errors by turning them into Either values.
       *
       * If there is no error, then an `scala.util.Right` value will be returned instead.
       */
     final def attempt: Txn[Either[Throwable, A]] =
       map(Right(_): Either[Throwable, A]).handleErrorWith(e => pure(Left(e)))
 
-    /**
-      * Similar to [[attempt]], but it only handles errors of type `EE`.
+    /** Similar to [[attempt]], but it only handles errors of type `EE`.
       */
     def attemptNarrow[EE <: Throwable](implicit tag: ClassTag[EE]): Txn[Either[EE, A]] =
       map(Right[EE, A](_): Either[EE, A]).recover { case e: EE => Left[EE, A](e) }
 
-    /**
-      * Similar to [[attempt]], but wraps the result in a EitherT for
-      * convenience.
+    /** Similar to [[attempt]], but wraps the result in a EitherT for convenience.
       */
     final def attemptT[B >: A]: EitherT[Txn, Throwable, B] = EitherT(attempt)
 
-    /**
-      * Reifies the value or error of the source and performs an effect on the result,
-      * then recovers the original value or error back into `F`.
+    /** Reifies the value or error of the source and performs an effect on the result, then recovers the original value
+      * or error back into `F`.
       *
       * Note that if the effect returned by `f` fails, the resulting effect will fail too.
       */
     final def attemptTap[B](f: Either[Throwable, A] => Txn[B]): Txn[A] =
       attempt.flatTap(f).rethrow
 
-    /**
-      * Turns a successful value into an error if it does not satisfy a given predicate.
+    /** Turns a successful value into an error if it does not satisfy a given predicate.
       */
     final def ensure(error: => Throwable)(predicate: A => Boolean): Txn[A] =
       flatMap(a => if (predicate(a)) pure(a) else raiseError(error))
 
-    /**
-      * Turns a successful value into an error specified by the `error` function if it does not satisfy a given predicate.
+    /** Turns a successful value into an error specified by the `error` function if it does not satisfy a given
+      * predicate.
       */
     final def ensureOr(error: A => Throwable)(predicate: A => Boolean): Txn[A] =
       flatMap(a => if (predicate(a)) pure(a) else raiseError(error(a)))
 
-    /**
-      * Monadic bind on `STM`.
+    /** Monadic bind on `STM`.
       */
     final def flatMap[B](f: A => Txn[B]): Txn[B] = Bind(this, f)
 
     final def flatTap[B](f: A => Txn[B]): Txn[A] =
-      flatMap(a => (f(a).as(a)))
+      flatMap(a => f(a).as(a))
 
-    /**
-      * "flatten" a nested `F` of `F` structure into a single-layer `F` structure.
+    /** "flatten" a nested `F` of `F` structure into a single-layer `F` structure.
       *
       * This is also commonly called `join`.
       */
     final def flatten[B](implicit ev: A <:< Txn[B]): Txn[B] = flatMap(ev)
 
-    /**
-      * Alias for [[map]]
+    /** Alias for [[map]]
       */
     final def fmap[B](f: A => B): Txn[B] = map(f)
 
-    /**
-      * Tuple the values in fa with the result of applying a function
-      * with the value
+    /** Tuple the values in fa with the result of applying a function with the value
       */
     final def fproduct[B](f: A => B): Txn[(A, B)] = map(a => a -> f(a))
 
-    /**
-      *  Pair the result of function application with `A`.
+    /** Pair the result of function application with `A`.
       */
     final def fproductLeft[B](f: A => B): Txn[(B, A)] = map(a => f(a) -> a)
 
-    /**
-      * Handle any error, by mapping it to an `A` value.
+    /** Handle any error, by mapping it to an `A` value.
       *
-      * @see [[handleErrorWith]] to map to an `F[A]` value instead of simply an
-      * `A` value.
+      * @see
+      *   [[handleErrorWith]] to map to an `F[A]` value instead of simply an `A` value.
       *
-      * @see [[recover]] to only recover from certain errors.
+      * @see
+      *   [[recover]] to only recover from certain errors.
       */
     final def handleError[B >: A](f: Throwable => B): Txn[B] = handleErrorWith(f.andThen(pure))
 
-    /**
-      * Handle any error, potentially recovering from it, by mapping it to an
-      * `F[A]` value.
+    /** Handle any error, potentially recovering from it, by mapping it to an `F[A]` value.
       *
-      * @see [[handleError]] to handle any error by simply mapping it to an `A`
-      * value instead of an `F[A]`.
+      * @see
+      *   [[handleError]] to handle any error by simply mapping it to an `A` value instead of an `F[A]`.
       *
-      * @see [[recoverWith]] to recover from only certain errors.
+      * @see
+      *   [[recoverWith]] to recover from only certain errors.
       */
     final def handleErrorWith[B >: A](f: Throwable => Txn[B]): Txn[B] = HandleError(this, f)
 
-    /**
-      * Functor map on `STM`.
+    /** Functor map on `STM`.
       */
     final def map[B](f: A => B): Txn[B] = Bind(this, f.andThen(Pure(_)))
 
     final def map2[B, Z](fb: Txn[B])(f: (A, B) => Z): Txn[Z] =
       flatMap(a => fb.map(b => f(a, b)))
 
-    /**
-      * Execute a callback on certain errors, then rethrow them.
-      * Any non matching error is rethrown as well.
+    /** Execute a callback on certain errors, then rethrow them. Any non matching error is rethrown as well.
       */
     final def onError(pf: PartialFunction[Throwable, Txn[Unit]]): Txn[A] =
-      handleErrorWith(e => (pf.andThen(_.map2(raiseError[A](e))((_, b) => b))).applyOrElse(e, raiseError))
+      handleErrorWith(e => pf.andThen(_.map2(raiseError[A](e))((_, b) => b)).applyOrElse(e, raiseError))
 
-    /**
-      * Try an alternative `STM` action if this one retries.
+    /** Try an alternative `STM` action if this one retries.
       */
     final def orElse[B >: A](other: Txn[B]): Txn[B] = OrElse(this, other)
 
@@ -225,57 +207,50 @@ trait STMLike[F[_]] {
     final def productR[B](that: Txn[B]): Txn[B] =
       flatMap(_ => that)
 
-    /**
-      * Recover from certain errors by mapping them to an `A` value.
+    /** Recover from certain errors by mapping them to an `A` value.
       *
-      * @see [[handleError]] to handle any/all errors.
+      * @see
+      *   [[handleError]] to handle any/all errors.
       *
-      * @see [[recoverWith]] to recover from certain errors by mapping them to
-      * `F[A]` values.
+      * @see
+      *   [[recoverWith]] to recover from certain errors by mapping them to `F[A]` values.
       */
     final def recover[B >: A](pf: PartialFunction[Throwable, B]): Txn[B] =
-      handleErrorWith(e => (pf.andThen(pure(_))).applyOrElse(e, raiseError[A](_)))
+      handleErrorWith(e => pf.andThen(pure(_)).applyOrElse(e, raiseError[A](_)))
 
-    /**
-      * Recover from certain errors by mapping them to an `F[A]` value.
+    /** Recover from certain errors by mapping them to an `F[A]` value.
       *
-      * @see [[handleErrorWith]] to handle any/all errors.
+      * @see
+      *   [[handleErrorWith]] to handle any/all errors.
       *
-      * @see [[recover]] to recover from certain errors by mapping them to `A`
-      * values.
+      * @see
+      *   [[recover]] to recover from certain errors by mapping them to `A` values.
       */
     final def recoverWith[B >: A](pf: PartialFunction[Throwable, Txn[B]]): Txn[B] =
       handleErrorWith(e => pf.applyOrElse(e, raiseError))
 
-    /**
-      * Returns a new value that transforms the result of the source,
-      * given the `recover` or `map` functions, which get executed depending
-      * on whether the result is successful or if it ends in error.
+    /** Returns a new value that transforms the result of the source, given the `recover` or `map` functions, which get
+      * executed depending on whether the result is successful or if it ends in error.
       */
     final def redeem[B](recover: Throwable => B, map: A => B): Txn[B] =
       attempt.map(_.fold(recover, map))
 
-    /**
-      * Returns a new value that transforms the result of the source,
-      * given the `recover` or `bind` functions, which get executed depending
-      * on whether the result is successful or if it ends in error.
+    /** Returns a new value that transforms the result of the source, given the `recover` or `bind` functions, which get
+      * executed depending on whether the result is successful or if it ends in error.
       */
     final def redeemWith[B](recover: Throwable => Txn[B], bind: A => Txn[B]): Txn[B] =
       attempt.flatMap(_.fold(recover, bind))
 
-    /**
-      * Inverse of `attempt`
+    /** Inverse of `attempt`
       */
     final def rethrow[B](implicit ev: A <:< Either[Throwable, B]): Txn[B] =
       flatMap(_.fold(raiseError, pure))
 
-    /**
-      * Tuples the `A` value in `Txn[A]` with the supplied `B` value, with the `B` value on the left.
+    /** Tuples the `A` value in `Txn[A]` with the supplied `B` value, with the `B` value on the left.
       */
     final def tupleLeft[B](b: B): Txn[(B, A)] = map(a => (b, a))
 
-    /**
-      * Tuples the `A` value in `Txn[A]` with the supplied `B` value, with the `B` value on the right.
+    /** Tuples the `A` value in `Txn[A]` with the supplied `B` value, with the `B` value on the right.
       */
     final def tupleRight[B](b: B): Txn[(A, B)] = map(a => (a, b))
 
@@ -286,8 +261,7 @@ trait STMLike[F[_]] {
     final def void: Txn[Unit] =
       map(_ => ())
 
-    /**
-      * Lifts natural subtyping covariance of covariant Functors.
+    /** Lifts natural subtyping covariance of covariant Functors.
       */
     final def widen[B >: A]: Txn[B] = this.asInstanceOf[Txn[B]]
   }
@@ -534,7 +508,7 @@ trait STMLike[F[_]] {
     def commit(implicit F: Concurrent[F]): F[Unit] = F.uncancelable(_ => values.toList.traverse_(_.commit))
 
     def signal(implicit F: Concurrent[F]): F[Unit] =
-      //TODO use chain to avoid reverse?
+      // TODO use chain to avoid reverse?
       F.uncancelable(_ =>
         values.toList.traverse_(e =>
           for {
@@ -594,8 +568,8 @@ trait STMLike[F[_]] {
     var errorFallbacks: List[TLog]        = Nil
     var log: TLog                         = TLog.empty
 
-    //Construction of a TVar requires allocating state but we want this to be tail-recursive
-    //and non-effectful so we trampoline it with run
+    // Construction of a TVar requires allocating state but we want this to be tail-recursive
+    // and non-effectful so we trampoline it with run
     @tailrec
     def go(
       nextId: TVarId,
@@ -622,7 +596,7 @@ trait STMLike[F[_]] {
           }
         case AllocT =>
           val t = txn.asInstanceOf[Alloc[Any]]
-          Eff(t.v.map(v => Pure((new TVar(nextId, v, lock, ref)))))
+          Eff(t.v.map(v => Pure(new TVar(nextId, v, lock, ref))))
         case BindT =>
           val t = txn.asInstanceOf[Bind[Any, Any]]
           conts = t.f :: conts
@@ -690,15 +664,15 @@ trait STMLike[F[_]] {
         id   <- idGen.updateAndGet(_ + 1)
         lock <- Semaphore[F](1)
         ref  <- Ref.of[F, List[Deferred[F, Unit]]](Nil)
-        //Trampoline so we can generate a new id/lock/ref to supply
-        //if we need to contruct a new tvar
+        // Trampoline so we can generate a new id/lock/ref to supply
+        // if we need to contruct a new tvar
         res <- go(id, lock, ref, txn) match {
           case Done(v)   => F.pure(v)
           case Eff(ftxn) => ftxn.flatMap(run(_))
         }
       } yield res
 
-    //Safe by construction
+    // Safe by construction
     run(txn.asInstanceOf[Txn[Any]]).map(res => res.asInstanceOf[TResult[A]] -> log)
   }
 

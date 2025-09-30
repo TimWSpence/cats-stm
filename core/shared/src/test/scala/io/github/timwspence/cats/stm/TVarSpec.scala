@@ -66,10 +66,10 @@ class TVarSpec extends BaseSpec {
       tvar <- stm.commit(TVar.of(0))
       fiber <-
         stm
-          .commit((for {
+          .commit(for {
             current <- tvar.get
             _       <- stm.check(current > 0)
-          } yield current))
+          } yield current)
           .start
       _   <- IO.sleep(1.second)
       _   <- stm.commit(tvar.set(2))
@@ -85,10 +85,10 @@ class TVarSpec extends BaseSpec {
     for {
       t1 <- stm.commit(t)
       t2 <- stm.commit(t)
-      _ <- stm.commit((for {
+      _ <- stm.commit(for {
         _ <- t1.modify(_ + 1)
         _ <- t2.modify(_ + 2)
-      } yield ()))
+      } yield ())
       vs <- stm.commit((t1.get, t2.get).tupled)
       res <- IO {
         assertEquals(vs._1, 1)

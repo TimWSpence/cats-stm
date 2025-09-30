@@ -74,8 +74,8 @@ object STM {
                 (res, log) = p
                 r <- res match {
                   case TSuccess(a) =>
-                    //Uncancelable so that we don't lose opportunities for retries
-                    //where a fiber commits and is immediately cancelled
+                    // Uncancelable so that we don't lose opportunities for retries
+                    // where a fiber commits and is immediately cancelled
                     F.uncancelable(poll =>
                       for {
                         retryImmediately <- poll(
@@ -108,7 +108,7 @@ object STM {
                               log.registerRetry(signal).as(false)
                             )
                           )
-                      //TODO is it worth removing signals from tvars when we wake?
+                      // TODO is it worth removing signals from tvars when we wake?
                       res <- if (retryImmediately) commit(txn) else signal.get >> commit(txn)
                     } yield res
                 }

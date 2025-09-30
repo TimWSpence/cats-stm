@@ -52,7 +52,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
       (tlog1.current == tlog2.current)
     }
 
-  //A log is in the same state if all dirty entries are in the same state
+  // A log is in the same state if all dirty entries are in the same state
   implicit def eqTLog: Eq[TLog] = {
     def run(tlog: TLog): List[(Long, Boolean)] =
       tlog.values.toList
@@ -116,7 +116,7 @@ trait Instances extends CatsEffectSuite with HasSTM {
       else
         Gen.resize(
           n / 2,
-          //Encourage it to generate non-trivial transactions
+          // Encourage it to generate non-trivial transactions
           Gen.frequency(
             1 -> genPure[A],
             1 -> genAbort[A],

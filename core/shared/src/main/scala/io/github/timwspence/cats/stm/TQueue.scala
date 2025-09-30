@@ -18,19 +18,16 @@ package io.github.timwspence.cats.stm
 
 import scala.collection.immutable.Queue
 
-/**
-  * Convenience definition of a queue in the `STM` monad.
+/** Convenience definition of a queue in the `STM` monad.
   */
 trait TQueueLike[F[_]] extends STMLike[F] {
   final class TQueue[A] private[stm] (private val tvar: TVar[Queue[A]]) {
 
-    /**
-      * Enqueue a value.
+    /** Enqueue a value.
       */
     def put(a: A): Txn[Unit] = tvar.modify(_.enqueue(a))
 
-    /**
-      * Dequeue the first element. Retries if currently empty.
+    /** Dequeue the first element. Retries if currently empty.
       */
     def read: Txn[A] =
       tvar.get.flatMap {
@@ -40,8 +37,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
           tvar.set(tail) >> pure(head)
       }
 
-    /**
-      * Peek the first element. Retries if empty.
+    /** Peek the first element. Retries if empty.
       */
     def peek: Txn[A] =
       tvar.get.flatMap {
@@ -49,9 +45,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
         case q              => pure(q.head)
       }
 
-    /**
-      * Attempt to dequeue the first element. Returns
-      * `None` if empty, `Some(head)` otherwise.
+    /** Attempt to dequeue the first element. Returns `None` if empty, `Some(head)` otherwise.
       */
     def tryRead: Txn[Option[A]] =
       tvar.get.flatMap {
@@ -61,14 +55,11 @@ trait TQueueLike[F[_]] extends STMLike[F] {
           tvar.set(tail) >> pure(Some(head))
       }
 
-    /**
-      * Attempt to peek the first element. Returns
-      * `None` if empty, `Some(head)` otherwise.
+    /** Attempt to peek the first element. Returns `None` if empty, `Some(head)` otherwise.
       */
     def tryPeek: Txn[Option[A]] = tvar.get.map(_.headOption)
 
-    /**
-      * Check if currently empty.
+    /** Check if currently empty.
       */
     def isEmpty: Txn[Boolean] = tryPeek.map(_.isEmpty)
 
@@ -76,8 +67,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
 
   object TQueue {
 
-    /**
-      * Create a new empty `TQueue`.
+    /** Create a new empty `TQueue`.
       */
     def empty[A]: Txn[TQueue[A]] = TVar.of(Queue.empty[A]).map(tvar => new TQueue[A](tvar))
 
