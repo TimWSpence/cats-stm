@@ -1,9 +1,9 @@
 ThisBuild / tlBaseVersion := "0.13" // your current series x.y
 
-ThisBuild / organization := "io.github.timwspence"
-ThisBuild / organizationName := "TimWSpence"
+ThisBuild / organization         := "io.github.timwspence"
+ThisBuild / organizationName     := "TimWSpence"
 ThisBuild / organizationHomepage := Some(url("https://github.com/TimWSpence"))
-ThisBuild / licenses := Seq(License.Apache2)
+ThisBuild / licenses             := Seq(License.Apache2)
 ThisBuild / developers := List(
   tlGitHubDev("TimWSpence", "Tim Spence")
 )
@@ -11,8 +11,8 @@ ThisBuild / startYear := Some(2017)
 
 val Scala213 = "2.13.16"
 ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.20", "3.4.1")
-ThisBuild / scalaVersion := Scala213 // the default Scala
-ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / scalaVersion       := Scala213 // the default Scala
+ThisBuild / tlJdkRelease       := Some(8)
 
 val CatsVersion             = "2.10.0"
 val CatsEffectVersion       = "3.6.3"
@@ -70,7 +70,7 @@ lazy val laws = project
       "org.typelevel"  %%% "discipline-munit"        % DisciplineVersion       % Test
     )
   )
-  //TODO cross-build this
+  // TODO cross-build this
   .dependsOn(core.jvm)
   .enablePlugins(NoPublishPlugin)
 
@@ -86,14 +86,14 @@ lazy val docs = project
     tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate)
   )
   .enablePlugins(TypelevelSitePlugin)
-  //TODO cross-build this
+  // TODO cross-build this
   .dependsOn(core.jvm)
 
 lazy val unidocs = project
   .in(file("unidoc"))
   .enablePlugins(TypelevelUnidocPlugin) // also enables the ScalaUnidocPlugin
   .settings(
-    name := "cats-stm-docs",
+    name                                       := "cats-stm-docs",
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core.jvm)
   )
 
