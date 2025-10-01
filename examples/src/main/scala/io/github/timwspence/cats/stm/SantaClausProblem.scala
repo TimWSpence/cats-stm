@@ -123,11 +123,10 @@ object SantaClausProblem extends IOApp.Simple {
 
       def choose[A](choices: NonEmptyList[(Txn[A], A => IO[Unit])]): IO[Unit] = {
         def actions: NonEmptyList[Txn[IO[Unit]]] =
-          choices.map {
-            case (guard, rhs) =>
-              for {
-                value <- guard
-              } yield rhs(value)
+          choices.map { case (guard, rhs) =>
+            for {
+              value <- guard
+            } yield rhs(value)
           }
         for {
           act <- stm.commit(actions.reduceLeft(_.orElse(_)))
