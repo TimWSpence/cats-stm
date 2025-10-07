@@ -99,7 +99,7 @@ object STM {
                       }
                   case TRetry =>
                     for {
-                      signal <- Deferred[F, Unit]
+                      signal           <- Deferred[F, Unit]
                       retryImmediately <-
                         log
                           .withLock(
