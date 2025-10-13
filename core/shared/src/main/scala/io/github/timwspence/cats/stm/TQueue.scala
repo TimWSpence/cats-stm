@@ -32,7 +32,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
     def read: Txn[A] =
       tvar.get.flatMap {
         case q if q.isEmpty => retry
-        case q =>
+        case q              =>
           val (head, tail) = q.dequeue
           tvar.set(tail) >> pure(head)
       }
@@ -50,7 +50,7 @@ trait TQueueLike[F[_]] extends STMLike[F] {
     def tryRead: Txn[Option[A]] =
       tvar.get.flatMap {
         case q if q.isEmpty => pure(None)
-        case q =>
+        case q              =>
           val (head, tail) = q.dequeue
           tvar.set(tail) >> pure(Some(head))
       }
