@@ -30,7 +30,7 @@ class TDeferredSpec extends BaseSpec {
       v2 <- stm.commit(TVar.of(0))
       f1 <- stm.commit(d.get.flatMap(v1.set)).start
       f2 <- stm.commit(d.get.flatMap(v2.set)).start
-      _ <- assertIO(
+      _  <- assertIO(
         stm.commit(d.complete(42).flatTap(_ => v.modify(_ + 1))),
         true
       )
