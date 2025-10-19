@@ -44,12 +44,13 @@ class MaintainsInvariants extends BaseSpec with ScalaCheckEffectSuite {
         for {
           fromIdx <- Gen.choose(0, tvars.length - 1)
           toIdx   <- Gen.choose(0, tvars.length - 1) suchThat (_ != fromIdx)
-          txn <- for {
-            balance <- tvars(fromIdx).get
-            transfer = Math.abs(Random.nextLong()) % balance
-            _ <- tvars(fromIdx).modify(_ - transfer)
-            _ <- tvars(toIdx).modify(_ + transfer)
-          } yield ()
+          txn     <-
+            for {
+              balance <- tvars(fromIdx).get
+              transfer = Math.abs(Random.nextLong()) % balance
+              _ <- tvars(fromIdx).modify(_ - transfer)
+              _ <- tvars(toIdx).modify(_ + transfer)
+            } yield ()
           _ <- count.modify(_ + 1)
         } yield txn
 

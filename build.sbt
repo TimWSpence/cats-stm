@@ -4,7 +4,7 @@ ThisBuild / organization         := "io.github.timwspence"
 ThisBuild / organizationName     := "TimWSpence"
 ThisBuild / organizationHomepage := Some(url("https://github.com/TimWSpence"))
 ThisBuild / licenses             := Seq(License.Apache2)
-ThisBuild / developers := List(
+ThisBuild / developers           := List(
   tlGitHubDev("TimWSpence", "Tim Spence")
 )
 ThisBuild / startYear := Some(2017)

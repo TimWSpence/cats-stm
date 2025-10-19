@@ -63,7 +63,7 @@ class TVarSpec extends BaseSpec {
   stmTest("Transaction is registered for retry") { stm =>
     import stm._
     for {
-      tvar <- stm.commit(TVar.of(0))
+      tvar  <- stm.commit(TVar.of(0))
       fiber <-
         stm
           .commit(for {
@@ -85,11 +85,11 @@ class TVarSpec extends BaseSpec {
     for {
       t1 <- stm.commit(t)
       t2 <- stm.commit(t)
-      _ <- stm.commit(for {
+      _  <- stm.commit(for {
         _ <- t1.modify(_ + 1)
         _ <- t2.modify(_ + 2)
       } yield ())
-      vs <- stm.commit((t1.get, t2.get).tupled)
+      vs  <- stm.commit((t1.get, t2.get).tupled)
       res <- IO {
         assertEquals(vs._1, 1)
         assertEquals(vs._2, 2)
