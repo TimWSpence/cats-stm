@@ -31,14 +31,14 @@ class STMSpec extends BaseSpec {
     for {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
-      _ <- stm.commit {
+      _    <- stm.commit {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
           _       <- to.modify(_ + balance)
         } yield ()
       }
-      vs <- stm.commit((from.get, to.get).tupled)
+      vs  <- stm.commit((from.get, to.get).tupled)
       res <- IO {
         assertEquals(vs._1, 0)
         assertEquals(vs._2, 100)
@@ -51,14 +51,14 @@ class STMSpec extends BaseSpec {
     for {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
-      _ <- stm.commit {
+      _    <- stm.commit {
         for {
           balance <- from.get
           _       <- from.modify(_ - balance)
           _       <- stm.abort[Unit](new RuntimeException("Boom"))
         } yield ()
       }.attempt
-      vs <- stm.commit((from.get, to.get).tupled)
+      vs  <- stm.commit((from.get, to.get).tupled)
       res <- IO {
         assertEquals(vs._1, 100)
         assertEquals(vs._2, 0)
@@ -73,7 +73,7 @@ class STMSpec extends BaseSpec {
     for {
       from <- stm.commit(TVar.of(100))
       to   <- stm.commit(TVar.of(0))
-      _ <- (for {
+      _    <- (for {
         _ <- IO.sleep(2.seconds)
         _ <- stm.commit(from.modify(_ + 1))
       } yield ()).start
@@ -85,7 +85,7 @@ class STMSpec extends BaseSpec {
           _       <- to.modify(_ + 100)
         } yield ()
       }
-      vs <- stm.commit((from.get, to.get).tupled)
+      vs  <- stm.commit((from.get, to.get).tupled)
       res <- IO {
         assertEquals(vs._1, 1)
         assertEquals(vs._2, 100)
@@ -99,10 +99,11 @@ class STMSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of(0))
 
-      retry = for {
-        current <- tvar.get
-        _       <- stm.check(current > 10)
-      } yield current
+      retry =
+        for {
+          current <- tvar.get
+          _       <- stm.check(current > 10)
+        } yield current
 
       background =
         1
@@ -113,7 +114,7 @@ class STMSpec extends BaseSpec {
       fiber <- background.start
       v     <- stm.commit(retry)
       _     <- fiber.join
-      res <- IO {
+      res   <- IO {
         assertEquals(v, 11)
       }
     } yield res
@@ -125,17 +126,19 @@ class STMSpec extends BaseSpec {
     for {
       account <- stm.commit(TVar.of(100))
 
-      first = for {
-        balance <- account.get
-        _       <- stm.check(balance > 100)
-        _       <- account.modify(_ - 100)
-      } yield ()
+      first =
+        for {
+          balance <- account.get
+          _       <- stm.check(balance > 100)
+          _       <- account.modify(_ - 100)
+        } yield ()
 
-      second = for {
-        balance <- account.get
-        _       <- stm.check(balance > 50)
-        _       <- account.modify(_ - 50)
-      } yield ()
+      second =
+        for {
+          balance <- account.get
+          _       <- stm.check(balance > 50)
+          _       <- account.modify(_ - 50)
+        } yield ()
 
       _   <- stm.commit(first.orElse(second))
       v   <- stm.commit(account.get)
@@ -148,16 +151,18 @@ class STMSpec extends BaseSpec {
     for {
       account <- stm.commit(TVar.of(100))
 
-      first = for {
-        _ <- account.modify(_ - 100)
-        _ <- stm.retry[Unit]
-      } yield ()
+      first =
+        for {
+          _ <- account.modify(_ - 100)
+          _ <- stm.retry[Unit]
+        } yield ()
 
-      second = for {
-        balance <- account.get
-        _       <- stm.check(balance > 50)
-        _       <- account.modify(_ - 50)
-      } yield ()
+      second =
+        for {
+          balance <- account.get
+          _       <- stm.check(balance > 50)
+          _       <- account.modify(_ - 50)
+        } yield ()
 
       _   <- stm.commit(first.orElse(second))
       v   <- stm.commit(account.get)
@@ -171,23 +176,25 @@ class STMSpec extends BaseSpec {
       account <- stm.commit(TVar.of(100))
       other   <- stm.commit(TVar.of(100))
 
-      first = for {
-        _ <- other.modify(_ - 100)
-        _ <- stm.retry[Unit]
-      } yield ()
+      first =
+        for {
+          _ <- other.modify(_ - 100)
+          _ <- stm.retry[Unit]
+        } yield ()
 
-      second = for {
-        balance <- account.get
-        _       <- stm.check(balance > 50)
-        _       <- account.modify(_ - 50)
-      } yield ()
+      second =
+        for {
+          balance <- account.get
+          _       <- stm.check(balance > 50)
+          _       <- account.modify(_ - 50)
+        } yield ()
 
       _ <- stm.commit {
         for {
           _ <- first.orElse(second)
         } yield ()
       }
-      vs <- stm.commit((account.get, other.get).tupled)
+      vs  <- stm.commit((account.get, other.get).tupled)
       res <- IO {
         assertEquals(vs._1, 50)
         assertEquals(vs._2, 100)
@@ -199,23 +206,26 @@ class STMSpec extends BaseSpec {
     import stm._
     for {
       tvar <- stm.commit(TVar.of(100))
-      first = for {
-        _ <- tvar.modify(_ - 100)
-        _ <- stm.retry[Unit]
-      } yield ()
+      first =
+        for {
+          _ <- tvar.modify(_ - 100)
+          _ <- stm.retry[Unit]
+        } yield ()
 
-      second = for {
-        _       <- tvar.modify(_ - 10)
-        balance <- tvar.get
-        _       <- stm.check(balance == 50)
-        _       <- tvar.modify(_ - 50)
-      } yield ()
+      second =
+        for {
+          _       <- tvar.modify(_ - 10)
+          balance <- tvar.get
+          _       <- stm.check(balance == 50)
+          _       <- tvar.modify(_ - 50)
+        } yield ()
 
-      third = for {
-        balance <- tvar.get
-        _       <- stm.check(balance == 100)
-        _       <- tvar.modify(_ - 50)
-      } yield ()
+      third =
+        for {
+          balance <- tvar.get
+          _       <- stm.check(balance == 100)
+          _       <- tvar.modify(_ - 50)
+        } yield ()
 
       v   <- stm.commit(first.orElse(second).orElse(third) >> tvar.get)
       res <- IO(assertEquals(v, 50))
@@ -228,16 +238,18 @@ class STMSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of(0L))
 
-      retry = for {
-        current <- tvar.get
-        _       <- stm.check(current > 0)
-        _       <- tvar.modify(_ + 1)
-      } yield ()
+      retry =
+        for {
+          current <- tvar.get
+          _       <- stm.check(current > 0)
+          _       <- tvar.modify(_ + 1)
+        } yield ()
 
-      background = for {
-        _ <- IO.sleep(2.seconds)
-        _ <- stm.commit(tvar.modify(_ + 1))
-      } yield ()
+      background =
+        for {
+          _ <- IO.sleep(2.seconds)
+          _ <- stm.commit(tvar.modify(_ + 1))
+        } yield ()
 
       fiber <- background.start
       _     <- stm.commit(retry.orElse(stm.retry))
@@ -268,10 +280,11 @@ class STMSpec extends BaseSpec {
         } yield ()
       }
 
-      background = for {
-        _ <- IO.sleep(2.seconds)
-        _ <- stm.commit(flag.set(true))
-      } yield ()
+      background =
+        for {
+          _ <- IO.sleep(2.seconds)
+          _ <- stm.commit(flag.set(true))
+        } yield ()
 
       fiber <- background.start
       ret1  <- retry.start
@@ -323,7 +336,7 @@ class STMSpec extends BaseSpec {
 
     for {
       tvar <- stm.commit(TVar.of(0))
-      v <-
+      v    <-
         stm
           .commit(
             1.to(iterations).foldLeft(stm.unit) { (prog, _) =>
@@ -343,7 +356,7 @@ class STMSpec extends BaseSpec {
       for {
         tvar <- stm.commit(TVar.of(0))
         unblock = stm.commit(tvar.modify(_ + 1))
-        retry = stm.commit(
+        retry   = stm.commit(
           for {
             current <- tvar.get
             _       <- stm.check(current == 1)
@@ -361,7 +374,7 @@ class STMSpec extends BaseSpec {
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
-      fs <- Random.shuffle(List.range(0, 100)).parTraverse { n =>
+      fs   <- Random.shuffle(List.range(0, 100)).parTraverse { n =>
         stm
           .commit(
             for {
@@ -383,7 +396,7 @@ class STMSpec extends BaseSpec {
     for {
       tvar1 <- stm.commit(TVar.of(0))
       tvar2 <- stm.commit(TVar.of(0))
-      f1 <-
+      f1    <-
         stm
           .commit(
             for {
@@ -403,11 +416,11 @@ class STMSpec extends BaseSpec {
             } yield current
           )
           .start
-      _  <- stm.commit(tvar1.set(1) >> tvar2.set(1))
-      _  <- f1.join.timeout(1.second)
-      _  <- f2.join.timeout(1.second)
-      v1 <- stm.commit(tvar1.get)
-      v2 <- stm.commit(tvar2.get)
+      _   <- stm.commit(tvar1.set(1) >> tvar2.set(1))
+      _   <- f1.join.timeout(1.second)
+      _   <- f2.join.timeout(1.second)
+      v1  <- stm.commit(tvar1.get)
+      v2  <- stm.commit(tvar2.get)
       res <- IO {
         assertEquals(v1 -> v2, 2 -> 2)
       }
@@ -445,7 +458,7 @@ class STMSpec extends BaseSpec {
     import stm._
     for {
       tvar <- stm.commit(TVar.of(0))
-      _ <- stm.commit(
+      _    <- stm.commit(
         for {
           _ <- tvar.set(1)
           _ <- (tvar.modify(_ + 1) >> stm.abort(new RuntimeException("BOOM"))).handleErrorWith { case _ =>
@@ -494,14 +507,14 @@ class STMSpec extends BaseSpec {
       for {
         from <- stm.commit(TVar.of(100))
         to   <- stm.commit(TVar.of(0))
-        _ <- stm.commit {
+        _    <- stm.commit {
           for {
             balance <- from.get
             _       <- from.modify(_ - balance)
             _       <- to.modify(_ + balance)
           } yield ()
         }
-        vs <- stm.commit((from.get, to.get).tupled)
+        vs  <- stm.commit((from.get, to.get).tupled)
         res <- IO {
           assertEquals(vs._1, 0)
           assertEquals(vs._2, 100)

@@ -27,7 +27,7 @@ class TLogSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
-      v <- tlog.getF(tvar)
+      v   <- tlog.getF(tvar)
       res <- IO {
         assertEquals(v, 1)
       }
@@ -39,7 +39,7 @@ class TLogSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
-      _ <- tlog.getF(tvar)
+      _   <- tlog.getF(tvar)
       res <- IO {
         tlog.modify(tvar, inc.asInstanceOf[Any => Any])
         assertEquals(tlog.get(tvar), 2)
@@ -84,9 +84,9 @@ class TLogSpec extends BaseSpec {
     for {
       tvar <- stm.commit(TVar.of[Any](1))
       tlog = TLog.empty
-      _ <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
-      _ <- tlog.commit
-      v <- stm.commit(tvar.get)
+      _   <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
+      _   <- tlog.commit
+      v   <- stm.commit(tvar.get)
       res <- IO {
         assertEquals(v, 2)
       }
@@ -101,7 +101,7 @@ class TLogSpec extends BaseSpec {
       tlog = TLog.empty
       _ <- tlog.modifyF(tvar, inc.asInstanceOf[Any => Any])
       tlog2 = tlog.snapshot()
-      v <- tlog2.getF(tvar2)
+      v   <- tlog2.getF(tvar2)
       res <- IO {
         assertEquals(tlog2.get(tvar), 2)
         assertEquals(v, 2)
