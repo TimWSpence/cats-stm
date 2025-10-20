@@ -104,9 +104,9 @@
     <li class="level2 nav-leaf"><a href="../theory/txn.html">Txn</a></li>
     <li class="level2 nav-leaf"><a href="../theory/tvar.html">TVar</a></li>
     <li class="level1 nav-header">datatypes</li>
+    <li class="level2 nav-leaf"><a href="tmvar.html">TMVar</a></li>
     <li class="level2 nav-leaf"><a href="tqueue.html">TQueue</a></li>
     <li class="level2 active nav-leaf"><a href="#">TSemaphore</a></li>
-    <li class="level2 nav-leaf"><a href="tmvar.html">TMVar</a></li>
     <li class="level1 nav-header">examples</li>
     <li class="level2 nav-leaf"><a href="../examples/santa.html">The Santa Claus Problem</a></li>
   </ul>
@@ -137,7 +137,7 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">github</span><span>.</span><span class="identifier">timwspence</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">stm</span><span>.</span><span class="type-name">STM</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">stm</span><span> = </span><span class="type-name">STM</span><span>.</span><span class="identifier">runtime</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@302e5533
+</span><span class="comment">// stm: STM[IO] = io.github.timwspence.cats.stm.STM$Make$$anon$1$$anon$2@61a90b49
 </span><span class="keyword">import</span><span> </span><span class="identifier">stm</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">txn</span><span>: </span><span class="type-name">Txn</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="keyword">for</span><span> {
@@ -150,11 +150,11 @@
 //   txn = Bind(
 //     txn = Alloc(
 //       v = Delay(
-//         thunk = cats.effect.IO$$$Lambda$10413/0x0000000802d2e440@114d4baf,
+//         thunk = cats.effect.IO$$$Lambda$10430/0x0000000802e05840@40cace72,
 //         event = cats.effect.tracing.TracingEvent$StackTrace
 //       )
 //     ),
-//     f = scala.Function1$$Lambda$10485/0x0000000802e08040@7c4c8e6
+//     f = scala.Function1$$Lambda$10502/0x0000000802ede840@5dbd149d
 //   ),
 //   f = &lt;function1&gt;
 // )
