@@ -159,11 +159,12 @@ trait Instances extends CatsEffectSuite with HasSTM {
     for {
       tvar <- genTVar[A]
       f    <- arbitrary[A => A]
-    } yield for {
-      tv  <- tvar
-      _   <- tv.modify(f)
-      res <- tv.get
-    } yield res
+    } yield
+      for {
+        tv  <- tvar
+        _   <- tv.modify(f)
+        res <- tv.get
+      } yield res
 
   def genAbort[A]: Gen[Txn[A]] = genError.map(stm.abort[A](_))
 
