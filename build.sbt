@@ -10,7 +10,7 @@ ThisBuild / developers           := List(
 ThisBuild / startYear := Some(2017)
 
 val Scala213 = "2.13.16"
-ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.20", "3.4.1")
+ThisBuild / crossScalaVersions := Seq(Scala213, "2.12.21", "3.4.1")
 ThisBuild / scalaVersion       := Scala213 // the default Scala
 ThisBuild / tlJdkRelease       := Some(8)
 
